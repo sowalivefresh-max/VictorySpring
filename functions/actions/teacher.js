@@ -38,7 +38,7 @@ module.exports = function(db, notificationsActions) {
           });
           return res.json({ success: true, data: subjects });
         } else {
-          // Standard high school teacher, just get explicitly assigned subjects
+          // Standard teacher, just get explicitly assigned subjects
           const subjectsSnap = await db.collection("subjects").where("assignedTeacherId", "==", String(userId)).get();
           const subjects = [];
           subjectsSnap.forEach(doc => {
@@ -121,7 +121,7 @@ module.exports = function(db, notificationsActions) {
         }
         
         const role = req.session.role;
-        const targetSection = role === 'primary_teacher' ? 'primary' : 'high';
+        const targetSection = 'primary';
         
         const subjectsSnap = await db.collection("subjects").where("section", "==", targetSection).get();
         const allSubjects = subjectsSnap.docs.map(d => ({id: d.id, ...d.data()}));

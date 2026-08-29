@@ -53,7 +53,10 @@
         <button class="aa-nav-item" id="nav-subjects" onclick="switchTab('admin-tabs', 'tab-subjects'); setActiveNav('nav-subjects')">
           <i class="fa fa-book"></i> Subjects
         </button>
-        <button class="aa-nav-item" id="nav-grading" onclick="switchTab('admin-tabs', 'tab-grading'); setActiveNav('nav-grading')">
+                <button class="aa-nav-item" id="nav-timetable" onclick="switchTab('admin-tabs', 'tab-timetable'); setActiveNav('nav-timetable')">
+          <i class="fa fa-calendar-alt"></i> Timetable
+        </button>
+<button class="aa-nav-item" id="nav-grading" onclick="switchTab('admin-tabs', 'tab-grading'); setActiveNav('nav-grading')">
           <i class="fa fa-medal"></i> Grading System
         </button>
         
@@ -80,8 +83,8 @@
         <div class="aa-user-card" onclick="AA.populateProfileModal()">
           <div class="aa-user-avatar">AD</div>
           <div>
-            <div class="aa-user-name">Admin User</div>
-            <div class="aa-user-role">Administrator</div>
+            <div class="aa-user-name">Developer</div>
+            <div class="aa-user-role">Super Admin</div>
           </div>
         </div>
       </div>
@@ -92,7 +95,7 @@
       <header class="aa-topbar">
         <button class="aa-menu-toggle" id="aa-menu-toggle"><i class="fa fa-bars"></i></button>
         <div class="aa-topbar-left">
-          <div class="aa-topbar-title">Admin Dashboard</div>
+          <div class="aa-topbar-title">Developer Dashboard</div>
           <div class="aa-topbar-subtitle" id="currentTermText">Loading session...</div>
         </div>
         <div class="aa-topbar-right">
@@ -110,7 +113,8 @@
           <div class="aa-tab" data-tab="tab-students" data-onload="loadStudents"></div>
           <div class="aa-tab" data-tab="tab-classes" data-onload="loadClasses"></div>
           <div class="aa-tab" data-tab="tab-subjects" data-onload="loadSubjects"></div>
-          <div class="aa-tab" data-tab="tab-grading" data-onload="loadGrading"></div>
+                    <div class="aa-tab" data-tab="tab-timetable" data-onload="loadTimetable"></div>
+<div class="aa-tab" data-tab="tab-grading" data-onload="loadGrading"></div>
           <div class="aa-tab" data-tab="tab-analytics" data-onload="loadAnalytics"></div>
           <div class="aa-tab" data-tab="tab-finance" data-onload="loadFinance"></div>
           <div class="aa-tab" data-tab="tab-reports" data-onload="loadReports"></div>
@@ -362,11 +366,9 @@
 
         <!-- TAB: Finance -->
         <div class="aa-tab-content" data-group="admin-tabs" data-id="tab-finance">
-          <div id="finance-dynamic-container">
-            <!-- Analytics sections will be injected here by loadFinance() -->
+          <div id="finance-stats-container">
+            <!-- Dynamically populated by JS -->
           </div>
-          
-          <h3 style="margin-top:2rem; margin-bottom:1rem; border-bottom:2px solid var(--aa-navy-dark); padding-bottom:5px; color:var(--aa-navy-dark);">Global Transactions</h3>
           
           <div class="aa-grid-4 mb-4">
             <div class="aa-stat-card">
@@ -388,26 +390,29 @@
             </div>
           </div>
           
-          <div class="aa-card">
-            <div class="aa-card-header">
-              <h3 class="aa-card-title">Recent Transactions</h3>
-              <div class="d-flex gap-2" style="align-items: center;">
-                <select id="financeReportType" class="aa-input" style="width:auto; padding:4px 8px; margin-right:5px; height: 32px;" onchange="filterFinanceTable()">
-                  <option value="both">All</option>
-                  <option value="income">Income</option>
-                  <option value="expenses">Expenses</option>
-                </select>
-                <button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadFinancialReport()"><i class="fa fa-download"></i> Export CSV</button>
+          <div class="aa-grid-2">
+            <div class="aa-card">
+              <div class="aa-card-header">
+                <h3 class="aa-card-title">Recent Transactions</h3>
+                <div class="d-flex gap-2" style="align-items: center;">
+                  <select id="financeReportType" class="aa-input" style="width:auto; padding:4px 8px; margin-right:5px; height: 32px;" onchange="filterFinanceTable()">
+                    <option value="income">Income</option>
+                    <option value="expenses">Expenses</option>
+                  </select>
+                  <button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadFinancialReport()"><i class="fa fa-download"></i> Export CSV</button>
+                </div>
+              </div>
+              <div class="aa-card-body" style="padding:0;">
+                <div class="aa-table-wrap">
+                  <table class="aa-table" id="finTxTable">
+                    <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <div class="aa-card-body" style="padding:0;">
-              <div class="aa-table-wrap">
-                <table class="aa-table" id="finTxTable">
-                  <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
-                  <tbody></tbody>
-                </table>
-              </div>
-            </div>
+            
+            
           </div>
         </div>
 
@@ -529,13 +534,30 @@
                 <div class="aa-form-group">
                   <label class="aa-label">Institution Type</label>
                   <select name="institution_type" class="aa-select">
-                    <option value="both">Dual-Section (Primary &amp; High School)</option>
                     <option value="primary">Primary School Only</option>
-                    <option value="secondary">Secondary / High School Only</option>
                   </select>
                   <small class="text-muted" style="font-size:11px;display:block;margin-top:4px;">This controls which sections appear in menus, forms, and lists across the portal.</small>
                 </div>
 
+                <!-- ====== CAMPUS MANAGEMENT ====== -->
+                <h4 style="margin:25px 0 15px 0; font-size:16px; border-bottom:2px solid var(--primary,#0d1b2a); padding-bottom:8px; color:var(--primary,#0d1b2a);"><i class="fa fa-building"></i> Campus Management</h4>
+                <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Configure multiple physical campuses for any section. Students, staff, classes and subjects can be assigned to a campus to keep data separated.</p>
+                <div id="campus-list-container" style="margin-bottom:12px;"></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+                  <div style="flex:1;min-width:160px;">
+                    <label class="aa-label" style="font-size:12px;">Campus Name</label>
+                    <input type="text" id="newCampusName" class="aa-input" placeholder="e.g. Main Campus" style="font-size:13px;">
+                  </div>
+                  <div style="width:160px;">
+                    <label class="aa-label" style="font-size:12px;">Section</label>
+                    <select id="newCampusSection" class="aa-select" style="font-size:13px;">
+                      <option value="primary">Primary Only</option>
+                    </select>
+                  </div>
+                  <button type="button" class="aa-btn aa-btn-primary aa-btn-sm" onclick="addNewCampus()" style="white-space:nowrap;"><i class="fa fa-plus"></i> Add Campus</button>
+                </div>
+                <button type="button" class="aa-btn aa-btn-success aa-btn-sm" onclick="saveCampuses()" style="margin-bottom:8px;"><i class="fa fa-save"></i> Save Campuses</button>
+                <!-- ====== END CAMPUS MANAGEMENT ====== -->
 
                 <div class="aa-form-group">
                   <label class="aa-label">Subscription Plan</label>
@@ -546,6 +568,33 @@
                   </select>
                   <small class="text-muted" style="font-size:11px;display:block;margin-top:4px;"><i class="fa fa-lock"></i> Subscription plan upgrades are managed by the developer.</small>
                 </div>
+
+                <h4 style="margin:25px 0 15px 0; font-size:16px; border-bottom:1px solid #eee; padding-bottom:8px;"><i class="fa fa-palette"></i> Branding & Themes</h4>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="aa-form-group">
+                      <label class="aa-label">Primary Color</label>
+                      <input type="color" name="theme_primary" id="theme_primary" class="aa-input" value="#0d1b2a" style="height:45px;padding:4px;cursor:pointer;" onchange="previewCustomTheme()">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="aa-form-group">
+                      <label class="aa-label">Secondary Color</label>
+                      <input type="color" name="theme_secondary" id="theme_secondary" class="aa-input" value="#f0a500" style="height:45px;padding:4px;cursor:pointer;" onchange="previewCustomTheme()">
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted" style="font-size:11px;display:block;margin-top:2px;margin-bottom:15px;">Select custom primary and secondary colors to instantly re-theme the entire portal.</small>
+                
+                <script>
+                  function previewCustomTheme() {
+                    var p = document.getElementById('theme_primary').value;
+                    var s = document.getElementById('theme_secondary').value;
+                    if(typeof AA !== 'undefined' && typeof AA.applyThemeToDocument === 'function') {
+                      AA.applyThemeToDocument('custom', p, s);
+                    }
+                  }
+                </script>
                 
                 <h4 style="margin:25px 0 15px 0; font-size:16px; border-bottom:1px solid #eee; padding-bottom:8px;"><i class="fa fa-envelope"></i> Email Settings (for Reminders)</h4>
                 <div class="row">
@@ -567,16 +616,16 @@
                   </div>
                 </div>
 
-                <div class="aa-form-group" style="margin-top:20px;">
-                  <label class="aa-label">Gradebook Format <small class="text-muted">(Must total 100 marks)</small></label>
-                  <div id="gradebook-builder-container" style="border:1px solid #e2e8f0; padding:12px; border-radius:6px; background:#f8fafc;">
-                    <!-- Dynamic rows will go here -->
+                  <div class="aa-form-group" style="margin-top:20px;">
+                    <label class="aa-label">Gradebook Format <small class="text-muted">(Must total 100 marks)</small></label>
+                    <div id="gradebook-builder-container" style="border:1px solid #e2e8f0; padding:12px; border-radius:6px; background:#f8fafc;">
+                      <!-- Dynamic rows will go here -->
+                    </div>
+                    <button type="button" class="aa-btn aa-btn-sm aa-btn-outline mt-2" onclick="addGradebookColumn()"><i class="fa fa-plus"></i> Add Assessment Column</button>
+                    <input type="hidden" name="gradebook_format" id="gradebookFormatInput">
                   </div>
-                  <button type="button" class="aa-btn aa-btn-sm aa-btn-outline mt-2" onclick="addGradebookColumn()"><i class="fa fa-plus"></i> Add Assessment Column</button>
-                  <input type="hidden" name="gradebook_format" id="gradebookFormatInput">
-                </div>
 
-                <div id="dev-controls" style="display:none; padding:15px; border:2px dashed #dc3545; border-radius:8px; margin-bottom:20px; background:#fff5f5;">
+                  <div id="dev-controls" style="display:none; padding:15px; border:2px dashed #dc3545; border-radius:8px; margin-bottom:20px; background:#fff5f5;">
                   <h4 style="color:#dc3545; margin-bottom:15px; font-size:16px; font-weight:bold;"><i class="fa fa-lock"></i> Developer Controls</h4>
                   
                   <div class="aa-form-group">
@@ -606,13 +655,97 @@
           </div>
         </div>
 
+        <!-- TAB: Timetable -->
+        <div class="aa-tab-content" data-group="admin-tabs" data-id="tab-timetable">
+          <div class="aa-header-between mb-3">
+            <h2 class="aa-section-title">Class Timetables</h2>
+            <div>
+              <button class="aa-btn aa-btn-primary" onclick="openTimetableConfigModal()">Configure Format</button>
+              <button class="aa-btn aa-btn-success" onclick="openTimetableGenerateModal()">Generate Timetable</button>
+              <button class="aa-btn aa-btn-danger" style="margin-left: 10px;" onclick="clearTimetables()"><i class="fa fa-trash"></i> Clear</button>
+            </div>
+          </div>
+          
+          <div class="aa-card">
+            <div class="aa-card-header">
+              <h3>View Timetable</h3>
+            </div>
+            <div class="aa-card-body" style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
+              <select class="aa-input" id="timetable-term-select" style="max-width:200px;">
+                <option value="First Term">First Term</option>
+                <option value="Second Term">Second Term</option>
+                <option value="Third Term">Third Term</option>
+              </select>
+              <select class="aa-input" id="timetable-session-select" style="max-width:200px;">
+              </select>
+              <select class="aa-input" id="timetable-class-select" style="max-width:200px;">
+                <option value="">Select Class...</option>
+              </select>
+              <button class="aa-btn aa-btn-navy" onclick="loadTimetableData()">View</button>
+            </div>
+            <div id="timetable-display-area" style="overflow-x:auto;">
+              <p class="text-muted">Select a class to view its timetable.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
 
   <!-- MODALS -->
   
-  <!-- User Modal -->
+  <!-- Timetable Config Modal -->
+  <div class="aa-modal-backdrop" id="modal-timetable-config">
+    <div class="aa-modal" style="max-width: 600px;">
+      <div class="aa-modal-header">
+        <h3>Configure Timetable Format</h3>
+        <button class="aa-modal-close" onclick="closeModal('modal-timetable-config')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="aa-modal-body">
+        <div class="aa-form-group">
+          <label>Days of the Week (Comma separated)</label>
+          <input type="text" id="tt-cfg-days" class="aa-input" value="Monday, Tuesday, Wednesday, Thursday, Friday" onchange="renderTimetableDayTabs()">
+        </div>
+        
+        <div id="tt-cfg-day-tabs" style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #e2e8f0; overflow-x:auto; padding-bottom:5px;"></div>
+        
+        <div class="aa-header-between mb-2">
+          <label style="margin:0;"><span id="tt-cfg-active-day" style="font-weight:bold; color:#1e3a8a;"></span> Time Slots</label>
+          <button class="aa-btn aa-btn-sm aa-btn-outline" onclick="addTimetableSlot()"><i class="fa fa-plus"></i> Add Slot</button>
+        </div>
+        <div id="tt-cfg-slots"></div>
+        <div class="mt-3">
+          <button class="aa-btn aa-btn-primary w-100" onclick="saveTimetableConfig()">Save Configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timetable Generate Modal -->
+  <div class="aa-modal-backdrop" id="modal-timetable-generate">
+    <div class="aa-modal">
+      <div class="aa-modal-header">
+        <h3>Generate Timetables</h3>
+        <button class="aa-modal-close" onclick="closeModal('modal-timetable-generate')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="aa-modal-body">
+        <p class="text-muted mb-3">Select the classes you want to generate a timetable for. The system will avoid scheduling conflicts for teachers.</p>
+        <div class="aa-form-group">
+          <label>Select Classes</label>
+          <div id="tt-gen-classes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;"></div>
+          <div class="mt-2">
+            <button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(true)">Select All</button>
+            <button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(false)">Deselect All</button>
+          </div>
+        </div>
+        <div class="mt-3">
+          <button class="aa-btn aa-btn-success w-100" id="btn-generate-timetable" onclick="generateTimetable()">Generate Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="aa-modal-backdrop" id="userModal">
     <div class="aa-modal">
       <div class="aa-modal-header">
@@ -656,17 +789,8 @@
           <div class="aa-form-group">
             <label class="aa-label">Section</label>
             <select name="section" class="aa-select">
-              <option value="both">Both Sections</option>
-              <option value="high">High School</option>
               <option value="primary">Primary School</option>
             </select>
-          </div>
-          <div class="aa-form-group" id="userCampusGroup">
-            <label class="aa-label"><i class="fa fa-building" style="font-size:11px;"></i> Campus Assignment</label>
-            <select name="campusId" id="userCampusSelect" class="aa-select">
-              <option value="">No Campus (All Campuses)</option>
-            </select>
-            <small class="text-muted" style="font-size:11px;">Only appears if campuses are configured in Settings.</small>
           </div>
           <div class="aa-form-group">
             <label class="aa-label">Password (Leave blank to keep existing)</label>
@@ -726,7 +850,6 @@
             <div class="aa-form-group">
               <label class="aa-label">Section</label>
               <select name="section" class="aa-select" required>
-                <option value="high">High School</option>
                 <option value="primary">Primary School</option>
               </select>
             </div>
@@ -737,13 +860,6 @@
                 <option value="Female">Female</option>
               </select>
             </div>
-          </div>
-          <div class="aa-form-group" id="studentCampusGroup">
-            <label class="aa-label"><i class="fa fa-building" style="font-size:11px;"></i> Campus Assignment</label>
-            <select name="campusId" id="studentCampusSelect" class="aa-select">
-              <option value="">No Campus (All Campuses)</option>
-            </select>
-            <small class="text-muted" style="font-size:11px;">Assign the student to a specific campus if your school has multiple campuses.</small>
           </div>
           <div class="aa-form-group">
             <label class="aa-label">Parent Email (Must match Parent User)</label>
@@ -803,14 +919,7 @@
           <div class="aa-form-group">
             <label class="aa-label">Section</label>
             <select name="section" class="aa-select" required>
-              <option value="high">High School</option>
               <option value="primary">Primary School</option>
-            </select>
-          </div>
-          <div class="aa-form-group" id="classCampusGroup">
-            <label class="aa-label"><i class="fa fa-building" style="font-size:11px;"></i> Campus</label>
-            <select name="campusId" id="classCampusSelect" class="aa-select">
-              <option value="">No Campus (School-wide)</option>
             </select>
           </div>
           <div class="aa-form-group">
@@ -843,14 +952,7 @@
           <div class="aa-form-group">
             <label class="aa-label">Section</label>
             <select name="section" id="subjectSectionSelect" class="aa-select" required onchange="filterSubjectClassesBySection(this.value)">
-              <option value="high">High School</option>
               <option value="primary">Primary School</option>
-            </select>
-          </div>
-          <div class="aa-form-group" id="subjectCampusGroup">
-            <label class="aa-label"><i class="fa fa-building" style="font-size:11px;"></i> Campus</label>
-            <select name="campusId" id="subjectCampusSelect" class="aa-select">
-              <option value="">No Campus (School-wide)</option>
             </select>
           </div>
           <div class="aa-form-group">
@@ -943,9 +1045,7 @@
             <div class="aa-form-group">
               <label class="aa-label">Target Section (Fallback)</label>
               <select name="targetSection" id="gsSection" class="aa-select">
-                <option value="both">Both Sections</option>
                 <option value="primary">Primary / Basic</option>
-                <option value="high">High School</option>
               </select>
             </div>
             <div class="aa-form-group">
@@ -1212,7 +1312,7 @@
   </div>
 
   <script src="api.js?v=2"></script>
-  <script src="scripts.js?v=6"></script>
+  <script src="scripts.js?v=1788044467"></script>
   <script>
     var globalUsers = [];
     var globalStudents = [];
@@ -1220,7 +1320,7 @@
     var globalSubjects = [];
     var currentTerm = '';
     var currentSession = '';
-    var institutionType = 'both'; // 'both' | 'primary' | 'secondary'
+    var institutionType = 'primary'; // 'both' | 'primary' | 'secondary'
     
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('admin-tabs');
@@ -1254,6 +1354,7 @@
         if (AA.user.role === 'admin_assistant') {
           document.getElementById('nav-finance').style.display = 'none';
           document.getElementById('nav-approvals').style.display = 'none';
+          document.getElementById('nav-settings').style.display = 'none'; // Maybe?
         }
         loadDashboard();
         refreshGlobalData();
@@ -1262,18 +1363,17 @@
     });
 
     function refreshGlobalData() {
-      var cid = AA.getActiveCampusId();
-      callServer('adminGetUsers', [AA.token, null, cid], function(u){ globalUsers = u; populateTeacherDropdowns(); populateCampusDropdowns(); });
-      callServer('adminGetClasses', [AA.token, null, cid], function(c){ globalClasses = c; populateClassDropdowns(); });
-      callServer('adminGetSubjects', [AA.token, null, cid], function(s){ globalSubjects = s; });
-      callServer('adminGetStudents', [AA.token, null, cid], function(st){ globalStudents = st; });
+      callServer('adminGetUsers', [AA.token], function(u){ globalUsers = u; populateTeacherDropdowns(); });
+      callServer('adminGetClasses', [AA.token], function(c){ globalClasses = c; populateClassDropdowns(); });
+      callServer('adminGetSubjects', [AA.token], function(s){ globalSubjects = s; });
+      callServer('adminGetStudents', [AA.token], function(st){ globalStudents = st; });
     }
 
     function populateTeacherDropdowns() {
       var teachers = globalUsers.filter(function(u) {
         if (!(u.role === 'teacher' || u.role === 'primary_teacher') || !(u.id || u.iD)) return false;
         if (institutionType === 'primary') return u.role === 'primary_teacher' || u.section === 'primary' || u.section === 'both';
-        if (institutionType === 'secondary') return u.role === 'teacher' || u.section === 'high' || u.section === 'both';
+        if (false) return u.role === 'teacher' || u.section === 'high' || u.section === 'both';
         return true;
       });
       var options = '<option value="">Select Teacher</option>';
@@ -1285,7 +1385,7 @@
     // Normalize section value to canonical form: 'high', 'primary', or 'both'
     function normalizeSection(sec) {
       var s = String(sec || '').toLowerCase().trim();
-      if (s === 'high' || s === 'highschool' || s === 'high school' || s === 'secondary') return 'high';
+      
       if (s === 'primary' || s === 'primaryschool' || s === 'primary school') return 'primary';
       return s; // 'both' or ''
     }
@@ -1294,7 +1394,7 @@
       var filteredClasses = globalClasses.filter(function(c) {
         var sec = normalizeSection(c.section);
         if (institutionType === 'primary') return sec === 'primary' || !sec;
-        if (institutionType === 'secondary') return sec === 'high' || !sec;
+        if (false) return sec === 'high' || !sec;
         return true;
       });
       filteredClasses.sort(function(a, b) { return (a.className || '').localeCompare(b.className || '', undefined, {numeric: true, sensitivity: 'base'}); });
@@ -1302,6 +1402,22 @@
       filteredClasses.forEach(function(c){ options += '<option value="'+c.className+'">'+c.className+'</option>'; });
       document.getElementById('studentClassSelect').innerHTML = options;
       document.getElementById('subjectClassSelect').innerHTML = '<option value="">All Classes</option>' + options;
+      // Also populate the timetable class select dropdown
+      var ttClsSel = document.getElementById('timetable-class-select');
+      if (ttClsSel) {
+        var ttOptions = '<option value="">Select Class...</option>';
+        filteredClasses.forEach(function(c){ ttOptions += '<option value="'+c.className+'">'+c.className+'</option>'; });
+        ttClsSel.innerHTML = ttOptions;
+      }
+      // Also populate the generate-timetable class checkboxes if visible
+      var ttGenClasses = document.getElementById('tt-gen-classes');
+      if (ttGenClasses) {
+        var chkHtml = '';
+        filteredClasses.forEach(function(c) {
+          chkHtml += '<div><label><input type="checkbox" class="tt-class-chk" value="'+c.className+'"> '+c.className+'</label></div>';
+        });
+        if (chkHtml) ttGenClasses.innerHTML = chkHtml;
+      }
     }
 
     function loadDashboard() {
@@ -1345,7 +1461,7 @@
         }
 
         // --- Institution type filter ---
-        institutionType = (s.institution_type || 'both').toLowerCase();
+        institutionType = 'primary';
         applyInstitutionFilter(institutionType);
       });
     }
@@ -1362,9 +1478,9 @@
       var isSingleSection = isPrimaryOnly || isSecondaryOnly;
 
       // Roles available per section type
-      var primaryRoles   = ['primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'developer'];
-      var secondaryRoles = ['teacher', 'principal', 'vp', 'parent', 'admin', 'admin_assistant', 'accounts', 'developer'];
-      var bothRoles      = ['teacher', 'primary_teacher', 'principal', 'vp', 'headteacher', 'accounts', 'parent', 'admin', 'admin_assistant', 'external', 'developer'];
+      var primaryRoles   = ['primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'storekeeper', 'developer'];
+      var secondaryRoles = ['teacher', 'principal', 'vp', 'parent', 'admin', 'admin_assistant', 'accounts', 'storekeeper', 'developer'];
+      var bothRoles      = ['teacher', 'primary_teacher', 'principal', 'vp', 'headteacher', 'accounts', 'storekeeper', 'parent', 'admin', 'admin_assistant', 'external', 'developer'];
 
       var allowedRoles = isSingleSection ? (isPrimaryOnly ? primaryRoles : secondaryRoles) : bothRoles;
 
@@ -1471,7 +1587,7 @@
             principal: 'PrincipalDashboard.html', vp: 'VPDashboard.html',
             headteacher: 'HeadTeacherDashboard.html', teacher: 'TeacherDashboard.html',
             primary_teacher: 'PrimaryTeacherDashboard.html', accounts: 'AccountsDashboard.html',
-            parent: 'ParentDashboard.html', student: 'StudentDashboard.html'
+            parent: 'ParentDashboard.html', student: 'StudentDashboard.html', storekeeper: 'StorekeeperDashboard.html'
           };
           var dashboard = dashboardMap[res.role] || 'Login.html';
           var redirectUrl = dashboard + '?token=' + encodeURIComponent(res.token);
@@ -1567,7 +1683,7 @@
       
       // For single-section schools, force the correct section
       if (!formData.section || formData.section === '') {
-        if (institutionType === 'secondary') formData.section = 'high';
+        if (false) formData.section = 'high';
         else if (institutionType === 'primary') formData.section = 'primary';
       }
       
@@ -1600,7 +1716,7 @@
       // For single-section schools, the section dropdown is disabled and may not submit its value.
       // Force the correct section value based on institution type.
       if (!data.section || data.section === '') {
-        if (institutionType === 'secondary') data.section = 'high';
+        if (false) data.section = 'high';
         else if (institutionType === 'primary') data.section = 'primary';
         else data.section = 'both';
       }
@@ -1886,73 +2002,33 @@
       }, null, true);
     }
 
-    function getFinanceHTML(prefix, title) {
-      var displayTitle = title ? '<h3 style="margin-bottom:1rem; border-bottom:2px solid var(--aa-primary); padding-bottom:5px; color:var(--aa-primary);">'+title+'</h3>' : '';
-      return `
-        ${displayTitle}
-        <div class="aa-grid-4 mb-4">
-          <div class="aa-stat-card">
-            <div class="aa-stat-icon bg-info"><i class="fa fa-file-invoice-dollar"></i></div>
-            <div class="aa-stat-value" id="${prefix}-fin-billed">...0.00</div>
-            <div class="aa-stat-label">Total Billed</div>
-          </div>
-          <div class="aa-stat-card">
-            <div class="aa-stat-icon bg-success"><i class="fa fa-wallet"></i></div>
-            <div class="aa-stat-value" id="${prefix}-fin-collected">...0.00</div>
-            <div class="aa-stat-label">Total Collected</div>
-          </div>
-          <div class="aa-stat-card">
-            <div class="aa-stat-icon bg-danger"><i class="fa fa-hand-holding-usd"></i></div>
-            <div class="aa-stat-value" id="${prefix}-fin-outstanding">...0.00</div>
-            <div class="aa-stat-label">Outstanding Balance</div>
-          </div>
-          <div class="aa-stat-card">
-            <div class="aa-stat-icon bg-warning"><i class="fa fa-receipt"></i></div>
-            <div class="aa-stat-value" id="${prefix}-fin-expense">...0.00</div>
-            <div class="aa-stat-label">Total Expenses</div>
-          </div>
-        </div>
-        <div class="aa-card mb-4">
-          <div class="aa-card-header">
-            <h3 class="aa-card-title">Top Debtors</h3>
-            <button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadDebtorsReport('${prefix}')"><i class="fa fa-download"></i> Export CSV</button>
-          </div>
-          <div class="aa-card-body" style="padding:0;">
-            <table class="aa-table" id="${prefix}-finDebtorsTable">
-              <thead><tr><th>Student Name</th><th>Class</th><th>Balance</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
     function downloadDebtorsReport(prefix) {
-      showToast('Generating debtors report...', 'info');
-      var section = prefix === 'primary' ? 'primary' : (prefix === 'high' ? 'high' : 'both');
-      callServer('adminGetDebtors', [AA.token, currentTerm, currentSession, section], function(debtorsData) {
-        if (!debtorsData || debtorsData.length === 0) {
-          showToast('No debtors found to export.', 'warning');
-          return;
-        }
-        var csvContent = "data:text/csv;charset=utf-8,Student Name,Class,Outstanding Balance\n";
-        debtorsData.forEach(function(r) {
-          var name = '"' + String(r.studentName).replace(/"/g, '""') + '"';
-          var cls = '"' + String(r.class).replace(/"/g, '""') + '"';
-          csvContent += name + "," + cls + "," + (r.amountOwed || 0) + "\n";
-        });
-        
-        var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Debtors_Report_" + section + "_" + currentTerm + "_" + currentSession + ".csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showToast('Download started.', 'success');
-      }, null, true);
-    }
+        showToast('Generating debtors report...', 'info');
+        var section = prefix === 'primary' ? 'primary' : (prefix === 'high' ? 'high' : 'both');
+        callServer('adminGetDebtors', [AA.token, currentTerm, currentSession, section], function(debtorsData) {
+          if (!debtorsData || debtorsData.length === 0) {
+            showToast('No debtors found to export.', 'warning');
+            return;
+          }
+          var csvContent = "data:text/csv;charset=utf-8,Student Name,Class,Outstanding Balance\n";
+          debtorsData.forEach(function(r) {
+            var name = '"' + String(r.studentName).replace(/"/g, '""') + '"';
+            var cls = '"' + String(r.class).replace(/"/g, '""') + '"';
+            csvContent += name + "," + cls + "," + (r.amountOwed || 0) + "\n";
+          });
+          
+          var encodedUri = encodeURI(csvContent);
+          var link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", "Debtors_Report_" + section + "_" + currentTerm + "_" + currentSession + ".csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          showToast('Download started.', 'success');
+        }, null, true);
+      }
+
     function filterFinanceTable() {
       var type = document.getElementById('financeReportType').value; // 'both', 'income', 'expenses'
       var rows = document.querySelectorAll('#finTxTable tbody tr');
@@ -1972,6 +2048,172 @@
       });
     }
 
+    function getFinanceHTML(prefix, title) {
+      var displayTitle = title ? '<h3 style="margin-bottom:1rem; border-bottom:2px solid var(--aa-primary); padding-bottom:5px; color:var(--aa-primary);">'+title+'</h3>' : '';
+      return `
+        ${displayTitle}
+        <div class="aa-grid-4 mb-4">
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-info"><i class="fa fa-file-invoice-dollar"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-billed">...0.00</div>
+            <div class="aa-stat-label">Total Expected (Billed)</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-danger" style="background:#f43f5e; color:#fff;"><i class="fa fa-history"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-arrears">...0.00</div>
+            <div class="aa-stat-label">Arrears Brought Forward</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-primary" style="background:#6366f1; color:#fff;"><i class="fa fa-sack-dollar"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-expected-income">...0.00</div>
+            <div class="aa-stat-label">Total Expected Income</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-success"><i class="fa fa-wallet"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-collected">...0.00</div>
+            <div class="aa-stat-label">Actual Revenue (Collected)</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-danger"><i class="fa fa-hand-holding-usd"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-outstanding">...0.00</div>
+            <div class="aa-stat-label">Outstanding Debt</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-warning"><i class="fa fa-receipt"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-expense">...0.00</div>
+            <div class="aa-stat-label">Total Expenses</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-navy"><i class="fa fa-balance-scale"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-net">...0.00</div>
+            <div class="aa-stat-label">Net Cash Flow</div>
+          </div>
+          <div class="aa-stat-card">
+            <div class="aa-stat-icon bg-primary"><i class="fa fa-chart-pie"></i></div>
+            <div class="aa-stat-value" id="${prefix}-fin-rate">0%</div>
+            <div class="aa-stat-label">Collection Rate</div>
+          </div>
+        </div>
+
+        <div class="aa-grid-2 mb-4">
+          <div class="aa-card">
+            <div class="aa-card-header"><h3 class="aa-card-title"><i class="fa fa-chart-pie"></i> Revenue Breakdown</h3></div>
+            <div class="aa-card-body">
+              <canvas id="${prefix}-chartRevenue" style="max-height: 250px; width:100%;"></canvas>
+            </div>
+          </div>
+          <div class="aa-card">
+            <div class="aa-card-header"><h3 class="aa-card-title"><i class="fa fa-chart-bar"></i> Cash Flow Overview</h3></div>
+            <div class="aa-card-body">
+              <canvas id="${prefix}-chartCashFlow" style="max-height: 250px; width:100%;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="aa-card mb-4">
+          <div class="aa-card-header">
+            <h3 class="aa-card-title">Top Debtors</h3>
+            <button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadDebtorsReport('${prefix}')"><i class="fa fa-download"></i> Export CSV</button>
+          </div>
+          <div class="aa-card-body" style="padding:0;">
+            <table class="aa-table" id="${prefix}-finDebtorsTable">
+              <thead><tr><th>Student</th><th>Class</th><th>Amount Owed</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function fetchAndRenderFinance(prefix) {
+      var section = prefix === 'primary' ? 'primary' : 'high';
+      // Fetch matched stats from backend for current term/session
+      callServer('adminGetFinancialStats', [AA.token, currentTerm, currentSession, section], function(statsRes) {
+        if(document.getElementById(prefix + '-fin-billed')) {
+          var billed = statsRes.totalBilled || 0;
+          var arrears = statsRes.totalArrears || 0;
+          var expectedIncome = statsRes.totalExpectedIncome || (billed + arrears);
+          var collected = statsRes.totalCollected || 0;
+          var outstanding = statsRes.totalOutstanding || 0;
+          var expense = statsRes.totalExpenses || 0;
+          var net = statsRes.netBalance || (collected - expense);
+          var rate = expectedIncome > 0 ? ((collected / expectedIncome) * 100).toFixed(1) : 0;
+
+          document.getElementById(prefix + '-fin-billed').textContent = formatNaira(billed);
+          if (document.getElementById(prefix + '-fin-arrears')) document.getElementById(prefix + '-fin-arrears').textContent = formatNaira(arrears);
+          if (document.getElementById(prefix + '-fin-expected-income')) document.getElementById(prefix + '-fin-expected-income').textContent = formatNaira(expectedIncome);
+          document.getElementById(prefix + '-fin-collected').textContent = formatNaira(collected);
+          document.getElementById(prefix + '-fin-outstanding').textContent = formatNaira(outstanding);
+          document.getElementById(prefix + '-fin-expense').textContent = formatNaira(expense);
+          
+          var netEl = document.getElementById(prefix + '-fin-net');
+          netEl.textContent = formatNaira(net);
+          netEl.style.color = net >= 0 ? 'var(--aa-success)' : 'var(--aa-danger)';
+          
+          var rateEl = document.getElementById(prefix + '-fin-rate');
+          rateEl.textContent = rate + '%';
+          rateEl.style.color = rate >= 80 ? 'var(--aa-success)' : (rate >= 50 ? 'var(--aa-warning)' : 'var(--aa-danger)');
+
+          // Render Charts
+          if (typeof Chart !== 'undefined' && typeof chartInstances !== 'undefined') {
+            // Revenue Doughnut
+            if (chartInstances[prefix + '-revDoughnut']) chartInstances[prefix + '-revDoughnut'].destroy();
+            var revCtx = document.getElementById(prefix + '-chartRevenue');
+            if (revCtx) {
+              chartInstances[prefix + '-revDoughnut'] = new Chart(revCtx, {
+                type: 'doughnut',
+                data: {
+                  labels: ['Collected Revenue', 'Outstanding Debt'],
+                  datasets: [{
+                    data: [collected, outstanding],
+                    backgroundColor: ['#4ade80', '#ef4444'],
+                    borderWidth: 0
+                  }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            }
+
+            // Cash Flow Bar
+            if (chartInstances[prefix + '-cashFlowBar']) chartInstances[prefix + '-cashFlowBar'].destroy();
+            var cashCtx = document.getElementById(prefix + '-chartCashFlow');
+            if (cashCtx) {
+              chartInstances[prefix + '-cashFlowBar'] = new Chart(cashCtx, {
+                type: 'bar',
+                data: {
+                  labels: ['Income', 'Collected', 'Expenses', 'Net Flow'],
+                  datasets: [{
+                    label: 'Amount (?)',
+                    data: [expectedIncome, collected, expense, net],
+                    backgroundColor: ['#6366f1', '#4ade80', '#f59e0b', net >= 0 ? '#10b981' : '#ef4444'],
+                    borderRadius: 4
+                  }]
+                },
+                options: { 
+                  responsive: true, 
+                  maintainAspectRatio: false,
+                  scales: { y: { beginAtZero: true } },
+                  plugins: { legend: { display: false } }
+                }
+              });
+            }
+          }
+        }
+      });
+
+      // Fetch top debtors
+      callServer('adminGetDebtors', [AA.token, currentTerm, currentSession, section], function(debtorsData) {
+        if(document.getElementById(prefix + '-finDebtorsTable')) {
+          var top = debtorsData.slice(0, 10);
+          buildTable(prefix + '-finDebtorsTable', [
+            {key:'studentName'},
+            {key:'class'},
+            {key:'amountOwed', render:function(r){ return '<span class="text-danger">'+formatNaira(r.amountOwed)+'</span>'; }}
+          ], top);
+        }
+      });
+    }
+
     function loadFinance() {
       if (!currentTerm || !currentSession) {
         return setTimeout(loadFinance, 200);
@@ -1981,6 +2223,20 @@
         callServer('adminGetExpenses', [AA.token], function(expenses) {
           var pending = payments.filter(function(p){ return String(p.status||'').toLowerCase() === 'pending'; });
           var approved = payments.filter(function(p){ return String(p.status||'').toLowerCase() === 'approved'; });
+
+          // Render stats block
+          var container = document.getElementById('finance-stats-container');
+          var schoolType = (AA.settings && AA.settings.institution_type) ? String(AA.settings.institution_type).toLowerCase() : 'both';
+          
+          if(schoolType.indexOf('both') !== -1 || schoolType.indexOf('primary &') !== -1) {
+            container.innerHTML = getFinanceHTML('primary', 'Primary School Finance');
+            fetchAndRenderFinance('primary');
+          } else {
+            // Determine default prefix based on school type
+            var prefix = schoolType.indexOf('primary') !== -1 ? 'primary' : 'high';
+            container.innerHTML = getFinanceHTML(prefix, '');
+            fetchAndRenderFinance(prefix);
+          }
 
           // Show pending payments card
           if(pending.length > 0) {
@@ -2041,20 +2297,12 @@
             return new Date(b.date) - new Date(a.date);
           });
 
-          var container = document.getElementById('finance-dynamic-container');
-          
-          if (institutionType === 'both') {
-            container.innerHTML = getFinanceHTML('primary', 'Primary School Finance') + getFinanceHTML('high', 'High School Finance');
-            fetchAndRenderFinance('primary');
-            fetchAndRenderFinance('high');
-          } else {
-            var section = (institutionType === 'secondary') ? 'high' : 'primary';
-            container.innerHTML = getFinanceHTML(section, '');
-            fetchAndRenderFinance(section);
-          }
+          // (Stats are now fetched dynamically via fetchAndRenderFinance)
 
           // Show pending approval count separately
           document.getElementById('fin-pending-approvals').textContent = pending.length > 0 ? pending.length : 0;
+
+          
 
           if(document.getElementById('finTxTable')) {
             buildTable('finTxTable', [
@@ -2077,31 +2325,6 @@
           }
         }, null, true);
       }, null, true);
-    }
-
-    function fetchAndRenderFinance(prefix) {
-      var section = prefix === 'primary' ? 'primary' : 'high';
-      // Fetch matched stats from backend for current term/session
-      callServer('adminGetFinancialStats', [AA.token, currentTerm, currentSession, section], function(statsRes) {
-        if(document.getElementById(prefix + '-fin-billed')) {
-          document.getElementById(prefix + '-fin-billed').textContent = formatNaira(statsRes.totalBilled);
-          document.getElementById(prefix + '-fin-collected').textContent = formatNaira(statsRes.totalCollected);
-          document.getElementById(prefix + '-fin-outstanding').textContent = formatNaira(statsRes.totalOutstanding);
-          document.getElementById(prefix + '-fin-expense').textContent = formatNaira(statsRes.totalExpenses);
-        }
-      });
-
-      // Fetch top debtors
-      callServer('adminGetDebtors', [AA.token, currentTerm, currentSession, section], function(debtorsData) {
-        if(document.getElementById(prefix + '-finDebtorsTable')) {
-          var top = debtorsData.slice(0, 10);
-          buildTable(prefix + '-finDebtorsTable', [
-            {key:'studentName'},
-            {key:'class'},
-            {key:'amountOwed', render:function(r){ return '<span class="text-danger">'+formatNaira(r.amountOwed)+'</span>'; }}
-          ], top);
-        }
-      });
     }
 
     function loadReports() {
@@ -2145,23 +2368,20 @@
         document.getElementById('compliance-summary').innerHTML = html;
       }, null, true);
       
-      if (institutionType === 'both') {
+      if (false) {
         document.getElementById('performance-summary').innerHTML = '<p class="text-muted">Loading...</p>';
         callServer('adminGetSchoolPerformanceAnalytics', [AA.token, AA.settings.current_term, AA.settings.current_session, 'primary'], function(resP) {
-          callServer('adminGetSchoolPerformanceAnalytics', [AA.token, AA.settings.current_term, AA.settings.current_session, 'high'], function(resH) {
             var html = '<div class="d-flex gap-3 flex-wrap">';
             html += '<div class="aa-stat-card flex-1"><h6>Primary School</h6><div class="mt-2">';
             html += '<p class="fs-12">Average Score: <b>'+(resP.overallAverage||0)+'%</b></p>';
             html += '<p class="fs-12">Best Class: <b>'+(resP.bestClass||'N/A')+'</b></p>';
             html += '<p class="fs-12">Top Subject: <b>'+(resP.bestSubject||'N/A')+'</b></p></div></div>';
-            html += '<div class="aa-stat-card flex-1"><h6>High School</h6><div class="mt-2">';
             html += '<p class="fs-12">Average Score: <b>'+(resH.overallAverage||0)+'%</b></p>';
             html += '<p class="fs-12">Best Class: <b>'+(resH.bestClass||'N/A')+'</b></p>';
             html += '<p class="fs-12">Top Subject: <b>'+(resH.bestSubject||'N/A')+'</b></p></div></div>';
             html += '</div>';
             document.getElementById('performance-summary').innerHTML = html;
           }, null, true);
-        }, null, true);
       } else {
         var section = (institutionType === 'secondary') ? 'high' : 'primary';
         callServer('adminGetSchoolPerformanceAnalytics', [AA.token, AA.settings.current_term, AA.settings.current_session, section], function(res) {
@@ -2263,15 +2483,11 @@
     }
 
     function loadAnalytics() {
-      if (!currentTerm || !currentSession) {
-        return setTimeout(loadAnalytics, 200);
-      }
       var container = document.getElementById('analytics-dynamic-container');
       
-      if (institutionType === 'both') {
-        container.innerHTML = getAnalyticsHTML('primary', 'Primary School Analytics') + getAnalyticsHTML('high', 'High School Analytics');
+      if (false) {
+        container.innerHTML = getAnalyticsHTML('primary', 'Primary School Analytics');
         fetchAndRenderAnalytics('primary');
-        fetchAndRenderAnalytics('high');
       } else {
         var section = (institutionType === 'secondary') ? 'high' : 'primary';
         container.innerHTML = getAnalyticsHTML(section, '');
@@ -2653,11 +2869,13 @@
       setTimeout(function() { newWin.print(); newWin.close(); }, 500);
     }
 
-        // --- SETTINGS ---
+    
+    // --- SETTINGS ---
       var currentGradebookFormat = [];
       
       function renderGradebookBuilder() {
         var container = document.getElementById('gradebook-builder-container');
+        if (!container) return;
         container.innerHTML = '';
         var total = 0;
         currentGradebookFormat.forEach(function(col, index) {
@@ -2691,7 +2909,7 @@
         renderGradebookBuilder();
       };
 
-    function loadSettings() {
+      function loadSettings() {
       callServer('adminGetSettings', [AA.token], function(res) {
         var s = (res && res.data !== undefined) ? res.data : (res || {});
         window.globalSettingsData = s;
@@ -2710,6 +2928,12 @@
 
         if (s.school_logo_url) document.getElementById('settingsLogoPreview').innerHTML = '<img src="'+s.school_logo_url+'" style="width:100%;height:100%;object-fit:contain;">';
         
+        if (s.theme_primary && s.theme_secondary) {
+          if (typeof AA !== 'undefined' && typeof AA.applyThemeToDocument === 'function') {
+            AA.applyThemeToDocument('custom', s.theme_primary, s.theme_secondary);
+          }
+        }
+        
         currentGradebookFormat = s.gradebook_format || [
           { id: 'ca1', title: 'CA1', max: 10 },
           { id: 'ca2', title: 'CA2', max: 10 },
@@ -2717,33 +2941,95 @@
           { id: 'exam', title: 'Exam', max: 70 }
         ];
         renderGradebookBuilder();
-        // --- Campus: sync global state ---
+        // --- Campus: load campus list into campus management UI ---
+        currentCampusList = (s.campuses || []).map(function(c) { return Object.assign({}, c); });
         AA.campuses = s.campuses || [];
+        renderCampusList();
         populateCampusDropdowns();
         renderCampusSelectorBar();
       }, null, true);
     }
+    function saveSettings() {
+      var data = getFormData('settingsForm');
+      
+      try {
+        var format = JSON.parse(data.gradebook_format);
+        var total = format.reduce(function(sum, col) { return sum + (parseInt(col.max)||0); }, 0);
+        if (total !== 100) return showToast('Gradebook format total must be exactly 100 marks.', 'error');
+        data.gradebook_format = format;
+      } catch(e) {}
+      
+      if (window.globalSettingsData && window.globalSettingsData.results_published !== undefined) {
+        data.results_published = window.globalSettingsData.results_published;
+      }
+      
+      callServer('adminUpdateSettings', [AA.token, data], function(res) {
+        showToast(res.message, res.success ? 'success' : 'error');
+        if(res.success) { loadSettings(); AA.loadSettings(); loadDashboard(); }
+      }, null, true);
+    }
 
-    // Populate all campus <select> elements in forms
+    // ==================== CAMPUS MANAGEMENT ====================
+    var currentCampusList = [];
+
+    function renderCampusList() {
+      var container = document.getElementById('campus-list-container');
+      if (!container) return;
+      if (!currentCampusList.length) {
+        container.innerHTML = '<p style="color:#94a3b8;font-size:12px;font-style:italic;">No campuses configured. Add one below to get started.</p>';
+        return;
+      }
+      var sectionLabel = { primary: 'Primary' };
+      var html = currentCampusList.map(function(c, i) {
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:8px;">' +
+          '<i class="fa fa-building" style="color:var(--primary,#0d1b2a);"></i>' +
+          '<span style="flex:1;font-weight:600;font-size:13px;">' + AA.escapeHTML(c.name) + '</span>' +
+          '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(15,23,42,0.08);color:#475569;">' + (sectionLabel[c.section] || c.section) + '</span>' +
+          '<span style="font-size:10px;color:#94a3b8;font-family:monospace;">' + AA.escapeHTML(c.id) + '</span>' +
+          '<button type="button" class="aa-btn aa-btn-sm aa-btn-danger" onclick="deleteCampus(' + i + ')" title="Remove campus"><i class="fa fa-trash"></i></button>' +
+          '</div>';
+      }).join('');
+      container.innerHTML = html;
+    }
+    function addNewCampus() {
+      var name = (document.getElementById('newCampusName').value || '').trim();
+      var section = document.getElementById('newCampusSection').value || 'both';
+      if (!name) { showToast('Please enter a campus name.', 'error'); return; }
+      var id = 'campus_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+      currentCampusList.push({ id: id, name: name, section: section });
+      document.getElementById('newCampusName').value = '';
+      renderCampusList();
+    }
+    function deleteCampus(index) {
+      currentCampusList.splice(index, 1);
+      renderCampusList();
+    }
+    function saveCampuses() {
+      callServer('adminManageCampuses', [AA.token, currentCampusList], function(res) {
+        showToast(res.message, res.success ? 'success' : 'error');
+        if (res.success) {
+          AA.campuses = res.campuses || currentCampusList;
+          populateCampusDropdowns();
+          renderCampusSelectorBar();
+        }
+      }, null, true);
+    }
     function populateCampusDropdowns() {
       var campuses = AA.campuses || [];
       var baseOption = '<option value="">No Campus (School-wide)</option>';
       var opts = baseOption + campuses.map(function(c) {
-        return '<option value="' + AA.escapeHTML(c.id) + '">' + AA.escapeHTML(c.name) + ' (' + (c.section === 'both' ? 'Both' : c.section === 'primary' ? 'Primary' : 'High School') + ')</option>';
+        return '<option value="' + AA.escapeHTML(c.id) + '">' + AA.escapeHTML(c.name) + ' (' + 'Primary' + ')</option>';
       }).join('');
       ['userCampusSelect','studentCampusSelect','classCampusSelect','subjectCampusSelect'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = opts;
       });
-      // Show/hide campus groups based on whether campuses are configured
       var hasCampuses = campuses.length > 0;
       ['userCampusGroup','studentCampusGroup','classCampusGroup','subjectCampusGroup'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = hasCampuses ? '' : 'none';
       });
     }
-
-    // Render a campus filter selector bar above the content area (for admins with multiple campuses)
     function renderCampusSelectorBar() {
       var campuses = AA.campuses || [];
       var bar = document.getElementById('campus-selector-bar');
@@ -2757,7 +3043,6 @@
       });
       bar.innerHTML = html;
     }
-
     function setCampusFilter(campusId) {
       AA.activeCampusId = campusId || null;
       renderCampusSelectorBar();
@@ -2765,25 +3050,6 @@
       loadDashboard();
     }
     // ===========================================================
-
-    function saveSettings() {
-      var data = getFormData('settingsForm');
-      
-      try {
-        var format = JSON.parse(data.gradebook_format);
-        var total = format.reduce(function(sum, col) { return sum + (parseInt(col.max)||0); }, 0);
-        if (total !== 100) return showToast('Gradebook format total must be exactly 100 marks.', 'error');
-        data.gradebook_format = format;
-      } catch(e) {}
-
-      if (window.globalSettingsData && window.globalSettingsData.results_published !== undefined) {
-        data.results_published = window.globalSettingsData.results_published;
-      }
-      callServer('adminUpdateSettings', [AA.token, data], function(res) {
-        showToast(res.message, res.success ? 'success' : 'error');
-        if(res.success) { loadSettings(); AA.loadSettings(); loadDashboard(); }
-      }, null, true);
-    }
 
     function togglePublishResults() {
       var s = window.globalSettingsData || {};
@@ -2974,7 +3240,7 @@
         globalStudents.forEach(function(s) {
           var opt = document.createElement('option');
           opt.value = s.id || s.iD;
-          opt.textContent = (s.fullName || 'Student') + (s.className ? ' ΓÇö ' + s.className : '');
+          opt.textContent = (s.fullName || 'Student') + (s.className ? ' � ' + s.className : '');
           sel.appendChild(opt);
         });
       }
@@ -3028,16 +3294,16 @@
 
     function shareViaEmail() {
       if (!currentInviteLink) return;
-      var subject = encodeURIComponent('Your Parent Portal Registration Invite ΓÇö ' + currentInviteSchoolName);
+      var subject = encodeURIComponent('Your Parent Portal Registration Invite � ' + currentInviteSchoolName);
       var body = encodeURIComponent(
         'Dear Parent,\n\nYou have been invited to create your parent account on ' + currentInviteSchoolName + '\'s school portal.\n\n' +
         'Please click the link below to complete your registration (this link is valid for 48 hours):\n\n' +
         currentInviteLink + '\n\n' +
         'Once registered, you will be able to:\n' +
-        '  ΓÇó View your child\'s academic results\n' +
-        '  ΓÇó Track attendance records\n' +
-        '  ΓÇó Pay school fees online\n' +
-        '  ΓÇó Receive school announcements\n\n' +
+        '  � View your child\'s academic results\n' +
+        '  � Track attendance records\n' +
+        '  � Pay school fees online\n' +
+        '  � Receive school announcements\n\n' +
         'If you have any questions, please contact the school office.\n\nRegards,\n' + currentInviteSchoolName
       );
       window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
@@ -3061,15 +3327,15 @@
           }[inv.effectiveStatus || inv.status] || '<span class="aa-badge">Unknown</span>';
 
           var linkedName = inv.linkedStudentId ? (globalStudents || []).reduce(function(found, s) {
-            return (s.id === inv.linkedStudentId || s.iD === inv.linkedStudentId) ? (s.fullName || 'ΓÇö') : found;
-          }, 'ΓÇö') : 'ΓÇö';
+            return (s.id === inv.linkedStudentId || s.iD === inv.linkedStudentId) ? (s.fullName || '�') : found;
+          }, '�') : '�';
 
           var created = new Date(inv.createdAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
           var expires = new Date(inv.expiresAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
           
           var revokeBtn = (inv.status === 'pending') 
             ? '<button class="aa-btn aa-btn-danger aa-btn-xs" onclick="revokeInvite(\'' + inv.id + '\')"><i class="fa fa-ban"></i></button>'
-            : 'ΓÇö';
+            : '�';
 
           rows += '<tr><td>' + created + '</td><td>' + AA.escapeHTML(linkedName) + '</td><td>' + statusBadge + '</td><td>' + expires + '</td><td>' + revokeBtn + '</td></tr>';
         });
@@ -3229,8 +3495,25 @@
     }
 
   </script>
+
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

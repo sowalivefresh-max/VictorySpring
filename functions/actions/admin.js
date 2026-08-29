@@ -2754,14 +2754,14 @@ module.exports = function(db, notificationsActions) {
         // Read section + campus from the logged-in officer's session
         const sessionCampusId = req.session.campusId || null;
         let sessionSection = (req.session.section || "both").toLowerCase();
-        if (sessionSection === "secondary") sessionSection = "high_school";
+        
 
         // Unified match filter — mirrors the pattern used throughout admin.js
         const matchFilter = (p) => {
           // Section isolation (primary vs high_school)
           if (sessionSection && sessionSection !== "both") {
             let planSec = (p.section || "both").toLowerCase();
-            if (planSec === "secondary") planSec = "high_school";
+            
             if (planSec !== sessionSection && planSec !== "both") return false;
           }
           // Campus isolation
@@ -2950,7 +2950,7 @@ module.exports = function(db, notificationsActions) {
                const uniqueSubjectIds = [...new Set(enrollments)];
                classSubjects = allSubjects.filter(s => uniqueSubjectIds.includes(s.id));
              } else {
-               classSubjects = allSubjects.filter(s => String(s.section).toLowerCase() === 'high' || String(s.section).toLowerCase() === 'secondary');
+               classSubjects = [];
              }
           }
           

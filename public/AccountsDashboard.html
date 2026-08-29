@@ -222,7 +222,7 @@
                     <input type="number" id="spQuantity" class="aa-input" min="1" value="1" required oninput="updateStorePaymentAmount()">
                   </div>
                   <div class="aa-form-group">
-                    <label class="aa-label">Amount Paid (₦)</label>
+                    <label class="aa-label">Amount Paid (&#8358;)</label>
                     <input type="number" id="spAmount" class="aa-input" min="0" required>
                   </div>
                   <div class="aa-form-group">
@@ -282,8 +282,8 @@
                   <h4 style="color:var(--aa-primary);margin-bottom:16px;"><i class="fa fa-file-alt"></i> Report Card Lock</h4>
                   <div class="aa-form-group"><label class="aa-label">Enable Report Card Lock</label>
                     <select id="report_lock_enabled" class="aa-select"><option value="false">OFF (Disabled)</option><option value="true">ON (Enabled)</option></select></div>
-                  <div class="aa-form-group"><label class="aa-label">Minimum Outstanding Balance to Lock (₦)</label>
-                    <input type="number" id="report_lock_min_balance" class="aa-input" min="0" placeholder="e.g. 0 = lock on any balance, 5000 = only if owed > ₦5000"></div>
+                  <div class="aa-form-group"><label class="aa-label">Minimum Outstanding Balance to Lock (&#8358;)</label>
+                    <input type="number" id="report_lock_min_balance" class="aa-input" min="0" placeholder="e.g. 0 = lock on any balance, 5000 = only if owed > &#8358;5000"></div>
                 </div>
               </div>
               <hr style="margin:20px 0;">
@@ -362,7 +362,6 @@
           <div class="aa-form-group">
             <label class="aa-label">Section</label>
             <select id="feeSectionSelect" class="aa-select">
-              <option value="high">High School</option>
               <option value="primary">Primary School</option>
             </select>
           </div>
@@ -375,7 +374,7 @@
           <!-- fee items injected here -->
         </div>
         <div class="d-flex justify-content-end mt-3" style="border-top:1px solid #eee;padding-top:12px;">
-          <span style="font-size:14px;color:#666;">Total: <strong id="feeTotalDisplay">₦0.00</strong></span>
+          <span style="font-size:14px;color:#666;">Total: <strong id="feeTotalDisplay">&#8358;0.00</strong></span>
         </div>
       </div>
       <div class="aa-modal-footer">
@@ -424,7 +423,7 @@
           <label class="aa-label">Discount Type</label>
           <select id="discountType" class="aa-select" onchange="toggleDiscountValueField()">
             <option value="none">None (No Discount)</option>
-            <option value="fixed">Fixed Amount (₦)</option>
+            <option value="fixed">Fixed Amount (&#8358;)</option>
             <option value="percentage">Percentage (of Tuition)</option>
           </select>
         </div>
@@ -523,7 +522,7 @@
   </div>
 
   <script src="api.js?v=3"></script>
-  <script src="scripts.js?v=6"></script>
+  <script src="scripts.js?v=1788044467"></script>
   <script>
     var currentTerm = ''; var currentSession = '';
     var globalStudents = [];
@@ -594,7 +593,7 @@
         wrap.style.display = 'none';
       } else {
         wrap.style.display = 'block';
-        label.textContent = type === 'percentage' ? 'Percentage (%)' : 'Amount (₦)';
+        label.textContent = type === 'percentage' ? 'Percentage (%)' : 'Amount (&#8358;)';
       }
     }
 

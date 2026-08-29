@@ -14,8 +14,8 @@ const db = getFirestore();
 const app = express();
 
 const allowedOrigins = [
-  "https://cloudschool-3c1d4.web.app",
-  "https://cloudschool-3c1d4.firebaseapp.com",
+  "https://victoryspring-681e5.web.app",
+  "https://victoryspring-681e5.firebaseapp.com",
   "https://sample.myschoolportal.wuaze.com", 
   "http://localhost:5000",
   "http://127.0.0.1:5000"

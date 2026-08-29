@@ -504,7 +504,7 @@ module.exports = function(db) {
         const className = studentData.className || bill.className || null;
         // Normalize section value
         let section = (studentData.section || bill.section || "both").toLowerCase();
-        if (section === "secondary") section = "high_school";
+        
         const planRef = db.collection("installment_plans").doc();
         await planRef.set({
           id: planRef.id, studentId, studentName, billId, parentId,

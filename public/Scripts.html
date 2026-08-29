@@ -230,7 +230,7 @@ function showToast(message, type, duration) {
 
   var toast = document.createElement('div');
   toast.className = 'aa-toast ' + t;
-  toast.innerHTML = '<span class="aa-toast-icon">' + (icons[t] || ''') + '</span>' +
+  toast.innerHTML = '<span class="aa-toast-icon">' + (icons[t] || '') + '</span>' +
     '<span class="aa-toast-msg">' + message + '</span>' +
     '<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;color:#888;font-size:16px;">Ã-</button>';
   container.appendChild(toast);

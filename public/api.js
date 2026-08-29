@@ -6,11 +6,12 @@
 // --- DEPLOYMENT CONFIGURATION ------------------------------------------------
 // Dynamically select the backend URL based on the environment
 // -----------------------------------------------------------------------------
-const PROJECT_ID = "cloudschool-3c1d4";
+const PROJECT_ID = "victoryspring-681e5";
 const REGION = "us-central1";
 
 // The live Firebase Cloud Run URL (as returned by the deployment)
-let SCRIPT_URL = "https://api-2jtv46nvba-uc.a.run.app/api";
+// Using relative path to utilize Firebase Hosting Rewrites (fixes CORS and firewall issues)
+let SCRIPT_URL = "/api";
 
 // If running locally, use the Firebase Emulator
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {

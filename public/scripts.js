@@ -488,7 +488,7 @@ function safeFloat(val, def) {
 
 function formatNaira(amount) {
   var n = parseFloat(amount) || 0;
-  return 'Γéª' + n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '\u20A6' + n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatDate(dateStr) {
