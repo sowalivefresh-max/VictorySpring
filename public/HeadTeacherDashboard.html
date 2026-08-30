@@ -397,7 +397,7 @@
         sel.innerHTML = '<option value="">-- Select Class --</option>';
         data.forEach(function(c) { 
           // HT typically only manages primary section, though we show all if permissions allow
-          if(c.section === 'primary') sel.innerHTML += '<option value="'+c.className+'">'+c.className+' ('+c.section+')</option>'; 
+          if(c.section === 'primary') sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>'; 
         });
       }, null, true);
     }

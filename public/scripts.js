@@ -956,7 +956,7 @@ function openBroadsheetModal() {
       // Most places use data.forEach where callback argument is `data`.
       var list = Array.isArray(res) ? res : (res.data || []);
       list.forEach(function(c) {
-        sel.innerHTML += '<option value="'+c.className+'">'+c.className+' ('+(c.section || 'N/A')+')</option>';
+        sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>';
       });
     }
   }, null, true);
