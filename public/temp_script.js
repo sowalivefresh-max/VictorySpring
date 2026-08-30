@@ -256,7 +256,8 @@
             principal: 'PrincipalDashboard.html', vp: 'VPDashboard.html',
             headteacher: 'HeadTeacherDashboard.html', teacher: 'TeacherDashboard.html',
             primary_teacher: 'PrimaryTeacherDashboard.html', accounts: 'AccountsDashboard.html',
-            parent: 'ParentDashboard.html', student: 'StudentDashboard.html'
+            parent: 'ParentDashboard.html', student: 'StudentDashboard.html', storekeeper: 'StorekeeperDashboard.html',
+            nurse: 'NurseDashboard.html'
           };
           var dashboard = dashboardMap[res.role] || 'Login.html';
           var redirectUrl = dashboard + '?token=' + encodeURIComponent(res.token);
