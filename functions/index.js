@@ -55,6 +55,7 @@ const teacherActions = require("./actions/teacher")(db, notificationsActions);
 const parentActions = require("./actions/parent")(db);
 const studentActions = require("./actions/student")(db);
 const storeActions = require("./actions/store")(db);
+const sickbayActions = require("./actions/sickbay")(db, notificationsActions);
 
 async function requireRole(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -82,6 +83,7 @@ async function requireRole(req, res, next) {
       const parentRoles = ["parent", "admin", "developer"];
       const studentRoles = ["student"];
       const storeRoles = ["storekeeper", "admin", "developer", "principal"];
+      const nurseRoles = ["nurse", "admin", "developer", "principal"];
 
       if (action.startsWith("admin")) {
         isAllowed = adminRoles.includes(role);
@@ -93,6 +95,8 @@ async function requireRole(req, res, next) {
         isAllowed = studentRoles.includes(role) || adminRoles.includes(role);
       } else if (action.startsWith("store")) {
         isAllowed = storeRoles.includes(role);
+      } else if (action.startsWith("sickbay")) {
+        isAllowed = nurseRoles.includes(role);
       } else {
         // Explicitly allow general authenticated actions
         const generalAuthActions = ["userUpdateProfile", "userChangePassword", "markNotificationRead", "getGradingSystems"];
@@ -320,6 +324,11 @@ app.post("/api", async (req, res) => {
         if (action === "storeGetRecords") { req.body.section = args[1] || null; }
         if (action === "storeGetStudents") { req.body.section = args[1] || null; }
         if (action === "storeGetPaidItems") { req.body.section = args[1] || null; }
+
+        // Sickbay Mappings
+        if (action === "sickbayGetRecords") { /* no args */ }
+        if (action === "sickbayAddRecord") { req.body.data = args[1]; }
+        if (action === "sickbayGetStudents") { req.body.section = args[1] || null; req.body.campusId = args[2] || null; }
       }
     }
   }
@@ -673,6 +682,14 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => storeActions.storeGetStudents(req, res));
       case "storeGetPaidItems":
         return requireRole(req, res, () => storeActions.storeGetPaidItems(req, res));
+
+      // --- SICKBAY ACTIONS ---
+      case "sickbayGetRecords":
+        return requireRole(req, res, () => sickbayActions.getRecords(req, res));
+      case "sickbayAddRecord":
+        return requireRole(req, res, () => sickbayActions.addRecord(req, res));
+      case "sickbayGetStudents":
+        return requireRole(req, res, () => adminActions.adminGetStudents(req, res));
 
       // Add more routes here as we build chunks...
 

@@ -220,7 +220,7 @@ var AA = {
   formatRole: function(role) {
     var map = { admin:'Administrator', admin_assistant:'Admin Assistant', developer:'Portal Developer', principal:'Principal', vp:'Vice Principal',
       headteacher:'Head Teacher', teacher:'Subject Teacher', primary_teacher:'Class Teacher (Primary)',
-      accounts:'Accounts Officer', parent:'Parent/Guardian' };
+      accounts:'Accounts Officer', parent:'Parent/Guardian', nurse:'School Nurse', storekeeper:'Store Keeper' };
     return map[role] || role;
   }
 };
