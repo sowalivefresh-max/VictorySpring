@@ -147,9 +147,9 @@
       var isSingleSection = isPrimaryOnly || isSecondaryOnly;
 
       // Roles available per section type
-      var primaryRoles   = ['primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'developer'];
-      var secondaryRoles = ['teacher', 'principal', 'vp', 'parent', 'admin', 'admin_assistant', 'accounts', 'developer'];
-      var bothRoles      = ['teacher', 'primary_teacher', 'principal', 'vp', 'headteacher', 'accounts', 'parent', 'admin', 'admin_assistant', 'external', 'developer'];
+      var primaryRoles   = ['primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'nurse', 'developer'];
+      var secondaryRoles = ['teacher', 'principal', 'vp', 'parent', 'admin', 'admin_assistant', 'accounts', 'nurse', 'developer'];
+      var bothRoles      = ['teacher', 'primary_teacher', 'principal', 'vp', 'headteacher', 'accounts', 'nurse', 'parent', 'admin', 'admin_assistant', 'external', 'developer'];
 
       var allowedRoles = isSingleSection ? (isPrimaryOnly ? primaryRoles : secondaryRoles) : bothRoles;
 
