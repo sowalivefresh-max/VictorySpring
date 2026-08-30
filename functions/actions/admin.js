@@ -53,10 +53,14 @@ const computeDynamicGrade = (score, className, section, gradingSystems) => {
 
 module.exports = function(db, notificationsActions) {
   const classOrderMap = {
-    "creche": 10, "playgroup": 20, "pre-nursery": 30, "nursery 1": 40, "nursery 2": 50, "nursery 3": 60,
+    "creche": 10, "playgroup": 20, "pre-nursery": 30, 
+    "nursery 1": 40, "nursery 2": 42, "nursery 3": 44,
+    "kg 1": 50, "kg 2": 52, "kg 3": 54, "kindergarten": 50,
+    "grade 1": 70, "grade 2": 80, "grade 3": 90, "grade 4": 100, "grade 5": 110, "grade 6": 120,
     "primary 1": 70, "primary 2": 80, "primary 3": 90, "primary 4": 100, "primary 5": 110, "primary 6": 120,
+    "year 1": 70, "year 2": 80, "year 3": 90, "year 4": 100, "year 5": 110, "year 6": 120,
     "jss 1": 130, "jss 2": 140, "jss 3": 150, "ss 1": 160, "ss 2": 170, "ss 3": 180,
-    "sss 1": 160, "sss 2": 170, "sss 3": 180, "year 1": 70, "year 2": 80, "year 3": 90, "year 4": 100, "year 5": 110, "year 6": 120
+    "sss 1": 160, "sss 2": 170, "sss 3": 180
   };
   function getClassSortWeight(className) {
     if (!className) return 999;
