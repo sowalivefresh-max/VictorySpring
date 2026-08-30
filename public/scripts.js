@@ -68,7 +68,9 @@ var AA = {
         if (s.school_logo_url && (s.school_logo_url.indexOf('data:image') === 0 || s.school_logo_url.indexOf('http') === 0)) {
           var brandIcon = document.querySelector('.aa-brand-icon');
           if (brandIcon) {
-            brandIcon.innerHTML = '<img src="' + s.school_logo_url + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;">';
+            brandIcon.style.background = '#fff';
+            brandIcon.style.borderRadius = '50%';
+            brandIcon.innerHTML = '<img src="' + s.school_logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
           }
         }
         
