@@ -1,157 +1,17 @@
-[debug] [2026-08-30T18:14:24.914Z] ----------------------------------------------------------------------
-[debug] [2026-08-30T18:14:24.917Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\OASISFAITH\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
-[debug] [2026-08-30T18:14:24.917Z] CLI Version:   15.24.0
-[debug] [2026-08-30T18:14:24.917Z] Platform:      win32
-[debug] [2026-08-30T18:14:24.918Z] Node Version:  v24.18.0
-[debug] [2026-08-30T18:14:24.918Z] Detected Agent: antigravity
-[debug] [2026-08-30T18:14:24.918Z] Time:          Sun Aug 30 2026 19:14:24 GMT+0100 (West Africa Time)
-[debug] [2026-08-30T18:14:24.918Z] ----------------------------------------------------------------------
+[debug] [2026-08-30T18:30:37.773Z] ----------------------------------------------------------------------
+[debug] [2026-08-30T18:30:37.776Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\OASISFAITH\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-08-30T18:30:37.777Z] CLI Version:   15.24.0
+[debug] [2026-08-30T18:30:37.777Z] Platform:      win32
+[debug] [2026-08-30T18:30:37.777Z] Node Version:  v24.18.0
+[debug] [2026-08-30T18:30:37.777Z] Detected Agent: antigravity
+[debug] [2026-08-30T18:30:37.777Z] Time:          Sun Aug 30 2026 19:30:37 GMT+0100 (West Africa Time)
+[debug] [2026-08-30T18:30:37.777Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2026-08-30T18:14:26.414Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-08-30T18:14:26.414Z] > authorizing via signed-in user (faith4grtns@gmail.com)
-[debug] [2026-08-30T18:14:26.414Z] [iam] checking project victoryspring-681e5 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
-[debug] [2026-08-30T18:14:26.428Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:26.428Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:26.429Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions [none]
-[debug] [2026-08-30T18:14:26.429Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions  x-goog-user-project=victoryspring-681e5
-[debug] [2026-08-30T18:14:26.429Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-08-30T18:14:27.922Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions 200
-[debug] [2026-08-30T18:14:27.922Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-08-30T18:14:27.923Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:27.923Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:27.924Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/victoryspring-681e5 [none]
-[debug] [2026-08-30T18:14:28.841Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/victoryspring-681e5 200
-[debug] [2026-08-30T18:14:28.841Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/victoryspring-681e5 {"projectId":"victoryspring-681e5","projectNumber":"248219645076","displayName":"VictorySpring","name":"projects/victoryspring-681e5","resources":{"hostingSite":"victoryspring-681e5"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_a4ed5db3-71c9-4233-b7b7-de0367589afc"}
-[info] 
-[info] === Deploying to 'victoryspring-681e5'...
-[info] 
-[info] i  deploying hosting 
-[debug] [2026-08-30T18:14:28.845Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:28.845Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:28.845Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/victoryspring-681e5/sites/victoryspring-681e5 [none]
-[debug] [2026-08-30T18:14:38.396Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/victoryspring-681e5/sites/victoryspring-681e5 200
-[debug] [2026-08-30T18:14:38.396Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/victoryspring-681e5/sites/victoryspring-681e5 {"name":"projects/victoryspring-681e5/sites/victoryspring-681e5","defaultUrl":"https://victoryspring-681e5.web.app","type":"DEFAULT_SITE"}
-[debug] [2026-08-30T18:14:38.409Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:38.409Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:38.414Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions [none]
-[debug] [2026-08-30T18:14:38.415Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
-[debug] [2026-08-30T18:14:40.513Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions 200
-[debug] [2026-08-30T18:14:40.513Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions {"name":"projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
-[info] i  hosting[victoryspring-681e5]: beginning deploy... 
-[info] i  hosting[victoryspring-681e5]: found 23 files in public 
-[debug] [2026-08-30T18:14:40.547Z] [hosting] uploading with 200 concurrency
-[debug] [2026-08-30T18:14:40.569Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:40.569Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:40.570Z] [hosting] hash cache [cHVibGlj] stored for 23 files
-[debug] [2026-08-30T18:14:40.570Z] [hosting][hash queue][FINAL] {"max":15,"min":0,"avg":2.6956521739130435,"active":0,"complete":23,"success":23,"errored":0,"retried":0,"total":23,"elapsed":21}
-[debug] [2026-08-30T18:14:40.570Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302:populateFiles [none]
-[debug] [2026-08-30T18:14:40.570Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302:populateFiles {"files":{"/TeacherDashboard.html":"57d07f959f83fd96d53b70c2a4430912194924f2b6311a79d0709fbb251102f5","/Subscription_Pricing_Proposal.html":"8b2e03e604c531a6362b754da87b95d4990474f406c906c863f86ab1bc9b30cc","/Styles.html":"39d89ba40e547464af2645b18c9e8868c30242d01e64be53ddd08cc15d837960","/styles.css":"930df29d3680876066ed519bc41e14b4386b41d437406f4676dc0bef5ae511b5","/StudentDashboard.html":"a4ee7f150cef20aef8a05f272adb5b2af1b308aff519ae1dafcfa9c5a4d46cdf","/StorekeeperDashboard.html":"d1853b234a7fba64d53701f5f1ac9a88b8613685265326ef575cede41466eec7","/scripts.js":"387c536c6c22599b1d03183cc2bb8e39ad7da6bae717231d05074e0b78d55f22","/Scripts.html":"67113c351314d3677155981d6e2c49b7528fb4093b10c14ef441b3d5bc5ae8f7","/PrimaryTeacherDashboard.html":"de9381fc000d86c8fb0ea197a44b7a36734d21a7372da75d6690e52b431695cd","/ParentRegister.html":"80fc37690b2224e18eb529c63c55cbaad649c0cd134dbf913b7a9fcda3c6d394","/ParentDashboard.html":"e2164ce8e9d85d1bd3cfbd1c0ae28f64fd4bf9408e767e8f6f5ed4e03836a1b0","/NurseDashboard.html":"23a1dfc9d62d9b95abc93384981d2daf6bbd99ddc86b59a8837376687e2b9cc2","/Login.html":"a0c99500e3156fa8205cf60cfae333b4c7463be48a686a26b763dd46d35f912d","/index.html":"0766a9dabd9305be76f83103a7f24c8c0d93a968d4b32eb516a93cebdc8ec52b","/HeadTeacherDashboard.html":"51bd715c198c4372469680411580ecc167ea4229537c4ded066662c0e0091f58","/Cloud_Deployment_Guide.html":"9c07d6c55c31ad05525564955677a222150ffd4454a431b53c5391f321afe7c1","/api.js":"54534a6e73c805d60dd45b8fbe87955f4e80b08f2b4e5c1f50973f8fcf46f53a","/AccountsDashboard.html":"b9c98101fa21d1c807bb3a698916f5a55e74102aea912db30077470597f7eea4","/temp_script.js":"f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478","/AdminAssistantDashboard.html":"271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512","/old_admin.html":"17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad","/DeveloperDashboard.html":"746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13","/AdminDashboard.html":"dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e"}}
-[debug] [2026-08-30T18:14:42.214Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302:populateFiles 200
-[debug] [2026-08-30T18:14:42.214Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302:populateFiles {"uploadRequiredHashes":["271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512","dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e","746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13","17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad","f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files"}
-[debug] [2026-08-30T18:14:42.215Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.216Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.216Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.216Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.217Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.217Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.217Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.217Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.218Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.218Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:42.218Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512 [none]
-[debug] [2026-08-30T18:14:42.219Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512 [stream]
-[debug] [2026-08-30T18:14:42.221Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e [none]
-[debug] [2026-08-30T18:14:42.221Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e [stream]
-[debug] [2026-08-30T18:14:42.223Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13 [none]
-[debug] [2026-08-30T18:14:42.223Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13 [stream]
-[debug] [2026-08-30T18:14:42.224Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad [none]
-[debug] [2026-08-30T18:14:42.225Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad [stream]
-[debug] [2026-08-30T18:14:42.226Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478 [none]
-[debug] [2026-08-30T18:14:42.226Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478 [stream]
-[debug] [2026-08-30T18:14:42.234Z] [hosting][populate queue][FINAL] {"max":1650,"min":1650,"avg":1650,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":1666}
-[debug] [2026-08-30T18:14:42.234Z] [hosting] uploads queued: 5
-[info] i  hosting: uploading new files [0/5] (0%) 
-[info] i  hosting: uploading new files [0/5] (0%) 
-[info] i  hosting: uploading new files [0/5] (0%) 
-[info] i  hosting: uploading new files [0/5] (0%) 
-[info] i  hosting: uploading new files [0/5] (0%) 
-[info] i  hosting: uploading new files [0/5] (0%) 
-[debug] [2026-08-30T18:14:53.131Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478 200
-[debug] [2026-08-30T18:14:53.131Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/f69c1d7c404937a9e86eb0f36fb85514b8b97bc36348a17a8f8ce6012252f478 [stream]
-[debug] [2026-08-30T18:14:53.481Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512 200
-[debug] [2026-08-30T18:14:53.481Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/271dcc33f573f7da5ee94e1ac32cc00174e7bb3377019b7123ae1afc90cd5512 [stream]
-[debug] [2026-08-30T18:14:53.508Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13 200
-[debug] [2026-08-30T18:14:53.509Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/746f76134fb296123916922e1e242a927f1447830d18f84cdda5f8e488eb5c13 [stream]
-[debug] [2026-08-30T18:14:53.558Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad 200
-[debug] [2026-08-30T18:14:53.559Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/17dbd08e18c3937bc01e955d5b871c943a0ab937a9da90ae800d7746cef156ad [stream]
-[debug] [2026-08-30T18:14:53.688Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e 200
-[debug] [2026-08-30T18:14:53.689Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/victoryspring-681e5/versions/93e255d75c3cf302/files/dcfbcc3bcfe0a6a052e68f27a0cdfcdb729b51fff4f5c37ee5d15bbd8672e97e [stream]
-[debug] [2026-08-30T18:14:53.689Z] [hosting][upload queue][FINAL] {"max":11473,"min":10914,"avg":11258,"active":0,"complete":5,"success":5,"errored":0,"retried":0,"total":5,"elapsed":11475}
-[info] i  hosting: upload complete 
-[info] +  hosting[victoryspring-681e5]: file upload complete 
-[debug] [2026-08-30T18:14:53.691Z] [hosting] deploy completed after 13167ms
-[debug] [2026-08-30T18:14:53.692Z] [
-  {
-    "config": {
-      "public": "public",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
-      "rewrites": [
-        {
-          "source": "/api",
-          "function": {
-            "functionId": "api"
-          }
-        },
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ],
-      "site": "victoryspring-681e5"
-    },
-    "version": "projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302"
-  }
-]
-[info] i  hosting[victoryspring-681e5]: finalizing version... 
-[debug] [2026-08-30T18:14:53.698Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:53.698Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:53.699Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/victoryspring-681e5/locations/-/functions [none]
-[debug] [2026-08-30T18:14:55.348Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/victoryspring-681e5/locations/-/functions 200
-[debug] [2026-08-30T18:14:55.349Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/victoryspring-681e5/locations/-/functions {}
-[debug] [2026-08-30T18:14:55.349Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:55.350Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:55.350Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/victoryspring-681e5/locations/-/functions filter=environment%3D%22GEN_2%22
-[debug] [2026-08-30T18:14:56.123Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/victoryspring-681e5/locations/-/functions 200
-[debug] [2026-08-30T18:14:56.123Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/victoryspring-681e5/locations/-/functions {"functions":[{"name":"projects/victoryspring-681e5/locations/us-central1/functions/api","buildConfig":{"build":"projects/248219645076/locations/us-central1/builds/c93c954d-b73a-4602-804b-81e6fd71ec81","runtime":"nodejs22","entryPoint":"api","source":{"storageSource":{"bucket":"gcf-v2-sources-248219645076-us-central1","object":"api/function-source.zip","generation":"1788112666881455"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/victoryspring-681e5/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-248219645076-us-central1","object":"api/function-source.zip","generation":"1788112666881455"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/victoryspring-681e5/serviceAccounts/248219645076-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/victoryspring-681e5/locations/us-central1/services/api","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"victoryspring-681e5\",\"storageBucket\":\"victoryspring-681e5.firebasestorage.app\"}","GCLOUD_PROJECT":"victoryspring-681e5","EVENTARC_CLOUD_EVENT_SOURCE":"projects/victoryspring-681e5/locations/us-central1/services/api","FUNCTION_TARGET":"api","LOG_EXECUTION_ID":"true"},"maxInstanceCount":20,"ingressSettings":"ALLOW_ALL","uri":"https://api-rrhgp2ggqq-uc.a.run.app","serviceAccountEmail":"248219645076-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"api-00006-riy","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-08-30T17:59:09.519246939Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e22a2c61b81e698e419c297e03c8f97111cdd4e7"},"environment":"GEN_2","url":"https://us-central1-victoryspring-681e5.cloudfunctions.net/api","createTime":"2026-08-29T21:07:29.744658226Z","satisfiesPzi":true}]}
-[debug] [2026-08-30T18:14:56.126Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:56.126Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:14:56.126Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions/93e255d75c3cf302 updateMask=status%2Cconfig
-[debug] [2026-08-30T18:14:56.126Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions/93e255d75c3cf302 {"status":"FINALIZED","config":{"rewrites":[{"glob":"/api","run":{"serviceId":"api","region":"us-central1"}},{"glob":"**","path":"/index.html"}]}}
-[debug] [2026-08-30T18:15:01.051Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions/93e255d75c3cf302 200
-[debug] [2026-08-30T18:15:01.052Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/versions/93e255d75c3cf302 {"name":"projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302","status":"FINALIZED","config":{"rewrites":[{"glob":"/api","run":{"serviceId":"api","region":"us-central1"}},{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-08-30T18:14:37.986469Z","createUser":{"email":"faith4grtns@gmail.com"},"finalizeTime":"2026-08-30T18:14:59.655404Z","finalizeUser":{"email":"faith4grtns@gmail.com"}}
-[debug] [2026-08-30T18:15:01.052Z] [hosting] finalized version for victoryspring-681e5:[object Object]
-[info] +  hosting[victoryspring-681e5]: version finalized 
-[info] i  hosting[victoryspring-681e5]: releasing new version... 
-[debug] [2026-08-30T18:15:01.053Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:15:01.054Z] Checked if tokens are valid: true, expires at: 1788116814907
-[debug] [2026-08-30T18:15:01.054Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/channels/live/releases versionName=projects%2F248219645076%2Fsites%2Fvictoryspring-681e5%2Fversions%2F93e255d75c3cf302
-[debug] [2026-08-30T18:15:01.054Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/channels/live/releases {}
-[debug] [2026-08-30T18:15:06.754Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/channels/live/releases 200
-[debug] [2026-08-30T18:15:06.754Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/victoryspring-681e5/channels/live/releases {"name":"projects/248219645076/sites/victoryspring-681e5/channels/live/releases/1788113704442000","version":{"name":"projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302","status":"FINALIZED","config":{"rewrites":[{"glob":"/api","run":{"serviceId":"api","region":"us-central1"}},{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-08-30T18:14:37.986469Z","createUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"},"finalizeTime":"2026-08-30T18:14:59.655404Z","finalizeUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"}},"type":"DEPLOY","releaseTime":"2026-08-30T18:15:04.442Z","releaseUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"}}
-[debug] [2026-08-30T18:15:06.754Z] [hosting] release: {"name":"projects/248219645076/sites/victoryspring-681e5/channels/live/releases/1788113704442000","version":{"name":"projects/248219645076/sites/victoryspring-681e5/versions/93e255d75c3cf302","status":"FINALIZED","config":{"rewrites":[{"glob":"/api","run":{"serviceId":"api","region":"us-central1"}},{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-08-30T18:14:37.986469Z","createUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"},"finalizeTime":"2026-08-30T18:14:59.655404Z","finalizeUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"}},"type":"DEPLOY","releaseTime":"2026-08-30T18:15:04.442Z","releaseUser":{"email":"faith4grtns@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLEYSCpC6QXxVI9ZrrPgzBbqLjliRa8FdJMXeDFQunkfwEXvFN7"}}
-[info] +  hosting[victoryspring-681e5]: release complete 
-[info] 
-[info] +  Deploy complete! 
-[info] 
-[info] Project Console: https://console.firebase.google.com/project/victoryspring-681e5/overview
-[info] Hosting URL: https://victoryspring-681e5.web.app
-[debug] [2026-08-30T18:15:16.773Z] Error: Timed out.
-    at Timeout._onTimeout (C:\Users\OASISFAITH\AppData\Roaming\npm\node_modules\firebase-tools\lib\utils.js:296:49)
-    at listOnTimeout (node:internal/timers:605:17)
-    at process.processTimers (node:internal/timers:541:7)
-[error] 
-[error] Error: An unexpected error has occurred.
+[debug] [2026-08-30T18:30:39.232Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-30T18:30:39.232Z] > authorizing via signed-in user (faith4grtns@gmail.com)
+[debug] [2026-08-30T18:30:39.233Z] [iam] checking project victoryspring-681e5 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-08-30T18:30:39.246Z] Checked if tokens are valid: true, expires at: 1788116814907
+[debug] [2026-08-30T18:30:39.246Z] Checked if tokens are valid: true, expires at: 1788116814907
+[debug] [2026-08-30T18:30:39.247Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions [none]
+[debug] [2026-08-30T18:30:39.247Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions  x-goog-user-project=victoryspring-681e5
+[debug] [2026-08-30T18:30:39.247Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/victoryspring-681e5:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}

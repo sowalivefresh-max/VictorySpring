@@ -130,6 +130,10 @@
             <label class="aa-label">Medication/Treatment Administered</label>
             <textarea id="recordMedication" class="aa-input" rows="3" required placeholder="Details of treatment given..."></textarea>
           </div>
+          <div class="aa-form-group">
+            <label class="aa-label">Administered By</label>
+            <input type="text" id="recordAdministeredBy" class="aa-input" required placeholder="Name of person administering treatment">
+          </div>
           <div class="aa-modal-footer" style="padding: 20px 0 0 0; margin-top:20px; border-top:1px solid rgba(0,0,0,0.05);">
             <button type="button" class="aa-btn aa-btn-outline" onclick="closeModal('addRecordModal')">Cancel</button>
             <button type="submit" class="aa-btn aa-btn-primary" id="saveRecordBtn">Save Record & Notify Parent</button>
@@ -250,6 +254,7 @@
 
     function openAddRecordModal() {
       document.getElementById('addRecordForm').reset();
+      document.getElementById('recordAdministeredBy').value = AA.user ? AA.user.fullName : 'School Nurse';
       openModal('addRecordModal');
     }
 
@@ -257,8 +262,9 @@
       var studentId = document.getElementById('recordStudentSelect').value;
       var complaints = document.getElementById('recordComplaints').value.trim();
       var medication = document.getElementById('recordMedication').value.trim();
+      var administeredBy = document.getElementById('recordAdministeredBy').value.trim();
       
-      if (!studentId || !complaints || !medication) {
+      if (!studentId || !complaints || !medication || !administeredBy) {
         return showToast('Please fill all required fields.', 'error');
       }
 
@@ -266,7 +272,7 @@
         studentId: studentId,
         complaints: complaints,
         medication: medication,
-        administeredBy: AA.user ? AA.user.fullName : 'School Nurse',
+        administeredBy: administeredBy,
         date: new Date().toISOString()
       };
 
