@@ -1,0 +1,17 @@
+[debug] [2026-08-30T18:06:53.532Z] ----------------------------------------------------------------------
+[debug] [2026-08-30T18:06:53.535Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\OASISFAITH\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-08-30T18:06:53.535Z] CLI Version:   15.24.0
+[debug] [2026-08-30T18:06:53.535Z] Platform:      win32
+[debug] [2026-08-30T18:06:53.535Z] Node Version:  v24.18.0
+[debug] [2026-08-30T18:06:53.536Z] Detected Agent: antigravity
+[debug] [2026-08-30T18:06:53.536Z] Time:          Sun Aug 30 2026 19:06:53 GMT+0100 (West Africa Time)
+[debug] [2026-08-30T18:06:53.536Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-30T18:06:55.090Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-30T18:06:55.090Z] > authorizing via signed-in user (faith4grtns@gmail.com)
+[debug] [2026-08-30T18:06:55.090Z] [iam] checking project victoryspring-681e5 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-08-30T18:06:55.104Z] Checked if tokens are valid: false, expires at: 1788113673284
+[debug] [2026-08-30T18:06:55.104Z] Checked if tokens are valid: false, expires at: 1788113673284
+[debug] [2026-08-30T18:06:55.105Z] > refreshing access token with scopes: []
+[debug] [2026-08-30T18:06:55.107Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-08-30T18:06:55.107Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
