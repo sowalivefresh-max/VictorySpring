@@ -1618,7 +1618,7 @@
     // --- CLASSES ---
     function loadClasses() {
       callServer('adminGetClasses', [AA.token], function(data) {
-        data.sort(function(a, b) { return (a.className || '').localeCompare(b.className || '', undefined, {numeric: true, sensitivity: 'base'}); });
+        
         globalClasses = data;
         populateClassDropdowns();
         buildTable('classesTable', [

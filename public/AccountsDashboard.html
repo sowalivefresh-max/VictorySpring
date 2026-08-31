@@ -570,9 +570,7 @@
                return sec === section;
             });
           }
-          data.sort(function(a, b) {
-            return (a.className || '').localeCompare(b.className || '', undefined, {numeric: true, sensitivity: 'base'});
-          }).forEach(function(c){ sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>'; });
+          data.forEach(function(c){ sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>'; });
         }
       });
     }

@@ -1680,7 +1680,7 @@ function downloadMasterTimetablePDF(section) {
         return true;
     });
     if (!filteredList.length) return showToast('No timetables for ' + section + ' section.', 'warning');
-    filteredList.sort(function(a, b){ return a.className.localeCompare(b.className); });
+    
 
     var jsPDF = window.jspdf.jsPDF;
     var doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
