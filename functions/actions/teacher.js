@@ -20,6 +20,7 @@ module.exports = function(db, notificationsActions) {
         if (role === 'primary_teacher') {
           // Fetch the user to get their assigned class
           const myClass = (await getTeacherClass(userId)) || "";
+          const myClassNormalized = myClass.toLowerCase().trim();
           
           const subjectsSnap = await db.collection("subjects").get();
           const subjects = [];
@@ -28,11 +29,31 @@ module.exports = function(db, notificationsActions) {
             let sub = doc.data();
             sub.id = doc.id;
             
+            const sec = sub.section ? String(sub.section).toLowerCase().trim() : "";
+            let classList = sub.className || sub.class || sub.targetClasses || "";
+            if (Array.isArray(classList)) classList = classList.join(",");
+            const classListNormalized = classList.toLowerCase().trim();
+            
+            let isMySubject = false;
+            
+            // 1. Explicitly assigned to this teacher
             if (sub.assignedTeacherId && String(sub.assignedTeacherId) === String(userId)) {
-              subjects.push(sub);
-            } else if (sub.section && String(sub.section).toLowerCase() === 'primary') {
-              // Primary school teachers need to see all primary subjects as they teach all subjects
-              // This avoids missing subjects if the className doesn't match perfectly.
+              isMySubject = true;
+            } 
+            // 2. Assigned to this specific class
+            else if (myClassNormalized && classListNormalized.includes(myClassNormalized)) {
+              isMySubject = true;
+            }
+            // 3. Assigned to all primary (if section is primary and no specific class constraint)
+            else if (sec === 'primary' && (!classListNormalized || classListNormalized === 'all' || classListNormalized === '')) {
+              isMySubject = true;
+            }
+            // 4. Fallback: if section is primary and class list contains the generic 'primary' string
+            else if (sec === 'primary' && classListNormalized.includes('primary') && !myClassNormalized) {
+              isMySubject = true;
+            }
+            
+            if (isMySubject) {
               subjects.push(sub);
             }
           });
