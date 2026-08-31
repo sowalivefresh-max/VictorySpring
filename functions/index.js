@@ -20,7 +20,9 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://127.0.0.1:5000",
   "https://victoryspring.aceportalhub.com",
-  "http://victoryspring.aceportalhub.com"
+  "http://victoryspring.aceportalhub.com",
+  "https://vicspring.aceportalhub.com",
+  "http://vicspring.aceportalhub.com"
 ];
 app.use(cors({
   origin: function(origin, callback) {
