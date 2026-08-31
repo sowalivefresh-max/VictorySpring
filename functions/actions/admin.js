@@ -2409,12 +2409,20 @@ module.exports = function(db, notificationsActions) {
         scores.forEach(s => totalScore += Number(s.total || s.termTotal || 0));
         let average = scores.length ? (totalScore / scores.length).toFixed(1) : 0;
         
+        // Fetch Psychomotor / Behavioural traits
+        let psychomotor = {};
+        const psySnap = await db.collection("psychomotorRecords").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", session).limit(1).get();
+        if (!psySnap.empty) {
+          psychomotor = psySnap.docs[0].data();
+        }
+        
         let reportData = {
           student: student,
           scores: scores,
           summary: { average: average, overallGrade: average >= 50 ? 'P' : 'F' },
           term: term,
-          session: session
+          session: session,
+          psychomotor: psychomotor
         };
         
         const pdfGenerator = require("./pdf");

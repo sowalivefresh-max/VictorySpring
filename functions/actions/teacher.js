@@ -609,6 +609,50 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    teacherGetClassSettings: async (req, res) => {
+      const { className, term, session } = req.body;
+      if (!className || !term || !session) return res.json({ success: false, message: "Missing parameters." });
+      try {
+        const snap = await db.collection("classSettings")
+          .where("className", "==", className)
+          .where("term", "==", term)
+          .where("session", "==", session)
+          .get();
+        if (snap.empty) return res.json({ success: true, data: null });
+        let data = snap.docs[0].data();
+        data.id = snap.docs[0].id;
+        return res.json({ success: true, data: data });
+      } catch (err) {
+        return res.json({ success: false, message: "Error fetching class settings: " + err.message });
+      }
+    },
+
+    teacherSaveClassSettings: async (req, res) => {
+      if(req.session) { db.collection("audit_logs").add({ timestamp: new Date().toISOString(), userId: req.session.userId, userName: req.session.fullName || "User", action: "UPDATE_CLASS_SETTINGS", details: `Updated class settings` }).catch(()=>{}); }
+      const data = req.body;
+      if (!data || !data.className || !data.term || !data.session) {
+        return res.json({ success: false, message: "Missing required data." });
+      }
+      try {
+        const snap = await db.collection("classSettings")
+          .where("className", "==", data.className)
+          .where("term", "==", data.term)
+          .where("session", "==", data.session)
+          .get();
+        if (!snap.empty) {
+          await db.collection("classSettings").doc(snap.docs[0].id).update(data);
+          return res.json({ success: true, message: "Class settings updated." });
+        } else {
+          const newRef = db.collection("classSettings").doc();
+          data.id = newRef.id;
+          await newRef.set(data);
+          return res.json({ success: true, message: "Class settings saved." });
+        }
+      } catch (err) {
+        return res.json({ success: false, message: "Error saving class settings: " + err.message });
+      }
+    },
+
     teacherSavePsychomotor: async (req, res) => {
       if(req.session) { db.collection("audit_logs").add({ timestamp: new Date().toISOString(), userId: req.session.userId, userName: req.session.fullName || "User", action: "UPDATE_TRAITS", details: `Updated psychomotor traits` }).catch(()=>{}); }
       const data = req.body.data;

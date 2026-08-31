@@ -132,59 +132,152 @@
           
           <div id="traitsFormContainer" style="display:none;">
             <div class="aa-grid-2">
-              <div class="aa-card">
-                <div class="aa-card-header"><h3 class="aa-card-title">Psychomotor Skills</h3></div>
-                <div class="aa-card-body">
-                  <form id="psyForm">
-                    <input type="hidden" name="studentId" id="psyStudentId">
-                    <div class="aa-form-group"><label class="aa-label">Handwriting</label>
-                      <select name="handwriting" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Sport Skills</label>
-                      <select name="sportSkills" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Drawing</label>
-                      <select name="drawing" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Creativity</label>
-                      <select name="creativity" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Speaking</label>
-                      <select name="speaking" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Attentiveness</label>
-                      <select name="attentiveness" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                  </form>
-                </div>
-              </div>
               
+              <!-- Home Performance Indices -->
               <div class="aa-card">
-                <div class="aa-card-header"><h3 class="aa-card-title">Affective Domain</h3></div>
+                <div class="aa-card-header"><h3 class="aa-card-title">Home Performance Indices</h3></div>
                 <div class="aa-card-body">
-                  <form id="affForm">
-                    <input type="hidden" name="studentId" id="affStudentId">
+                  <form id="homePerfForm">
+                    <input type="hidden" name="studentId" id="hpStudentId">
                     <div class="aa-form-group"><label class="aa-label">Punctuality</label>
-                      <select name="punctuality" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
+                      <select name="hp_punctuality" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
                     </div>
                     <div class="aa-form-group"><label class="aa-label">Neatness</label>
-                      <select name="neatness" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
+                      <select name="hp_neatness" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
                     </div>
-                    <div class="aa-form-group"><label class="aa-label">Politeness</label>
-                      <select name="politeness" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
+                    <div class="aa-form-group"><label class="aa-label">PTC attendance</label>
+                      <select name="hp_ptc" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
                     </div>
-                    <div class="aa-form-group"><label class="aa-label">Honesty</label>
-                      <select name="honesty" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
+                    <div class="aa-form-group"><label class="aa-label">Quality of homework submitted</label>
+                      <select name="hp_hw_quality" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
                     </div>
-                    <div class="aa-form-group"><label class="aa-label">Leadership</label>
-                      <select name="leadership" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
-                    </div>
-                    <div class="aa-form-group"><label class="aa-label">Cooperation</label>
-                      <select name="cooperation" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select>
+                    <div class="aa-form-group"><label class="aa-label">Prompt homework submission</label>
+                      <select name="hp_hw_prompt" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
                     </div>
                   </form>
                 </div>
               </div>
+
+              <!-- Conducts & Work habits -->
+              <div class="aa-card">
+                <div class="aa-card-header"><h3 class="aa-card-title">Conducts & Work habits</h3></div>
+                <div class="aa-card-body">
+                  <form id="conductForm">
+                    <div class="aa-form-group"><label class="aa-label">Polite</label>
+                      <select name="cd_polite" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Independent & Organized</label>
+                      <select name="cd_independent" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Relates appropriately with adults</label>
+                      <select name="cd_adults" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Maintains appropriate behaviour without prompting</label>
+                      <select name="cd_behaviour" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Exhibits eagerness & curiousity as a learner</label>
+                      <select name="cd_curious" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Participates actively in class</label>
+                      <select name="cd_active" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Collaborates with other children for learning</label>
+                      <select name="cd_collaborates" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Perseveres at a challenging task</label>
+                      <select name="cd_perseveres" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Daily work reflects best effort</label>
+                      <select name="cd_effort" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Leadership skills</label>
+                      <select name="cd_leadership" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Public presentation skills</label>
+                      <select name="cd_presentation" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Other Subjects -->
+              <div class="aa-card">
+                <div class="aa-card-header"><h3 class="aa-card-title">Other Subjects (Grades)</h3></div>
+                <div class="aa-card-body">
+                  <form id="otherSubjForm">
+                    <div class="aa-form-group"><label class="aa-label">Music</label>
+                      <select name="os_music" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Physical Education</label>
+                      <select name="os_pe" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Swimming</label>
+                      <select name="os_swimming" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Library</label>
+                      <select name="os_library" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Handwriting</label>
+                      <select name="os_handwriting" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Chess</label>
+                      <select name="os_chess" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Diction</label>
+                      <select name="os_diction" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Project</label>
+                      <select name="os_project" class="aa-select"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Enrichment Activities -->
+              <div class="aa-card">
+                <div class="aa-card-header"><h3 class="aa-card-title">Enrichment Activities</h3></div>
+                <div class="aa-card-body">
+                  <form id="enrichForm">
+                    <div class="aa-form-group"><label class="aa-label">Computer</label>
+                      <select name="en_computer" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">French</label>
+                      <select name="en_french" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Arts & Craft</label>
+                      <select name="en_arts" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Taekwando</label>
+                      <select name="en_taekwando" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Ballet</label>
+                      <select name="en_ballet" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Leadership</label>
+                      <select name="en_leadership" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Robotics</label>
+                      <select name="en_robotics" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Music</label>
+                      <select name="en_music" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Table Tennis / Football / Basketball</label>
+                      <select name="en_sports" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Reading Club</label>
+                      <select name="en_reading" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Chess/Scrabble</label>
+                      <select name="en_chess" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                    <div class="aa-form-group"><label class="aa-label">Etiquette / Red Cross</label>
+                      <select name="en_etiquette" class="aa-select"><option value="NA">NA</option><option value="D">D</option><option value="SD">SD</option><option value="M">M</option></select>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
             </div>
             <div class="text-center mt-3">
               <button type="button" class="aa-btn aa-btn-primary aa-btn-lg" id="btnSaveTraits" onclick="saveAllTraits()"><i class="fa fa-save"></i> Save Behavioral Traits</button>
@@ -274,8 +367,13 @@
 
           <!-- Attendance sub-section -->
           <div class="aa-card mt-4">
-            <div class="aa-card-header">
+            <div class="aa-card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3 class="aa-card-title"><i class="fa fa-calendar-check"></i> Class Attendance</h3>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <label class="aa-label mb-0" style="font-size:12px;">Total Times School Opened (This Term):</label>
+                <input type="number" id="timesSchoolOpened" class="aa-input" style="width:80px; padding:4px;">
+                <button class="aa-btn aa-btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="saveTimesSchoolOpened()">Save</button>
+              </div>
             </div>
             <div class="aa-card-body">
               <div class="d-flex gap-3 align-items-center">
@@ -846,6 +944,7 @@ Answer: A
       // Set today's date on the attendance date picker
       var attDateEl = document.getElementById('classAttDate');
       if (attDateEl && !attDateEl.value) attDateEl.valueAsDate = new Date();
+      loadTimesSchoolOpened(cls);
       callServer('teacherGetClassStudents', [AA.token, cls], function(data) {
         myClassStudents = data;
         document.getElementById('stat-myclass-students').textContent = myClassStudents.length;
@@ -1309,19 +1408,21 @@ Answer: A
       var sid = document.getElementById('traitStudentSelect').value;
       if(!sid) { document.getElementById('traitsFormContainer').style.display='none'; return; }
       
-      document.getElementById('psyStudentId').value = sid;
-      document.getElementById('affStudentId').value = sid;
+      document.getElementById('hpStudentId').value = sid;
       
       callServer('teacherGetPsychomotor', [AA.token, sid, currentTerm, currentSession], function(res) {
-        if(res && Object.keys(res).length > 0) setFormData('psyForm', res);
-        else document.getElementById('psyForm').reset();
-        document.getElementById('psyStudentId').value = sid;
-      }, null, true);
-      
-      callServer('teacherGetAffective', [AA.token, sid, currentTerm, currentSession], function(res) {
-        if(res && Object.keys(res).length > 0) setFormData('affForm', res);
-        else document.getElementById('affForm').reset();
-        document.getElementById('affStudentId').value = sid;
+        document.getElementById('homePerfForm').reset();
+        document.getElementById('conductForm').reset();
+        document.getElementById('otherSubjForm').reset();
+        document.getElementById('enrichForm').reset();
+        
+        if(res && Object.keys(res).length > 0) {
+          setFormData('homePerfForm', res);
+          setFormData('conductForm', res);
+          setFormData('otherSubjForm', res);
+          setFormData('enrichForm', res);
+        }
+        document.getElementById('hpStudentId').value = sid;
         document.getElementById('traitsFormContainer').style.display='block';
       }, null, true);
     }
@@ -1331,20 +1432,28 @@ Answer: A
       if(!sid) return showToast('Select a student first','error');
       var cls = AA.user.classAssigned;
       
-      var psyData = getFormData('psyForm');
-      psyData.studentId = sid; psyData.className = cls; psyData.term = currentTerm; psyData.session = currentSession;
-      var affData = getFormData('affForm');
-      affData.studentId = sid; affData.className = cls; affData.term = currentTerm; affData.session = currentSession;
+      var traitData = Object.assign(
+        getFormData('homePerfForm'),
+        getFormData('conductForm'),
+        getFormData('otherSubjForm'),
+        getFormData('enrichForm')
+      );
+      
+      traitData.studentId = sid; 
+      traitData.className = cls; 
+      traitData.term = currentTerm; 
+      traitData.session = currentSession;
       
       var btn = document.getElementById('btnSaveTraits');
       btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
       
-      callServer('teacherSavePsychomotor', [AA.token, psyData], function(r1) {
-        callServer('teacherSaveAffective', [AA.token, affData], function(r2) {
-          btn.innerHTML = '<i class="fa fa-save"></i> Save Behavioral Traits'; btn.disabled = false;
-          showToast('Records saved successfully', 'success');
-        }, function() { btn.innerHTML = '<i class="fa fa-save"></i> Save Behavioral Traits'; btn.disabled = false; });
-      }, function() { btn.innerHTML = '<i class="fa fa-save"></i> Save Behavioral Traits'; btn.disabled = false; });
+      callServer('teacherSavePsychomotor', [AA.token, traitData], function(r1) {
+        btn.innerHTML = '<i class="fa fa-save"></i> Save Behavioral Traits'; btn.disabled = false;
+        if(!r1.success) {
+          return showToast(r1.message, 'error');
+        }
+        showToast('Records saved successfully', 'success');
+      }, function() { btn.innerHTML = '<i class="fa fa-save"></i> Save Behavioral Traits'; btn.disabled = false; }, true);
     }
 
     // -- Lesson Plans --
@@ -2223,6 +2332,43 @@ Answer: A
       }
     }
 
+    function loadTimesSchoolOpened(cls) {
+      callServer('teacherGetClassSettings', [AA.token, { className: cls, term: currentTerm, session: currentSession }], function(res) {
+        if (res && res.timesSchoolOpened) {
+          var el = document.getElementById('timesSchoolOpened');
+          if (el) el.value = res.timesSchoolOpened;
+        }
+      });
+    }
+
+    function saveTimesSchoolOpened() {
+      var cls = AA.user.classAssigned;
+      if (!cls) return AA.showToast("No class assigned to you.", "error");
+      var val = document.getElementById('timesSchoolOpened').value;
+      if (!val) return AA.showToast("Please enter a valid number.", "error");
+
+      var payload = {
+        className: cls,
+        term: currentTerm,
+        session: currentSession,
+        timesSchoolOpened: parseInt(val, 10)
+      };
+
+      var btn = event.target || document.querySelector('button[onclick="saveTimesSchoolOpened()"]');
+      var oldText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+
+      callServer('teacherSaveClassSettings', [AA.token, payload], function(res) {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        AA.showToast("Saved successfully!", "success");
+      }, function(err) {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        AA.showToast(err || "Error saving.", "error");
+      });
+    }
   </script>
 </body>
 </html>

@@ -88,8 +88,10 @@ async function enrichReportData(dbInstance, reportData, cfg) {
         let classData = classSnap.docs[0].data();
         if (classData.classTeacherId) {
           const ctSnap = await dbInstance.collection("users").doc(classData.classTeacherId).get();
-          if (ctSnap.exists && ctSnap.data().signature) {
-            cfg.class_teacher_signature = ctSnap.data().signature;
+          if (ctSnap.exists) {
+            let ctData = ctSnap.data();
+            if (ctData.signature) cfg.class_teacher_signature = ctData.signature;
+            if (ctData.fullName) cfg.class_teacher_name = ctData.fullName;
           }
         }
       }
@@ -133,6 +135,16 @@ async function enrichReportData(dbInstance, reportData, cfg) {
       });
       
       let totalDays = uniqueDates.size;
+      
+      const cSetSnap = await dbInstance.collection("classSettings")
+          .where("className", "==", student.className)
+          .where("term", "==", reportData.term)
+          .where("session", "==", reportData.session)
+          .limit(1).get();
+      if (!cSetSnap.empty && cSetSnap.docs[0].data().timesSchoolOpened) {
+          totalDays = parseInt(cSetSnap.docs[0].data().timesSchoolOpened, 10);
+      }
+
       let percentage = totalDays > 0 ? Math.round(((present + late) / totalDays) * 100) : 0;
       reportData.attendance = { present, absent, late, total: totalDays, percentage };
     } else {
