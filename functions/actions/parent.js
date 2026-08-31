@@ -534,6 +534,66 @@ module.exports = function(db) {
         return res.json({ success: true, data: plans });
       } catch(err) { return res.json({ success: false, message: err.message }); }
     },
+    
+    parentGetAnnouncements: async (req, res) => {
+      try {
+        const parentId = req.session.userId;
+        
+        // Find children of this parent to know their sections/classes/campuses
+        const snap = await db.collection("students").where("parentId", "==", parentId).get();
+        if (snap.empty) {
+          // If parent has no children, they probably only see "all" announcements, but we can query that.
+          const announcementsSnap = await db.collection("announcements")
+            .where("targetAudience", "==", "all")
+            .orderBy("createdAt", "desc").get();
+          return res.json({ success: true, data: announcementsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) });
+        }
+
+        const classes = [];
+        const sections = ["both", ""];
+        const campuses = [null, ""];
+        
+        snap.forEach(doc => {
+          const s = doc.data();
+          if (s.className && !classes.includes(s.className)) classes.push(s.className);
+          if (s.section && !sections.includes(s.section)) sections.push(s.section);
+          if (s.campusId && !campuses.includes(s.campusId)) campuses.push(s.campusId);
+        });
+
+        // We can't do complex OR queries natively in firestore easily in one go.
+        // So we query ALL announcements for the matching campus/section, then filter in memory for classes or 'all'.
+        
+        // Let's just fetch all announcements, since there won't be millions, 
+        // and filter them based on the parent's children.
+        // To be somewhat efficient, we'll order by createdAt desc limit 100.
+        const allAnnSnap = await db.collection("announcements")
+          .orderBy("createdAt", "desc")
+          .limit(100)
+          .get();
+          
+        const validAnnouncements = [];
+        allAnnSnap.forEach(doc => {
+          const a = doc.data();
+          
+          // Filter by campus
+          if (a.campusId && !campuses.includes(a.campusId)) return;
+          
+          // Filter by section
+          if (a.section && a.section !== "both" && !sections.includes(a.section)) return;
+          
+          // Filter by audience
+          if (a.targetAudience === "all") {
+            validAnnouncements.push({ id: doc.id, ...a });
+          } else if (a.targetAudience === "class" && classes.includes(a.targetClass)) {
+            validAnnouncements.push({ id: doc.id, ...a });
+          }
+        });
+        
+        return res.json({ success: true, data: validAnnouncements });
+      } catch(err) {
+        return res.json({ success: false, message: err.message });
+      }
+    }
 
   };
 };

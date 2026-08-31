@@ -189,6 +189,11 @@ app.post("/api", async (req, res) => {
         if (action === "adminUpdateStudent") { req.body.studentId = args[1]; req.body.updates = args[2]; }
         if (action === "adminDeleteStudent") { req.body.studentId = args[1]; }
         
+        if (action === "adminCreateAnnouncement") { req.body.data = args[1]; }
+        if (action === "adminGetAnnouncements") { req.body.section = args[1]; req.body.campusId = args[2] || null; }
+        if (action === "adminDeleteAnnouncement") { req.body.announcementId = args[1]; }
+        if (action === "parentGetAnnouncements") { /* no args */ }
+        
         if (action === "adminCreateClass") { req.body.data = args[1]; }
         if (action === "adminUpdateClass") { req.body.classId = args[1]; req.body.updates = args[2]; }
         if (action === "adminDeleteClass") { req.body.classId = args[1]; }
@@ -413,6 +418,13 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminUpdateSubject(req, res));
       case "adminDeleteSubject":
         return requireRole(req, res, () => adminActions.adminDeleteSubject(req, res));
+        
+      case "adminCreateAnnouncement":
+        return requireRole(req, res, () => adminActions.adminCreateAnnouncement(req, res));
+      case "adminGetAnnouncements":
+        return requireRole(req, res, () => adminActions.adminGetAnnouncements(req, res));
+      case "adminDeleteAnnouncement":
+        return requireRole(req, res, () => adminActions.adminDeleteAnnouncement(req, res));
 
       // --- SECONDARY ADMIN ACTIONS ---
       case "adminGetTimetableConfig": return requireRole(req, res, () => adminActions.adminGetTimetableConfig(req, res));
@@ -582,6 +594,8 @@ app.post("/api", async (req, res) => {
       // --- PARENT ACTIONS ---
       case "parentGetChildren":
         return requireRole(req, res, () => parentActions.parentGetChildren(req, res));
+      case "parentGetAnnouncements":
+        return requireRole(req, res, () => parentActions.parentGetAnnouncements(req, res));
       case "parentGetReport":
         return requireRole(req, res, () => parentActions.parentGetReport(req, res));
       case "parentDownloadReport":

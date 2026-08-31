@@ -3088,6 +3088,49 @@ module.exports = function(db, notificationsActions) {
       } catch (err) {
         return res.json({ success: false, message: err.message });
       }
+    },
+    
+    adminCreateAnnouncement: async (req, res) => {
+      try {
+        const { data } = req.body;
+        if (!data.subject || !data.message || !data.targetAudience) {
+          return res.json({ success: false, message: "Missing required fields." });
+        }
+        data.createdAt = new Date().toISOString();
+        const docRef = await db.collection("announcements").add(data);
+        return res.json({ success: true, message: "Announcement sent successfully.", id: docRef.id });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+    
+    adminGetAnnouncements: async (req, res) => {
+      try {
+        const { section, campusId } = req.body;
+        let query = db.collection("announcements");
+        if (section && section !== "both") {
+          query = query.where("section", "in", [section, "both", ""]);
+        }
+        if (campusId) {
+          query = query.where("campusId", "in", [campusId, null, ""]);
+        }
+        const snap = await query.orderBy("createdAt", "desc").get();
+        const announcements = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return res.json({ success: true, data: announcements });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+    
+    adminDeleteAnnouncement: async (req, res) => {
+      try {
+        const { announcementId } = req.body;
+        if (!announcementId) return res.json({ success: false, message: "Missing announcement ID." });
+        await db.collection("announcements").doc(announcementId).delete();
+        return res.json({ success: true, message: "Announcement deleted." });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
     }
   };
 };

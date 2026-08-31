@@ -1941,6 +1941,126 @@ window.selectAllTtClasses = selectAllTtClasses;
 window.generateTimetable = generateTimetable;
 window.loadTimetableData = loadTimetableData;
 
+// --- Communications System ---
+function loadCommunications() {
+  var tbody = document.querySelector('#communicationsTable tbody');
+  if(tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+  
+  var instType = typeof institutionType !== 'undefined' ? institutionType : (AA.settings.institution_type || 'primary');
+  callServer('adminGetAnnouncements', [AA.token, instType, AA.getActiveCampusId()], function(res) {
+    if(!res.success) {
+      if(tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">'+(res.message || 'Error loading')+'</td></tr>';
+      return;
+    }
+    
+    // Load classes for the modal dropdown if not loaded
+    var cSel = document.getElementById('commClassSelect');
+    if(cSel && cSel.options.length <= 1) {
+      callServer('adminGetClasses', [AA.token, {section: instType, campusId: AA.getActiveCampusId()}], function(cRes) {
+        if(cRes.success) {
+          cRes.data.forEach(function(c) {
+            cSel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>';
+          });
+        }
+      });
+    }
+
+    // Attach target change listener
+    var tgtSel = document.getElementById('commTargetSelect');
+    if(tgtSel) {
+      tgtSel.onchange = function() {
+        document.getElementById('commClassGroup').style.display = this.value === 'class' ? 'block' : 'none';
+      };
+    }
+
+    if(res.data.length === 0) {
+      if(tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No communications found.</td></tr>';
+      return;
+    }
+    
+    buildTable('communicationsTable', [
+      {key:'createdAt', render:function(r) { return formatDate(r.createdAt); }},
+      {key:'subject'},
+      {key:'target', render:function(r) { return r.targetAudience === 'all' ? '<span class="aa-badge aa-badge-info">All Parents</span>' : '<span class="aa-badge aa-badge-warning">Class: '+r.targetClass+'</span>'; }},
+      {key:'actions', render:function(r) { 
+        return '<button class="aa-btn aa-btn-sm aa-btn-outline text-danger" onclick="deleteCommunication(\''+r.id+'\')"><i class="fa fa-trash"></i> Delete</button>'; 
+      }}
+    ], res.data);
+  }, null, false);
+}
+
+function sendCommunication() {
+  var form = document.getElementById('communicationForm');
+  if(!form.checkValidity()) { form.reportValidity(); return; }
+  
+  var instType = typeof institutionType !== 'undefined' ? institutionType : (AA.settings.institution_type || 'primary');
+  var payload = {
+    targetAudience: form.targetAudience.value,
+    targetClass: form.targetClass ? form.targetClass.value : '',
+    subject: form.subject.value,
+    message: form.message.value,
+    section: instType,
+    campusId: AA.getActiveCampusId()
+  };
+  
+  if (payload.targetAudience === 'class' && !payload.targetClass) {
+    return showToast('Please select a target class.', 'warning');
+  }
+
+  showToast('Sending...', 'info');
+  callServer('adminCreateAnnouncement', [AA.token, payload], function(res) {
+    if(res.success) {
+      showToast(res.message, 'success');
+      closeModal('communicationModal');
+      loadCommunications();
+    } else {
+      showToast(res.message, 'error');
+    }
+  }, null, true);
+}
+
+function deleteCommunication(id) {
+  if(!confirm('Are you sure you want to delete this communication?')) return;
+  showToast('Deleting...', 'info');
+  callServer('adminDeleteAnnouncement', [AA.token, id], function(res) {
+    if(res.success) {
+      showToast(res.message, 'success');
+      loadCommunications();
+    } else {
+      showToast(res.message, 'error');
+    }
+  }, null, true);
+}
+
+function loadParentAnnouncements() {
+  var container = document.getElementById('announcements-container');
+  if(container) container.innerHTML = '<div class="text-center py-4 text-muted"><i class="fa fa-spinner fa-spin"></i> Loading announcements...</div>';
+  
+  callServer('parentGetAnnouncements', [AA.token], function(res) {
+    if(!res.success) {
+      if(container) container.innerHTML = '<div class="text-center py-4 text-danger">'+(res.message||'Error loading announcements')+'</div>';
+      return;
+    }
+    if(res.data.length === 0) {
+      if(container) container.innerHTML = '<div class="text-center py-4 text-muted"><i class="fa fa-bullhorn" style="font-size:36px;color:#cbd5e1;display:block;margin-bottom:10px;"></i> No announcements from the school at this time.</div>';
+      return;
+    }
+    
+    var html = '';
+    res.data.forEach(function(ann) {
+      var targetBadge = ann.targetAudience === 'all' ? '<span class="aa-badge aa-badge-info" style="font-size:10px;">All Parents</span>' : '<span class="aa-badge aa-badge-warning" style="font-size:10px;">'+ann.targetClass+'</span>';
+      html += '<div style="border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:15px;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">';
+      html += '  <h4 style="margin:0;font-size:16px;color:#1e293b;">'+AA.escapeHTML(ann.subject)+'</h4>';
+      html += '  <div style="text-align:right;">'+targetBadge+'<div style="font-size:11px;color:#94a3b8;margin-top:4px;">'+formatDate(ann.createdAt)+'</div></div>';
+      html += '</div>';
+      html += '<div style="color:#475569;font-size:14px;white-space:pre-wrap;line-height:1.5;">'+AA.escapeHTML(ann.message)+'</div>';
+      html += '</div>';
+    });
+    if(container) container.innerHTML = html;
+  }, null, false);
+}
+
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -1951,3 +2071,4 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+

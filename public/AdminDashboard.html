@@ -62,6 +62,9 @@
         </button>
         
         <div class="aa-nav-section">Operations</div>
+        <button class="aa-nav-item" id="nav-communications" onclick="switchTab('admin-tabs', 'tab-communications'); setActiveNav('nav-communications')">
+          <i class="fa fa-bullhorn"></i> Communications
+        </button>
         <button class="aa-nav-item" id="nav-finance" onclick="switchTab('admin-tabs', 'tab-finance'); setActiveNav('nav-finance')">
           <i class="fa fa-wallet"></i> Finance
         </button>
@@ -119,6 +122,7 @@
           <div class="aa-tab" data-tab="tab-subjects" data-onload="loadSubjects"></div>
           <div class="aa-tab" data-tab="tab-grading" data-onload="loadGrading"></div>
           <div class="aa-tab" data-tab="tab-analytics" data-onload="loadAnalytics"></div>
+          <div class="aa-tab" data-tab="tab-communications" data-onload="loadCommunications"></div>
           <div class="aa-tab" data-tab="tab-finance" data-onload="loadFinance"></div>
           <div class="aa-tab" data-tab="tab-reports" data-onload="loadReports"></div>
                     <div class="aa-tab" data-tab="tab-timetable" data-onload="loadTimetable"></div>
@@ -361,6 +365,24 @@
               <div class="aa-table-wrap">
                 <table class="aa-table" id="gradingSystemsTable">
                   <thead><tr><th>Name</th><th>Target Section</th><th>Target Classes</th><th>Rules Count</th><th>Actions</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Communications -->
+        <div class="aa-tab-content" data-group="admin-tabs" data-id="tab-communications">
+          <div class="aa-card">
+            <div class="aa-card-header">
+              <h3 class="aa-card-title">Communications & Announcements</h3>
+              <button class="aa-btn aa-btn-primary" onclick="openModal('communicationModal');resetForm('communicationForm');"><i class="fa fa-plus"></i> Compose New</button>
+            </div>
+            <div class="aa-card-body" style="padding:0;">
+              <div class="aa-table-wrap">
+                <table class="aa-table" id="communicationsTable">
+                  <thead><tr><th>Date</th><th>Subject</th><th>Target Audience</th><th>Actions</th></tr></thead>
                   <tbody></tbody>
                 </table>
               </div>
@@ -649,6 +671,45 @@
 
   <!-- MODALS -->
   
+  <!-- Communication Modal -->
+  <div class="aa-modal-backdrop" id="communicationModal">
+    <div class="aa-modal">
+      <div class="aa-modal-header">
+        <h5 class="aa-modal-title">Compose Communication</h5>
+        <button class="aa-modal-close" onclick="closeModal('communicationModal')"><i class='fa fa-times'></i></button>
+      </div>
+      <div class="aa-modal-body">
+        <form id="communicationForm">
+          <div class="aa-form-group">
+            <label class="aa-label">Target Audience</label>
+            <select name="targetAudience" id="commTargetSelect" class="aa-select" required>
+              <option value="all">All Parents</option>
+              <option value="class">Specific Class</option>
+            </select>
+          </div>
+          <div class="aa-form-group" id="commClassGroup" style="display:none;">
+            <label class="aa-label">Select Class</label>
+            <select name="targetClass" id="commClassSelect" class="aa-select">
+              <option value="">Choose a class...</option>
+            </select>
+          </div>
+          <div class="aa-form-group">
+            <label class="aa-label">Subject</label>
+            <input type="text" name="subject" class="aa-input" required>
+          </div>
+          <div class="aa-form-group">
+            <label class="aa-label">Message</label>
+            <textarea name="message" class="aa-input" rows="5" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="aa-modal-footer">
+        <button class="aa-btn aa-btn-outline" onclick="closeModal('communicationModal')">Cancel</button>
+        <button class="aa-btn aa-btn-primary" onclick="sendCommunication()">Send</button>
+      </div>
+    </div>
+  </div>
+
   <!-- User Modal -->
   <div class="aa-modal-backdrop" id="userModal">
     <div class="aa-modal">

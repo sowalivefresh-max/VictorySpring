@@ -26,6 +26,9 @@
         <button class="aa-nav-item active" id="nav-dashboard" onclick="switchTab('par-tabs', 'tab-dashboard'); setActiveNav('nav-dashboard')">
           <i class="fa fa-home"></i> My Children
         </button>
+        <button class="aa-nav-item" id="nav-announcements" onclick="switchTab('par-tabs', 'tab-announcements'); setActiveNav('nav-announcements')">
+          <i class="fa fa-bullhorn"></i> Announcements
+        </button>
         <div class="aa-nav-section">Academics</div>
         <button class="aa-nav-item" id="nav-reports" onclick="switchTab('par-tabs', 'tab-reports'); setActiveNav('nav-reports')">
           <i class="fa fa-file-signature"></i> Report Cards
@@ -71,6 +74,7 @@
       <div class="aa-content">
         <div id="par-tabs" style="display:none;">
           <div class="aa-tab active" data-tab="tab-dashboard" data-onload="loadDashboard"></div>
+          <div class="aa-tab" data-tab="tab-announcements" data-onload="loadParentAnnouncements"></div>
           <div class="aa-tab" data-tab="tab-reports" data-onload="loadReportsTab"></div>
           <div class="aa-tab" data-tab="tab-finance" data-onload="loadFinanceTab"></div>
         </div>
@@ -87,6 +91,20 @@
             <div class="aa-card-body">
               <p>Through this portal, you can monitor your children's academic progress, view termly report cards, and track school fee payments.</p>
               <p>If any of your children are missing from your profile, please contact the school administration to link their records to your account.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Announcements -->
+        <div class="aa-tab-content" data-group="par-tabs" data-id="tab-announcements">
+          <div class="aa-card">
+            <div class="aa-card-header">
+              <h3 class="aa-card-title">School Announcements</h3>
+            </div>
+            <div class="aa-card-body">
+              <div id="announcements-container">
+                <div class="text-center w-100 py-4 text-muted">Loading announcements...</div>
+              </div>
             </div>
           </div>
         </div>
