@@ -132,6 +132,16 @@ async function requireRole(req, res, next) {
 // API ROUTES
 // ============================================================
 
+app.get('/api/debug-subjects', async (req, res) => {
+  try {
+    const snap = await db.collection('subjects').get();
+    const subs = [];
+    snap.forEach(d => subs.push(d.data()));
+    res.json(subs);
+  } catch (e) {
+    res.json({error: e.message});
+  }
+});
 app.post("/api", async (req, res) => {
   let action = req.body.action;
   if (!action) return res.status(400).json({ success: false, message: "No action specified." });

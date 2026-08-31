@@ -41,7 +41,7 @@ module.exports = function(db, notificationsActions) {
               isMySubject = true;
             } 
             // 2. Assigned to this specific class
-            else if (myClassNormalized && classListNormalized.includes(myClassNormalized)) {
+            else if (myClassNormalized && (classListNormalized.includes(myClassNormalized) || myClassNormalized.includes(classListNormalized))) {
               isMySubject = true;
             }
             // 3. Assigned to all primary (if section is primary and no specific class constraint)
@@ -50,6 +50,10 @@ module.exports = function(db, notificationsActions) {
             }
             // 4. Fallback: if section is primary and class list contains the generic 'primary' string
             else if (sec === 'primary' && classListNormalized.includes('primary') && !myClassNormalized) {
+              isMySubject = true;
+            }
+            // 5. Fallback: if explicitly assigned to 'all' classes regardless of section
+            else if (classListNormalized === 'all' || classListNormalized === 'both') {
               isMySubject = true;
             }
             
