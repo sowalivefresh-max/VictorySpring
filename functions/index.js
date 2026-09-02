@@ -230,6 +230,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminRejectTask") { req.body.taskId = args[1]; req.body.note = args[2]; }
         if (action === "adminProcessPasswordReset") { req.body.requestId = args[1]; req.body.newPassword = args[2]; }
         if (action === "adminGetStudentResultPDF") { req.body.studentId = args[1]; req.body.term = args[2]; req.body.session = args[3]; req.body.rptType = args[4]; }
+        if (action === "adminGenerateTranscript") { req.body.studentId = args[1]; }
         if (action === "adminSetPromotionStatus") { req.body.studentId = args[1]; req.body.session = args[2]; req.body.status = args[3]; }
         if (action === "teacherGenerateLessonPlanPDF") { req.body.planId = args[1]; }
         
@@ -240,6 +241,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminGetBills") { req.body.filters = args[1]; }
         if (action === "adminRecordPayment") { req.body.data = args[1]; }
         if (action === "adminGetStudentLedger") { req.body.studentId = args[1]; }
+        if (action === "adminDownloadLedgerPDF") { req.body.studentId = args[1]; req.body.startDate = args[2]; req.body.endDate = args[3]; }
         if (action === "adminGetSchoolPerformance") { req.body.term = args[1]; req.body.session = args[2]; req.body.section = args[3]; req.body.campusId = args[4] || null; }
         if (action === "adminGetSchoolPerformanceAnalytics") { req.body.term = args[1]; req.body.session = args[2]; req.body.section = args[3]; req.body.campusId = args[4] || null; }
         if (action === "adminGetYearGroupRanking") { req.body.term = args[1]; req.body.session = args[2]; req.body.yearGroup = args[3]; }
@@ -458,6 +460,7 @@ app.post("/api", async (req, res) => {
       case "adminSaveGradingSystem": return requireRole(req, res, () => adminActions.adminSaveGradingSystem(req, res));
       case "adminDeleteGradingSystem": return requireRole(req, res, () => adminActions.adminDeleteGradingSystem(req, res));
       case "adminGenerateBulkResult": return requireRole(req, res, () => adminActions.adminGenerateBulkResult(req, res));
+      case "adminGenerateTranscript": return requireRole(req, res, () => adminActions.adminGenerateTranscript(req, res));
       case "adminGetBroadsheetData": return requireRole(req, res, () => adminActions.adminGetBroadsheetData(req, res));
       case "adminGetComplianceSummary": return requireRole(req, res, () => adminActions.adminGetComplianceSummary(req, res));
       case "adminGetSchoolPerformance":
@@ -486,6 +489,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminRecordPayment(req, res));
       case "adminGetStudentLedger":
         return requireRole(req, res, () => adminActions.adminGetStudentLedger(req, res));
+      case "adminDownloadLedgerPDF":
+        return requireRole(req, res, () => adminActions.adminDownloadLedgerPDF(req, res));
       case "adminGenerateReceipt":
         return requireRole(req, res, () => adminActions.adminGenerateReceipt(req, res));
       case "adminRecordExpense":

@@ -1625,6 +1625,7 @@
           return '<button class="aa-btn aa-btn-outline aa-btn-xs" title="Edit" onclick="editStudent(\''+id+'\')"><i class="fa fa-edit"></i></button> ' +
                  '<button class="aa-btn aa-btn-success aa-btn-xs" title="Subjects" onclick="manageEnrollment(\''+id+'\', \''+r.fullName+'\')"><i class="fa fa-book"></i></button> ' +
                  '<button class="aa-btn aa-btn-info aa-btn-xs" title="Generate ID Card" onclick="generateIDCard(\''+id+'\')"><i class="fa fa-id-card"></i></button> ' +
+                 '<button class="aa-btn aa-btn-primary aa-btn-xs" title="Generate Transcript" onclick="generateTranscript(\''+id+'\')"><i class="fa fa-graduation-cap"></i></button> ' +
                  '<button class="aa-btn ' + lockBtnClass + ' aa-btn-xs" title="' + lockTitle + '" onclick="toggleLockOverride(\''+id+'\', ' + !r.lockOverride + ')"><i class="fa ' + lockIcon + '"></i></button> ' +
                  '<button class="aa-btn aa-btn-danger aa-btn-xs" title="Delete" onclick="deleteStudent(\''+id+'\')"><i class="fa fa-trash"></i></button>';
         });
@@ -1636,6 +1637,25 @@
       callServer('adminGenerateIDCard', [AA.token, studentId], function(res) {
         if (res.success) openPDFViewer(res.previewUrl, res.downloadUrl, 'Student ID Card');
         else showToast(res.message, 'error');
+      }, null, true);
+    }
+
+    function generateTranscript(studentId) {
+      showToast('Generating Transcript, please wait...', 'info');
+      callServer('adminGenerateTranscript', [AA.token, studentId], function(res) {
+        if (res.success) {
+          var newTab = window.open('', '_blank');
+          if (newTab) {
+            var decoded = decodeURIComponent(res.previewUrl.replace('data:text/html;charset=utf-8,', ''));
+            newTab.document.open();
+            newTab.document.write(decoded);
+            newTab.document.close();
+          } else {
+            showToast('Popup blocked. Please allow popups for this site.', 'error');
+          }
+        } else {
+          showToast(res.message || 'Failed to generate transcript', 'error');
+        }
       }, null, true);
     }
 

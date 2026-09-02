@@ -347,5 +347,282 @@ module.exports = {
     html += '</body></html>';
     
     return html;
+  },
+
+  generateStudentLedgerHTML: function(ledgerData, cfg) {
+    const s = ledgerData.student || {};
+    const bills = ledgerData.bills || [];
+    const payments = ledgerData.payments || [];
+    const startDate = ledgerData.startDate;
+    const endDate = ledgerData.endDate;
+    
+    let html = '<!DOCTYPE html><html><head><meta charset="utf-8">';
+    html += '<style>';
+    html += 'body{font-family: Arial, sans-serif; margin:0; padding:20px; color:#333; font-size:12px;}';
+    html += '.wrap{max-width:800px; margin:0 auto; padding:20px;}';
+    html += '.hdr{display:flex; align-items:center; border-bottom:2px solid #0d1b2a; padding-bottom:15px; margin-bottom:20px;}';
+    html += '.logo{width:70px; height:70px; object-fit:contain; margin-right:20px;}';
+    html += '.school-info{flex:1;}';
+    html += '.school-name{font-size:22px; font-weight:bold; color:#0d1b2a; margin-bottom:4px;}';
+    html += '.doc-title{font-size:16px; font-weight:bold; color:#f0a500; text-transform:uppercase;}';
+    
+    html += '.student-details{display:flex; justify-content:space-between; background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:25px;}';
+    html += '.student-details p{margin:0 0 5px 0; font-size:13px;}';
+    
+    html += 'h3{color:#0d1b2a; border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:20px; margin-bottom:10px; font-size:14px;}';
+    html += 'table{width:100%; border-collapse:collapse; margin-bottom:20px;}';
+    html += 'th, td{border:1px solid #ddd; padding:8px; text-align:left;}';
+    html += 'th{background:#0d1b2a; color:#fff; font-size:11px; text-transform:uppercase;}';
+    html += 'td{font-size:12px;}';
+    html += '.text-right{text-align:right;}';
+    html += '.text-center{text-align:center;}';
+    html += '.summary-box{display:flex; justify-content:flex-end; margin-top:20px;}';
+    html += '.summary-table{width:300px;}';
+    html += '.summary-table th{background:#f0f0f0; color:#333; text-align:right; width:60%;}';
+    html += '.summary-table td{text-align:right; font-weight:bold;}';
+    html += '</style>';
+    html += '</head><body><div class="wrap">';
+
+    const logoHtml = cfg.school_logo_url 
+        ? `<img src="${cfg.school_logo_url}" class="logo">` 
+        : `<div style="width:70px;height:70px;background:#0d1b2a;display:flex;align-items:center;justify-content:center;color:#f0a500;font-weight:bold;font-size:12px;margin-right:20px;">Logo</div>`;
+
+    html += '<div class="hdr">';
+    html += logoHtml;
+    html += '<div class="school-info">';
+    html += '<div class="school-name">' + (cfg.schoolName || cfg.school_name || "MySchool Portal") + '</div>';
+    html += '<div class="doc-title">Student Financial Statement</div>';
+    html += '</div>';
+    
+    html += '<div style="text-align:right;">';
+    html += '<p style="margin:0 0 4px 0;font-size:12px;"><strong>Date Printed:</strong> ' + new Date().toLocaleDateString() + '</p>';
+    if (startDate && endDate) {
+        html += '<p style="margin:0;font-size:12px;"><strong>Period:</strong> ' + startDate + ' to ' + endDate + '</p>';
+    }
+    html += '</div>';
+    html += '</div>'; // end hdr
+
+    html += '<div class="student-details">';
+    html += '<div>';
+    html += '<p><strong>Student Name:</strong> ' + (s.fullName || 'N/A') + '</p>';
+    html += '<p><strong>Class:</strong> ' + (s.className || 'N/A') + '</p>';
+    html += '</div>';
+    html += '<div>';
+    html += '<p><strong>Admission No:</strong> ' + (s.admissionNumber || 'N/A') + '</p>';
+    html += '<p><strong>Status:</strong> ' + (s.enrollmentStatus || 'Active') + '</p>';
+    html += '</div>';
+    html += '</div>';
+
+    // Format Currency Helper
+    const formatNaira = (amt) => {
+        return '&#8358;' + parseFloat(amt||0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    };
+
+    html += '<h3>Term Bills</h3>';
+    if (bills.length === 0) {
+        html += '<p class="text-center">No bills found for this period.</p>';
+    } else {
+        html += '<table><thead><tr><th>Term & Session</th><th>Billed Amount</th><th>Discount</th><th>Paid</th><th>Balance Due</th><th>Status</th></tr></thead><tbody>';
+        bills.forEach(b => {
+            const discount = parseFloat(b.discountAmount || 0);
+            const discountStr = discount > 0 ? ('-' + formatNaira(discount)) : '-';
+            html += `<tr>
+                <td>${b.term} ${b.session}</td>
+                <td class="text-right">${formatNaira(b.originalFeeTotal || b.totalBilled)}</td>
+                <td class="text-right">${discountStr}</td>
+                <td class="text-right">${formatNaira(b.totalPaid)}</td>
+                <td class="text-right" style="color:#d9534f;font-weight:bold;">${formatNaira(b.balance)}</td>
+                <td class="text-center">${b.status}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    html += '<h3>Payment History</h3>';
+    if (payments.length === 0) {
+        html += '<p class="text-center">No payments found for this period.</p>';
+    } else {
+        html += '<table><thead><tr><th>Date</th><th>Term & Session</th><th>Receipt Ref</th><th>Method</th><th>Amount Paid</th><th>Status</th></tr></thead><tbody>';
+        payments.forEach(p => {
+            const dateStr = p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : (p.date ? new Date(p.date).toLocaleDateString() : '-');
+            html += `<tr>
+                <td>${dateStr}</td>
+                <td>${p.term || ''} ${p.session || ''}</td>
+                <td>${p.receiptRef || p.id || ''}</td>
+                <td>${p.method || p.paymentMethod || 'N/A'}</td>
+                <td class="text-right" style="color:#5cb85c;font-weight:bold;">${formatNaira(p.amount)}</td>
+                <td class="text-center">${p.status || 'Approved'}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    // Summary Box
+    let totalBilled = 0;
+    bills.forEach(b => totalBilled += parseFloat(b.totalBilled || 0));
+    let totalPaid = 0;
+    payments.filter(p => p.status === 'Approved').forEach(p => totalPaid += parseFloat(p.amount || 0));
+    let balance = Math.max(0, totalBilled - totalPaid);
+    let overage = Math.max(0, totalPaid - totalBilled);
+
+    html += '<div class="summary-box"><table class="summary-table"><tbody>';
+    html += `<tr><th>Total Billed (Period):</th><td>${formatNaira(totalBilled)}</td></tr>`;
+    html += `<tr><th>Total Approved Payments:</th><td>${formatNaira(totalPaid)}</td></tr>`;
+    if (overage > 0) {
+        html += `<tr><th>Credit Balance (Overage):</th><td style="color:#5cb85c;">${formatNaira(overage)}</td></tr>`;
+    } else {
+        html += `<tr><th>Outstanding Balance:</th><td style="color:#d9534f;">${formatNaira(balance)}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+
+    html += '<div style="margin-top:40px;text-align:center;font-size:11px;color:#777;">This statement is electronically generated.</div>';
+    html += '</div></body></html>';
+    
+    return html;
+  },
+
+  generateTranscriptHTML: function(student, termData, cfg) {
+    let html = '<!DOCTYPE html><html><head><meta charset="utf-8">';
+    html += '<style>';
+    html += 'body{font-family: "Times New Roman", Times, serif; margin:0; padding:15px; color:#000; font-size:11px;}';
+    html += '.wrap{max-width:800px; margin:0 auto; padding:20px; border: 4px double #0d1b2a;}';
+    html += '.hdr{display:flex; align-items:center; border-bottom:2px solid #0d1b2a; padding-bottom:15px; margin-bottom:15px;}';
+    html += '.logo{width:80px; height:80px; object-fit:contain; margin-right:20px;}';
+    html += '.school-info{flex:1; text-align:center;}';
+    html += '.school-name{font-size:24px; font-weight:bold; color:#0d1b2a; margin-bottom:4px; text-transform:uppercase;}';
+    html += '.doc-title{font-size:16px; font-weight:bold; color:#f0a500; text-transform:uppercase; margin-top:5px; text-decoration:underline;}';
+    
+    html += '.student-details{display:flex; justify-content:space-between; padding:10px; border:1px solid #000; border-radius:4px; margin-bottom:20px; font-size:12px;}';
+    html += '.student-details p{margin:2px 0;}';
+    html += '.bio-label{font-weight:bold; text-transform:uppercase; margin-right:5px;}';
+    
+    html += '.term-block{margin-bottom:20px; page-break-inside: avoid;}';
+    html += '.term-title{font-size:13px; font-weight:bold; background:#0d1b2a; color:#fff; padding:4px 8px; margin-bottom:0; text-transform:uppercase;}';
+    html += 'table{width:100%; border-collapse:collapse; margin-bottom:5px;}';
+    html += 'th, td{border:1px solid #000; padding:4px; text-align:center;}';
+    html += 'th{background:#f0f0f0; font-weight:bold; font-size:10px; text-transform:uppercase;}';
+    html += 'td{font-size:11px;}';
+    html += '.text-left{text-align:left; padding-left:8px;}';
+    
+    html += '.term-avg{font-weight:bold; background:#f9f9f9;}';
+    
+    html += '.footer{margin-top:30px; font-size:10px;}';
+    html += '.legend-table{width:50%; font-size:9px; margin-bottom:15px; border-collapse:collapse;}';
+    html += '.legend-table th, .legend-table td{padding:2px; border:1px solid #000; text-align:center;}';
+    
+    html += '.sig-block{display:flex; justify-content:space-between; margin-top:40px;}';
+    html += '.sig-line{width:200px; border-top:1px solid #000; text-align:center; padding-top:4px;}';
+    html += '</style>';
+    html += '</head><body><div class="wrap">';
+
+    const logoHtml = cfg.school_logo_url 
+        ? `<img src="${cfg.school_logo_url}" class="logo">` 
+        : `<div style="width:80px;height:80px;background:#0d1b2a;display:flex;align-items:center;justify-content:center;color:#f0a500;font-weight:bold;font-size:12px;margin-right:20px;">Logo</div>`;
+
+    html += '<div class="hdr">';
+    html += logoHtml;
+    html += '<div class="school-info">';
+    html += '<div class="school-name">' + (cfg.schoolName || cfg.school_name || "MySchool Portal") + '</div>';
+    html += '<div style="font-size:11px;">' + (cfg.schoolAddress || "School Address") + '</div>';
+    html += '<div class="doc-title">Official Academic Transcript</div>';
+    html += '</div>';
+    html += '<div style="width:80px;"></div>'; // spacer for centering
+    html += '</div>'; // end hdr
+
+    html += '<div class="student-details">';
+    html += '<div>';
+    html += '<p><span class="bio-label">Student Name:</span> ' + (student.fullName || 'N/A') + '</p>';
+    html += '<p><span class="bio-label">Admission No:</span> ' + (student.admissionNumber || 'N/A') + '</p>';
+    html += '</div>';
+    html += '<div>';
+    html += '<p><span class="bio-label">Gender:</span> ' + (student.gender || 'N/A') + '</p>';
+    html += '<p><span class="bio-label">Date of Birth:</span> ' + (student.dob || 'N/A') + '</p>';
+    html += '</div>';
+    html += '</div>';
+
+    if (termData.length === 0) {
+        html += '<p style="text-align:center; padding:30px; font-style:italic;">No academic records found for this student.</p>';
+    } else {
+        termData.forEach(td => {
+            html += '<div class="term-block">';
+            html += '<div class="term-title">' + td.session + ' - ' + td.term + ' (' + (td.className || 'Class') + ')</div>';
+            html += '<table><thead><tr><th class="text-left">Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead><tbody>';
+            
+            let termTotalScore = 0;
+            let subCount = 0;
+            
+            td.scores.forEach(s => {
+                const ca = parseFloat(s.ca || s.termCA || 0);
+                const exam = parseFloat(s.exam || s.termExam || 0);
+                const total = parseFloat(s.total || s.termTotal || (ca + exam));
+                termTotalScore += total;
+                subCount++;
+                
+                let grade = s.grade || '';
+                let remark = s.remark || '';
+                
+                // Fallback grade calculation if missing
+                if (!grade) {
+                    if (total >= 75) { grade = 'A1'; remark = 'Excellent'; }
+                    else if (total >= 70) { grade = 'B2'; remark = 'Very Good'; }
+                    else if (total >= 65) { grade = 'B3'; remark = 'Good'; }
+                    else if (total >= 60) { grade = 'C4'; remark = 'Credit'; }
+                    else if (total >= 55) { grade = 'C5'; remark = 'Credit'; }
+                    else if (total >= 50) { grade = 'C6'; remark = 'Credit'; }
+                    else if (total >= 45) { grade = 'D7'; remark = 'Pass'; }
+                    else if (total >= 40) { grade = 'E8'; remark = 'Pass'; }
+                    else { grade = 'F9'; remark = 'Fail'; }
+                }
+                
+                html += `<tr>
+                    <td class="text-left">${s.subject || s.subjectName || ''}</td>
+                    <td>${s.ca !== undefined ? s.ca : (s.termCA !== undefined ? s.termCA : '-')}</td>
+                    <td>${s.exam !== undefined ? s.exam : (s.termExam !== undefined ? s.termExam : '-')}</td>
+                    <td><strong>${total}</strong></td>
+                    <td><strong>${grade}</strong></td>
+                    <td>${remark}</td>
+                </tr>`;
+            });
+            
+            const termAvg = subCount > 0 ? (termTotalScore / subCount).toFixed(1) : 0;
+            html += `<tr class="term-avg">
+                <td colspan="3" class="text-left">TERM AVERAGE</td>
+                <td colspan="3">${termAvg}%</td>
+            </tr>`;
+            
+            html += '</tbody></table>';
+            html += '</div>';
+        });
+    }
+
+    html += '<div class="footer">';
+    html += '<table class="legend-table"><thead><tr><th colspan="5">Grading Legend</th></tr><tr><th>Score</th><th>Grade</th><th>Remark</th></tr></thead><tbody>';
+    html += '<tr><td>75 - 100</td><td>A1</td><td>Excellent</td></tr>';
+    html += '<tr><td>70 - 74</td><td>B2</td><td>Very Good</td></tr>';
+    html += '<tr><td>65 - 69</td><td>B3</td><td>Good</td></tr>';
+    html += '<tr><td>60 - 64</td><td>C4</td><td>Credit</td></tr>';
+    html += '<tr><td>50 - 59</td><td>C5/C6</td><td>Credit</td></tr>';
+    html += '<tr><td>40 - 49</td><td>D7/E8</td><td>Pass</td></tr>';
+    html += '<tr><td>0 - 39</td><td>F9</td><td>Fail</td></tr>';
+    html += '</tbody></table>';
+    
+    html += '<div class="sig-block">';
+    html += '<div><p>Date Issued: <strong>' + new Date().toLocaleDateString() + '</strong></p></div>';
+    
+    html += '<div>';
+    if (cfg.principal_signature) {
+        html += `<img src="${cfg.principal_signature}" style="max-height:40px; margin-bottom:5px; display:block; margin: 0 auto;"><br>`;
+    } else {
+        html += '<br><br><br>';
+    }
+    html += '<div class="sig-line">Principal\'s Signature & Date</div>';
+    html += '</div>';
+    html += '</div>'; // end sig-block
+    
+    html += '</div>'; // end footer
+
+    html += '</div></body></html>';
+    
+    return html;
   }
 };

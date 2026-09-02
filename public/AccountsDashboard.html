@@ -476,6 +476,18 @@
     <div class="aa-modal aa-modal-lg">
       <div class="aa-modal-header"><h5 class="aa-modal-title">Student Ledger</h5><button class="aa-modal-close" onclick="closeModal('ledgerModal')">×</button></div>
       <div class="aa-modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #ddd;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:12px; font-weight:bold;">From:</label>
+            <input type="date" id="ledgerStartDate" class="aa-input" style="height:32px; width:130px;">
+            <label style="font-size:12px; font-weight:bold;">To:</label>
+            <input type="date" id="ledgerEndDate" class="aa-input" style="height:32px; width:130px;">
+          </div>
+          <div>
+            <button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadLedgerPDF()"><i class="fa fa-download"></i> Download PDF</button>
+          </div>
+        </div>
+        <input type="hidden" id="ledgerStudentId">
         <div id="ledgerContent">Loading...</div>
       </div>
     </div>
@@ -1061,6 +1073,7 @@
       }, null, true);
     }
     function viewLedger(sid) {
+      document.getElementById('ledgerStudentId').value = sid;
       callServer('adminGetStudentLedger', [AA.token, sid], function(res) {
         var html = '';
         if (res.creditBalance > 0) {
@@ -1095,6 +1108,31 @@
           }
         } else {
           showToast(res.message, 'error');
+        }
+      }, null, true);
+    }
+
+    function downloadLedgerPDF() {
+      var sid = document.getElementById('ledgerStudentId').value;
+      var startDate = document.getElementById('ledgerStartDate').value;
+      var endDate = document.getElementById('ledgerEndDate').value;
+      if (!sid) return showToast('No student selected', 'error');
+      
+      callServer('adminDownloadLedgerPDF', [AA.token, sid, startDate, endDate], function(res) {
+        if(res.success) {
+          var newTab = window.open('', '_blank');
+          if (newTab) {
+            var decoded = decodeURIComponent(res.previewUrl.replace('data:text/html;charset=utf-8,', ''));
+            newTab.document.open();
+            newTab.document.write(decoded);
+            newTab.document.close();
+            // Optional: trigger print automatically
+            setTimeout(function(){ newTab.print(); }, 1000);
+          } else {
+            showToast('Popup blocked. Please allow popups for this site.', 'error');
+          }
+        } else {
+          showToast(res.message || 'Error generating PDF', 'error');
         }
       }, null, true);
     }

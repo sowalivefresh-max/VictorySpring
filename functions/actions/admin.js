@@ -2129,6 +2129,67 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    adminDownloadLedgerPDF: async (req, res) => {
+      try {
+        const { studentId, startDate, endDate } = req.body;
+        
+        // Fetch student
+        const studentDoc = await db.collection("students").doc(studentId).get();
+        if(!studentDoc.exists) return res.json({ success: false, message: "Student not found" });
+        const student = studentDoc.data();
+        
+        // Fetch bills and payments
+        const billsSnap = await db.collection("bills").where("studentId", "==", studentId).get();
+        const paymentsSnap = await db.collection("payments").where("studentId", "==", studentId).get();
+        
+        let bills = billsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let payments = paymentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filter by Date
+        if (startDate && endDate) {
+          const start = new Date(startDate).getTime();
+          const end = new Date(endDate).getTime() + (24 * 60 * 60 * 1000) - 1; // End of day
+          
+          bills = bills.filter(b => {
+             const ts = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+             return ts >= start && ts <= end;
+          });
+          
+          payments = payments.filter(p => {
+             const ts = (p.paymentDate || p.date) ? new Date(p.paymentDate || p.date).getTime() : 0;
+             return ts >= start && ts <= end;
+          });
+        }
+        
+        // Sort chronologically
+        bills.sort((a,b) => (a.createdAt ? new Date(a.createdAt).getTime() : 0) - (b.createdAt ? new Date(b.createdAt).getTime() : 0));
+        payments.sort((a,b) => {
+          const ta = (a.paymentDate || a.date) ? new Date(a.paymentDate || a.date).getTime() : 0;
+          const tb = (b.paymentDate || b.date) ? new Date(b.paymentDate || b.date).getTime() : 0;
+          return ta - tb;
+        });
+        
+        const ledgerData = {
+          student,
+          bills,
+          payments,
+          startDate,
+          endDate
+        };
+        
+        const pdfGenerator = require("./pdf");
+        const cfgDoc = await db.collection("settings").doc("global").get();
+        const cfg = cfgDoc.exists ? cfgDoc.data() : { schoolName: "MySchool Portal" };
+        
+        const html = pdfGenerator.generateStudentLedgerHTML(ledgerData, cfg);
+        const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+        
+        return res.json({ success: true, previewUrl: dataUri });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
     adminGenerateReceipt: async (req, res) => {
       try {
         const { paymentId } = req.body;
@@ -2438,6 +2499,61 @@ module.exports = function(db, notificationsActions) {
         const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
         
         return res.json({ success: true, previewUrl: dataUri, downloadUrl: dataUri });
+      } catch(err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
+    adminGenerateTranscript: async (req, res) => {
+      try {
+        const { studentId } = req.body;
+        
+        // Fetch student
+        const studentDoc = await db.collection("students").doc(studentId).get();
+        if(!studentDoc.exists) return res.json({ success: false, message: "Student not found" });
+        const student = studentDoc.data();
+        
+        // Fetch ALL scores for this student
+        const scoresSnap = await db.collection("assessments").where("studentId", "==", studentId).get();
+        const allScores = scoresSnap.docs.map(d => d.data());
+        
+        // Group by Session and Term
+        let grouped = {};
+        allScores.forEach(s => {
+           let session = s.session || 'Unknown Session';
+           let term = s.term || 'Unknown Term';
+           let key = session + '_' + term;
+           if (!grouped[key]) {
+               grouped[key] = {
+                   session: session,
+                   term: term,
+                   className: s.className || student.className || '',
+                   scores: []
+               };
+           }
+           grouped[key].scores.push(s);
+        });
+        
+        // Convert to array and sort (simple string sort works well for "2023/2024_First Term")
+        let termData = Object.values(grouped);
+        termData.sort((a,b) => {
+           if(a.session !== b.session) return a.session.localeCompare(b.session);
+           
+           // Sort terms chronologically
+           const termOrder = { "First Term": 1, "Second Term": 2, "Third Term": 3 };
+           const orderA = termOrder[a.term] || 99;
+           const orderB = termOrder[b.term] || 99;
+           return orderA - orderB;
+        });
+        
+        const pdfGenerator = require("./pdf");
+        const cfgDoc = await db.collection("settings").doc("global").get();
+        const cfg = cfgDoc.exists ? cfgDoc.data() : { schoolName: "MySchool Portal" };
+        
+        const html = pdfGenerator.generateTranscriptHTML(student, termData, cfg);
+        const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+        
+        return res.json({ success: true, previewUrl: dataUri });
       } catch(err) {
         return res.json({ success: false, message: err.message });
       }
