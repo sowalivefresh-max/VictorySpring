@@ -526,7 +526,11 @@ module.exports = {
     html += '<div style="font-size:11px;">' + (cfg.schoolAddress || "School Address") + '</div>';
     html += '<div class="doc-title">Official Academic Transcript</div>';
     html += '</div>';
-    html += '<div style="width:80px;"></div>'; // spacer for centering
+    if (student.photoUrl) {
+        html += `<img src="${student.photoUrl}" style="width:80px; height:80px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">`;
+    } else {
+        html += '<div style="width:80px;height:80px;background:#eee;border:1px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">No Photo</div>';
+    }
     html += '</div>'; // end hdr
 
     html += '<div class="student-details">';
@@ -610,12 +614,12 @@ module.exports = {
     html += '<div><p>Date Issued: <strong>' + new Date().toLocaleDateString() + '</strong></p></div>';
     
     html += '<div>';
-    if (cfg.principal_signature) {
-        html += `<img src="${cfg.principal_signature}" style="max-height:40px; margin-bottom:5px; display:block; margin: 0 auto;"><br>`;
+    if (cfg.head_teacher_signature || cfg.principal_signature) {
+        html += `<img src="${cfg.head_teacher_signature || cfg.principal_signature}" style="max-height:40px; margin-bottom:5px; display:block; margin: 0 auto;"><br>`;
     } else {
         html += '<br><br><br>';
     }
-    html += '<div class="sig-line">Principal\'s Signature & Date</div>';
+    html += '<div class="sig-line">Head Teacher\'s Signature & Date</div>';
     html += '</div>';
     html += '</div>'; // end sig-block
     
