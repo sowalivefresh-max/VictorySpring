@@ -242,6 +242,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminRecordPayment") { req.body.data = args[1]; }
         if (action === "adminGetStudentLedger") { req.body.studentId = args[1]; }
         if (action === "adminDownloadLedgerPDF") { req.body.studentId = args[1]; req.body.startDate = args[2]; req.body.endDate = args[3]; }
+        if (action === "adminDownloadBillInvoice") { req.body.billId = args[1]; }
         if (action === "adminGetSchoolPerformance") { req.body.term = args[1]; req.body.session = args[2]; req.body.section = args[3]; req.body.campusId = args[4] || null; }
         if (action === "adminGetSchoolPerformanceAnalytics") { req.body.term = args[1]; req.body.session = args[2]; req.body.section = args[3]; req.body.campusId = args[4] || null; }
         if (action === "adminGetYearGroupRanking") { req.body.term = args[1]; req.body.session = args[2]; req.body.yearGroup = args[3]; }

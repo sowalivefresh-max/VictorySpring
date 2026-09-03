@@ -628,5 +628,180 @@ module.exports = {
     html += '</div></body></html>';
     
     return html;
+  },
+
+  generateBillPDFHTML: function(student, bill, cfg) {
+    const formatNaira = (amt) => {
+        return Number(amt || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    };
+    
+    const schoolName = cfg.schoolName || cfg.school_name || "Victory Spring Academy";
+    const schoolAddress = cfg.schoolAddress || "123 Education Avenue, Lagos, Nigeria";
+    const schoolEmail = cfg.schoolEmail || cfg.smtp_email || "info@victoryspringacademy.com";
+    const schoolWebsite = cfg.schoolWebsite || "www.victoryspringacademy.com";
+    
+    // Generate Invoice Number
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB'); // dd/mm/yyyy
+    
+    // Determine due date (assume 1st day of term, mock it to +14 days from now if not in config)
+    const dueObj = new Date();
+    dueObj.setDate(dueObj.getDate() + 14);
+    const dueDateStr = dueObj.toLocaleDateString('en-GB');
+
+    let invoiceNo = 'INV-' + (bill.session || '').replace('/', '') + '-' + (bill.term || 'TERM').substring(0,6).toUpperCase();
+    if (student.admissionNumber) {
+        invoiceNo += '-' + student.admissionNumber.replace(/\D/g, '');
+    } else {
+        invoiceNo += '-' + Math.floor(Math.random() * 10000);
+    }
+    
+    let html = '<!DOCTYPE html><html><head><meta charset="utf-8">';
+    html += '<style>';
+    html += 'body{font-family: "Arial", sans-serif; margin:0; padding:15px; color:#000; font-size:12px;}';
+    html += '.wrap{max-width:800px; margin:0 auto;}';
+    html += '.hdr{display:flex; align-items:flex-start; margin-bottom:20px;}';
+    html += '.school-info{flex:1;}';
+    html += '.school-name{font-size:24px; font-weight:bold; margin-bottom:10px; text-transform:uppercase;}';
+    html += '.logo{width:120px; height:120px; object-fit:contain; margin-left:20px;}';
+    
+    html += '.student-bar{display:flex; border:1px solid #000; margin-bottom:10px;}';
+    html += '.student-label{font-weight:bold; padding:8px; width:40%;}';
+    html += '.student-name{font-weight:bold; padding:8px; font-size:14px; text-transform:uppercase;}';
+    
+    html += '.top-right-table{width:40%; margin-left:auto; border-collapse:collapse; margin-bottom:20px; font-size:11px;}';
+    html += '.top-right-table th, .top-right-table td{border:1px solid #000; padding:4px 8px;}';
+    html += '.top-right-table th{text-align:left; font-weight:bold;}';
+    html += '.top-right-table td{text-align:center;}';
+    
+    html += '.split-layout{display:flex; gap:10px;}';
+    html += '.notes-col{width:45%;}';
+    html += '.items-col{width:55%;}';
+    
+    html += '.notes-box{border:1px solid #000; padding:0; height:100%;}';
+    html += '.notes-hdr{font-weight:bold; text-align:center; padding:4px; border-bottom:1px solid #000; background:#f9f9f9;}';
+    html += '.notes-content{padding:10px; font-size:11px; line-height:1.4;}';
+    html += '.notes-content ol{padding-left:15px; margin:0;}';
+    html += '.notes-content li{margin-bottom:10px;}';
+    
+    html += '.items-table{width:100%; border-collapse:collapse; font-size:11px; height:100%;}';
+    html += '.items-table th, .items-table td{border:1px solid #000; padding:6px 8px;}';
+    html += '.items-table th{text-align:center; font-weight:bold; background:#f9f9f9;}';
+    html += '.item-name{width:60%;}';
+    html += '.item-amt{text-align:right;}';
+    
+    html += '.total-row{font-weight:bold;}';
+    html += '.total-label{text-align:right;}';
+    
+    html += '.payment-details{margin-top:20px; border-collapse:collapse; width:100%; font-size:11px;}';
+    html += '.payment-details th, .payment-details td{border:1px solid #000; padding:6px 8px; text-align:center;}';
+    html += '.payment-details th{font-weight:bold; background:#f9f9f9;}';
+    
+    html += '</style>';
+    html += '</head><body><div class="wrap">';
+
+    // Header
+    const logoHtml = cfg.school_logo_url 
+        ? `<img src="${cfg.school_logo_url}" class="logo">` 
+        : `<div class="logo" style="background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">Logo</div>`;
+
+    html += '<div class="hdr">';
+    html += '<div class="school-info">';
+    html += '<div class="school-name">' + schoolName + '</div>';
+    html += '<div style="margin-bottom:15px;">' + schoolAddress + '</div>';
+    html += '<div>e-mail: ' + schoolEmail + '</div>';
+    html += '<div>website: ' + schoolWebsite + '</div>';
+    html += '</div>';
+    html += logoHtml;
+    html += '</div>';
+
+    // Student Bar
+    html += '<div class="student-bar">';
+    html += '<div class="student-label">Account in respect of</div>';
+    html += '<div class="student-name">' + (student.fullName || 'N/A') + '</div>';
+    html += '</div>';
+    
+    // Top Right Table
+    html += '<table class="top-right-table">';
+    html += `<tr><th>DATE:</th><td>${dateStr}</td></tr>`;
+    html += `<tr><th>DUE DATE:</th><td>${dueDateStr}</td></tr>`;
+    html += `<tr><th>INVOICE NO:</th><td>${invoiceNo}</td></tr>`;
+    html += `<tr><th>TERM:</th><td>${bill.term || ''}</td></tr>`;
+    html += `<tr><th>STUDENT NO:</th><td>${student.admissionNumber || ''}</td></tr>`;
+    html += `<tr><th>CLASS:</th><td>${student.className || ''}</td></tr>`;
+    html += '</table>';
+
+    // Split Section
+    html += '<div class="split-layout">';
+    
+    // Notes Col
+    html += '<div class="notes-col"><div class="notes-box">';
+    html += '<div class="notes-hdr">Notes:</div>';
+    html += '<div class="notes-content"><ol>';
+    html += '<li>Fees are to be paid on or before the 1st day of Term.</li>';
+    html += '<li>Pupils whose fees are not paid before school resumes would not be allowed into the school upon resumption.</li>';
+    html += '<li>Payment is to be made directly to the school bank accounts, tellers and other evidence of payment should be forwarded to the Bursar at ' + schoolEmail + ' on or before the first day of Term.</li>';
+    html += '<li>Damages done by pupils other than wear and tear will be separately invoiced and must be paid as an extra.</li>';
+    html += '</ol></div>';
+    html += '</div></div>';
+
+    // Items Col
+    let lineItems = [];
+    try { lineItems = typeof bill.lineItems === 'string' ? JSON.parse(bill.lineItems) : (bill.lineItems || []); } catch(e){}
+    
+    // If no lineItems explicitly stored in the bill document (older bills), fallback to totalBilled
+    if (lineItems.length === 0 && bill.totalBilled) {
+        lineItems.push({ name: "Tuition", amount: bill.totalBilled });
+    }
+
+    html += '<div class="items-col">';
+    html += '<table class="items-table">';
+    html += '<thead><tr><th colspan="2">ITEM</th></tr></thead>';
+    html += '<tbody>';
+    
+    let totalAmt = 0;
+    lineItems.forEach(item => {
+        const amt = parseFloat(item.amount) || 0;
+        totalAmt += amt;
+        html += `<tr>
+            <td class="item-name">${item.name}</td>
+            <td class="item-amt">${formatNaira(amt)}</td>
+        </tr>`;
+    });
+    
+    // Empty rows for filler to match screenshot style
+    for(let i=0; i < Math.max(0, 10 - lineItems.length); i++) {
+        html += `<tr><td>&nbsp;</td><td></td></tr>`;
+    }
+
+    if (bill.discountAmount && parseFloat(bill.discountAmount) > 0) {
+        html += `<tr><td class="item-name">Discount</td><td class="item-amt">-${formatNaira(bill.discountAmount)}</td></tr>`;
+        totalAmt -= parseFloat(bill.discountAmount);
+    }
+
+    html += `<tr class="total-row">
+        <td class="total-label">Total Due: NGN</td>
+        <td class="item-amt">${formatNaira(totalAmt)}</td>
+    </tr>`;
+    html += '</tbody></table>';
+    html += '</div>'; // end items-col
+    
+    html += '</div>'; // end split-layout
+
+    // Payment Details
+    html += '<table class="payment-details">';
+    html += '<thead><tr><th colspan="3">PAYMENT DETAILS :</th></tr>';
+    html += '<tr><th>BANK</th><th>ACCOUNT NO</th><th>ACCOUNT NAME</th></tr></thead>';
+    html += '<tbody>';
+    html += `<tr>
+        <td>ZENITH BANK</td>
+        <td>1312426803</td>
+        <td>VICTORY SPRING ACADEMY</td>
+    </tr>`;
+    html += '</tbody></table>';
+
+    html += '</div></body></html>';
+    
+    return html;
   }
 };

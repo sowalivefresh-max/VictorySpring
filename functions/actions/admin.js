@@ -2190,6 +2190,33 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    adminDownloadBillInvoice: async (req, res) => {
+      try {
+        const { billId } = req.body;
+        if (!billId) return res.json({ success: false, message: "billId is required" });
+
+        const billDoc = await db.collection("bills").doc(billId).get();
+        if (!billDoc.exists) return res.json({ success: false, message: "Bill not found" });
+        const bill = { id: billDoc.id, ...billDoc.data() };
+
+        const stuId = bill.studentId || bill.studentID;
+        const stuDoc = await db.collection("students").doc(stuId).get();
+        if (!stuDoc.exists) return res.json({ success: false, message: "Student not found" });
+        const student = { id: stuDoc.id, ...stuDoc.data() };
+
+        const pdfGenerator = require("./pdf");
+        const cfgDoc = await db.collection("settings").doc("global").get();
+        const cfg = cfgDoc.exists ? cfgDoc.data() : { schoolName: "Victory Spring Academy" };
+
+        const html = pdfGenerator.generateBillPDFHTML(student, bill, cfg);
+        const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+
+        return res.json({ success: true, previewUrl: dataUri });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
     adminGenerateReceipt: async (req, res) => {
       try {
         const { paymentId } = req.body;
