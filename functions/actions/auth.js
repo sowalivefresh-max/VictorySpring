@@ -169,9 +169,13 @@ module.exports = function(db) {
     userChangePassword: async (req, res) => {
       if (!req.session) return res.status(401).json({ success: false, message: "Unauthorized" });
       
-      const { currentPassword, newPassword } = req.body;
+      const currentPassword = req.body.currentPassword || req.body.oldPassword;
+      const newPassword = req.body.newPassword;
       if (!currentPassword || !newPassword) {
         return res.json({ success: false, message: "Current and new password required." });
+      }
+      if (String(newPassword).length < 6) {
+        return res.json({ success: false, message: "New password must be at least 6 characters." });
       }
 
       try {

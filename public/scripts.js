@@ -187,15 +187,25 @@ var AA = {
   },
 
   changePwd: function() {
-    var o = document.getElementById('oldPwd').value;
-    var n = document.getElementById('newPwd').value;
-    if (!o || !n) return showToast('Enter both passwords', 'error');
+    var oldEl = document.getElementById('oldPwd');
+    var newEl = document.getElementById('newPwd');
+    var confEl = document.getElementById('confirmPwd');
+    var o = oldEl ? oldEl.value.trim() : '';
+    var n = newEl ? newEl.value.trim() : '';
+    var c = confEl ? confEl.value.trim() : n;
+    if (!o || !n) return showToast('Current and new password required.', 'error');
+    if (n.length < 6) return showToast('New password must be at least 6 characters.', 'error');
+    if (confEl && n !== c) return showToast('New passwords do not match.', 'error');
     callServer('userChangePassword', [AA.token, o, n], function(r) {
       showToast(r.message, r.success ? 'success' : 'error');
       if (r.success) {
-        document.getElementById('oldPwd').value = '';
-        document.getElementById('newPwd').value = '';
+        if (oldEl) oldEl.value = '';
+        if (newEl) newEl.value = '';
+        if (confEl) confEl.value = '';
         closeModal('profileModal');
+        setTimeout(function() {
+          if (typeof AA !== 'undefined' && AA.logout) AA.logout();
+        }, 1500);
       }
     }, null, true);
   },

@@ -576,7 +576,7 @@
   </div>
 
   <script src="api.js?v=3"></script>
-  <script src="scripts.js?v=1788044467"></script>
+  <script src="scripts.js?v=1788044468"></script>
   <script>
     var currentTerm = ''; var currentSession = '';
     var myClass = ''; var myStudents = []; var mySubjects = [];
@@ -609,6 +609,9 @@
           document.getElementById('newPwd').value = '';
           if (document.getElementById('confirmPwd')) document.getElementById('confirmPwd').value = '';
           closeModal('profileModal');
+          setTimeout(function() {
+            if (typeof AA !== 'undefined' && AA.logout) AA.logout();
+          }, 1500);
         }
       });
     }

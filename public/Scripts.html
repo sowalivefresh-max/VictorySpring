@@ -134,6 +134,9 @@ var AA = {
         document.getElementById('newPwd').value = '';
         if (document.getElementById('confirmPwd')) document.getElementById('confirmPwd').value = '';
         closeModal('profileModal');
+        setTimeout(function() {
+          if (typeof AA !== 'undefined' && AA.logout) AA.logout();
+        }, 1500);
       }
     }, null, true);
   },
