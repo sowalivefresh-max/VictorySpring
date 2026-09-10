@@ -409,7 +409,7 @@ function setFormData(formId, data) {
     var el = form.querySelector('[name="' + k + '"]');
     if (el) {
       if (el.multiple && (typeof data[k] === 'string' || Array.isArray(data[k]))) {
-        var vals = Array.isArray(data[k]) ? data[k] : data[k].split(',');
+        var vals = Array.isArray(data[k]) ? data[k] : String(data[k]).split(',').map(function(s){return s.trim();});
         for(var i = 0; i < el.options.length; i++) {
           el.options[i].selected = vals.indexOf(el.options[i].value) !== -1;
         }

@@ -2192,6 +2192,7 @@
     function filterSubjectClassesBySection(section) {
       var sec = normalizeSection(section);
       var filteredClasses = globalClasses.filter(function(c) {
+        if (!sec) return true;
         var cSec = normalizeSection(c.section);
         return cSec === sec || !cSec;
       });
