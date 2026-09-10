@@ -240,7 +240,8 @@ module.exports = function(db) {
           current_session: cfg.current_session || "2026/2027",
           theme_primary: cfg.theme_primary || "",
           theme_secondary: cfg.theme_secondary || "",
-          campuses: cfg.campuses || []
+          campuses: cfg.campuses || [],
+          gradebook_format: cfg.gradebook_format || null
         });
       } catch (err) {
         return res.json({ success: false, message: err.message });
