@@ -1,4 +1,4 @@
-<script>
+﻿<script>
 /* ============================================================
    ABECEDARIAN ACADEMY - Shared Frontend JavaScript
    All dashboards include this file via <?!= include('Scripts') ?>
@@ -121,14 +121,18 @@ var AA = {
   },
 
   changePwd: function() {
-    var o = document.getElementById('oldPwd').value;
-    var n = document.getElementById('newPwd').value;
-    if (!o || !n) return showToast('Enter both passwords', 'error');
+    var o = document.getElementById('oldPwd').value.trim();
+    var n = document.getElementById('newPwd').value.trim();
+    var c = document.getElementById('confirmPwd') ? document.getElementById('confirmPwd').value.trim() : n;
+    if (!o || !n) return showToast('Current and new password required.', 'error');
+    if (n.length < 6) return showToast('New password must be at least 6 characters.', 'error');
+    if (n !== c) return showToast('New passwords do not match.', 'error');
     callServer('userChangePassword', [AA.token, o, n], function(r) {
       showToast(r.message, r.success ? 'success' : 'error');
       if (r.success) {
         document.getElementById('oldPwd').value = '';
         document.getElementById('newPwd').value = '';
+        if (document.getElementById('confirmPwd')) document.getElementById('confirmPwd').value = '';
         closeModal('profileModal');
       }
     }, null, true);
@@ -232,7 +236,7 @@ function showToast(message, type, duration) {
   toast.className = 'aa-toast ' + t;
   toast.innerHTML = '<span class="aa-toast-icon">' + (icons[t] || '') + '</span>' +
     '<span class="aa-toast-msg">' + message + '</span>' +
-    '<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;color:#888;font-size:16px;">Ã-</button>';
+    '<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;color:#888;font-size:16px;">Ãƒ-</button>';
   container.appendChild(toast);
 
   setTimeout(function() { if (toast.parentNode) toast.remove(); }, duration || 4000);
@@ -690,3 +694,4 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+

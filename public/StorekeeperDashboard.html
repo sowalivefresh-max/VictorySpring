@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json" />
@@ -18,7 +18,7 @@
       <div class="aa-sidebar-brand">
         <div class="aa-brand-icon">SK</div>
         <div class="aa-brand-text">
-          <div class="aa-brand-name" id="sb-school-name">Loading…</div>
+          <div class="aa-brand-name" id="sb-school-name">Loadingâ€¦</div>
           <div class="aa-brand-role">Store Keeper</div>
         </div>
       </div>
@@ -201,7 +201,7 @@
     <div class="aa-modal">
       <div class="aa-modal-header">
         <h5 class="aa-modal-title">Receive Stock / Add Item</h5>
-        <button class="aa-modal-close" onclick="closeModal('receiveModal')">×</button>
+        <button class="aa-modal-close" onclick="closeModal('receiveModal')">Ã—</button>
       </div>
       <div class="aa-modal-body">
         <form id="receiveForm">
@@ -249,7 +249,7 @@
   <div class="aa-modal-backdrop" id="profileModal">
     <!-- Similar to Accounts Dashboard -->
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <div class="text-center mb-4">
           <div class="aa-user-name fs-20 fw-700 mt-2" id="profNameDisplay"></div>
@@ -270,8 +270,16 @@
         <hr class="my-4" style="border:0;border-top:1px solid #eee;">
         <h6 class="mb-3">Change Password</h6>
         <div class="aa-form-group">
-          <input type="password" id="oldPwd" class="aa-input mb-2" placeholder="Current Password">
-          <input type="password" id="newPwd" class="aa-input" placeholder="New Password">
+          <label class="aa-label">Current Password</label>
+          <input type="password" id="oldPwd" class="aa-input" placeholder="Enter your current password">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">New Password</label>
+          <input type="password" id="newPwd" class="aa-input" placeholder="Min. 6 characters">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">Confirm New Password</label>
+          <input type="password" id="confirmPwd" class="aa-input" placeholder="Re-enter new password">
         </div>
         <div class="d-flex gap-2">
           <button class="aa-btn aa-btn-outline w-100" onclick="AA.changePwd()">Update Password</button>

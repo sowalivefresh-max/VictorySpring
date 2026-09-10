@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json" />
@@ -149,14 +149,14 @@
           <div id="finContent" style="display:none;">
             <!-- Clearance Badge -->
             <div id="clearanceBadge" style="display:none; text-align:center; padding:20px; margin-bottom:16px; background:linear-gradient(135deg,#064e3b,#065f46); border-radius:14px; border:2px solid #10b981;">
-              <div style="font-size:48px; margin-bottom:6px;">✅</div>
+              <div style="font-size:48px; margin-bottom:6px;">âœ…</div>
               <h3 style="color:#6ee7b7; margin:0 0 4px; font-size:22px;">Financially Cleared!</h3>
               <p style="color:#a7f3d0; margin:0; font-size:14px;">All fees are fully paid. Thank you for your prompt payment!</p>
             </div>
             <!-- Early-Bird Banner -->
             <div id="earlyBirdBanner" style="display:none; background:linear-gradient(135deg,#1e3a5f,#1e40af); border-radius:12px; padding:16px 20px; margin-bottom:16px; border:1px solid #3b82f6;">
               <div style="display:flex; align-items:center; gap:12px;">
-                <div style="font-size:28px;">⚡</div>
+                <div style="font-size:28px;">âš¡</div>
                 <div>
                   <div style="color:#93c5fd; font-weight:700; font-size:15px;">Early Payment Discount Available!</div>
                   <div id="earlyBirdText" style="color:#bfdbfe; font-size:13px;">Pay in full before the deadline and save on tuition.</div>
@@ -204,7 +204,7 @@
     <div class="aa-modal">
       <div class="aa-modal-header">
         <h5 class="aa-modal-title">Submit Payment Proof</h5>
-        <button class="aa-modal-close" onclick="closeModal('submitPaymentModal')">×</button>
+        <button class="aa-modal-close" onclick="closeModal('submitPaymentModal')">Ã—</button>
       </div>
       <div class="aa-modal-body">
         <div class="aa-alert aa-alert-info mb-3">
@@ -242,7 +242,7 @@
   <!-- Profile Modal -->
   <div class="aa-modal-backdrop" id="profileModal">
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <div class="text-center mb-4">
           <div class="position-relative d-inline-block">
@@ -271,8 +271,16 @@
         <hr class="my-4" style="border:0;border-top:1px solid #eee;">
         <h6 class="mb-3">Change Password</h6>
         <div class="aa-form-group">
-          <input type="password" id="oldPwd" class="aa-input mb-2" placeholder="Current Password">
-          <input type="password" id="newPwd" class="aa-input" placeholder="New Password">
+          <label class="aa-label">Current Password</label>
+          <input type="password" id="oldPwd" class="aa-input" placeholder="Enter your current password">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">New Password</label>
+          <input type="password" id="newPwd" class="aa-input" placeholder="Min. 6 characters">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">Confirm New Password</label>
+          <input type="password" id="confirmPwd" class="aa-input" placeholder="Re-enter new password">
         </div>
         <div class="d-flex gap-2">
           <button class="aa-btn aa-btn-outline w-100" onclick="AA.changePwd()">Update Password</button>
@@ -446,7 +454,7 @@
             }},
             {key:'plan', render:function(r){
               var plan = planMap[r.id];
-              if (!plan) return '<span style="color:#64748b;font-size:12px;">—</span>';
+              if (!plan) return '<span style="color:#64748b;font-size:12px;">â€”</span>';
               if (plan.status === 'pending') return '<span class="aa-badge aa-badge-warning">Plan Pending</span>';
               if (plan.status === 'approved') {
                 var expectedPaid = 0;
@@ -583,7 +591,7 @@
       // Build bill selector
       var billOptions = unpaidBills.map(function(b) {
         var totalDue = (parseFloat(b.balance)||0) + (parseFloat(b.arrears)||0);
-        return '<option value="' + b.id + '" data-term="' + (b.term||'') + '" data-session="' + (b.session||'') + '" data-total="' + totalDue + '">' + b.term + ' ' + b.session + ' — ' + formatNaira(totalDue) + ' due</option>';
+        return '<option value="' + b.id + '" data-term="' + (b.term||'') + '" data-session="' + (b.session||'') + '" data-total="' + totalDue + '">' + b.term + ' ' + b.session + ' â€” ' + formatNaira(totalDue) + ' due</option>';
       }).join('');
       document.getElementById('installmentBillSelect').innerHTML = billOptions;
       // Update total display when bill changes
@@ -645,7 +653,7 @@
     <div class="aa-modal" style="max-width:520px;">
       <div class="aa-modal-header">
         <h5 class="aa-modal-title"><i class="fa fa-calendar-alt"></i> Request Installment Plan</h5>
-        <button class="aa-modal-close" onclick="closeModal('installmentModal')">×</button>
+        <button class="aa-modal-close" onclick="closeModal('installmentModal')">Ã—</button>
       </div>
       <div class="aa-modal-body">
         <div class="aa-alert aa-alert-info mb-3">

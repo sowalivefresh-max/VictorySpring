@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json" />
@@ -312,7 +312,7 @@
   <!-- Profile Modal -->
   <div class="aa-modal-backdrop" id="profileModal">
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <div class="text-center mb-4">
           <div class="position-relative d-inline-block">
@@ -341,8 +341,16 @@
         <hr class="my-4" style="border:0;border-top:1px solid #eee;">
         <h6 class="mb-3">Change Password</h6>
         <div class="aa-form-group">
-          <input type="password" id="oldPwd" class="aa-input mb-2" placeholder="Current Password">
-          <input type="password" id="newPwd" class="aa-input" placeholder="New Password">
+          <label class="aa-label">Current Password</label>
+          <input type="password" id="oldPwd" class="aa-input" placeholder="Enter your current password">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">New Password</label>
+          <input type="password" id="newPwd" class="aa-input" placeholder="Min. 6 characters">
+        </div>
+        <div class="aa-form-group">
+          <label class="aa-label">Confirm New Password</label>
+          <input type="password" id="confirmPwd" class="aa-input" placeholder="Re-enter new password">
         </div>
         <div class="d-flex gap-2">
           <button class="aa-btn aa-btn-outline w-100" onclick="AA.changePwd()">Update Password</button>
@@ -355,7 +363,7 @@
   <!-- Fee Structure Modal -->
   <div class="aa-modal-backdrop" id="feeModal">
     <div class="aa-modal aa-modal-lg">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">Fee Structure</h5><button class="aa-modal-close" onclick="closeModal('feeModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">Fee Structure</h5><button class="aa-modal-close" onclick="closeModal('feeModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <input type="hidden" id="feeId">
         <div class="aa-grid-2 mb-3">
@@ -391,7 +399,7 @@
   <!-- Payment Modal -->
   <div class="aa-modal-backdrop" id="paymentModal">
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">Record Payment</h5><button class="aa-modal-close" onclick="closeModal('paymentModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">Record Payment</h5><button class="aa-modal-close" onclick="closeModal('paymentModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <form id="paymentForm">
           <div class="aa-form-group">
@@ -419,7 +427,7 @@
   <!-- Discount Modal -->
   <div class="aa-modal-backdrop" id="discountModal">
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">Set Student Discount</h5><button class="aa-modal-close" onclick="closeModal('discountModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">Set Student Discount</h5><button class="aa-modal-close" onclick="closeModal('discountModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <input type="hidden" id="discountStudentId">
         <p style="font-size:13px; color:var(--aa-muted); margin-bottom:15px;">Configure a fee discount for <strong id="discountStudentName" class="text-navy"></strong>. This discount will be applied automatically whenever term bills are generated for their class.</p>
@@ -446,7 +454,7 @@
   <!-- Expense Modal -->
   <div class="aa-modal-backdrop" id="expenseModal">
     <div class="aa-modal">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">Record Expense</h5><button class="aa-modal-close" onclick="closeModal('expenseModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">Record Expense</h5><button class="aa-modal-close" onclick="closeModal('expenseModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <form id="expenseForm">
           <input type="hidden" name="id" id="expenseId">
@@ -474,7 +482,7 @@
   <!-- Ledger Modal -->
   <div class="aa-modal-backdrop" id="ledgerModal">
     <div class="aa-modal aa-modal-lg">
-      <div class="aa-modal-header"><h5 class="aa-modal-title">Student Ledger</h5><button class="aa-modal-close" onclick="closeModal('ledgerModal')">×</button></div>
+      <div class="aa-modal-header"><h5 class="aa-modal-title">Student Ledger</h5><button class="aa-modal-close" onclick="closeModal('ledgerModal')">Ã—</button></div>
       <div class="aa-modal-body">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #ddd;">
           <div style="display:flex; gap:10px; align-items:center;">
@@ -498,7 +506,7 @@
     <div class="aa-modal">
       <div class="aa-modal-header">
         <h5 class="aa-modal-title">Review Parent Payment</h5>
-        <button class="aa-modal-close" onclick="closeModal('reviewPaymentModal')">×</button>
+        <button class="aa-modal-close" onclick="closeModal('reviewPaymentModal')">Ã—</button>
       </div>
       <div class="aa-modal-body">
         <input type="hidden" id="revPayId">
@@ -559,9 +567,22 @@
     });
 
     function changePwd() {
-      var o=document.getElementById('oldPwd').value, n=document.getElementById('newPwd').value;
-      if(!o||!n) return showToast('Enter both passwords', 'error');
-      callServer('userChangePassword', [AA.token, o, n], function(r){ showToast(r.message, r.success?'success':'error'); if(r.success)closeModal('profileModal'); });
+      var o = document.getElementById('oldPwd').value.trim();
+      var n = document.getElementById('newPwd').value.trim();
+      var c = document.getElementById('confirmPwd') ? document.getElementById('confirmPwd').value.trim() : n;
+      if (!o || !n) return showToast('Current and new password required.', 'error');
+      if (n.length < 6) return showToast('New password must be at least 6 characters.', 'error');
+      if (n !== c) return showToast('New passwords do not match.', 'error');
+      callServer('userChangePassword', [AA.token, o, n], function(r) {
+        showToast(r.message, r.success ? 'success' : 'error');
+        if (r.success) {
+          document.getElementById('oldPwd').value = '';
+          document.getElementById('newPwd').value = '';
+          if (document.getElementById('confirmPwd')) document.getElementById('confirmPwd').value = '';
+          closeModal('profileModal');
+        }
+      });
+    }
     }
 
     function loadStudentsDropdown() {
@@ -1202,13 +1223,13 @@
     function loadInstallmentPlans() {
       var status = (document.getElementById('planFilterStatus') || {}).value || '';
       callServer('adminGetInstallmentPlans', [AA.token, status || null], function(res) {
-        // api.js unwraps {success:true, data:[...]} → returns the array directly
+        // api.js unwraps {success:true, data:[...]} â†’ returns the array directly
         var plans = Array.isArray(res) ? res : (res && res.data ? res.data : null);
         if (plans === null) {
           return showToast((res && res.message) || 'Failed to load plans.', 'error');
         }
 
-        // Client-side section filter — belt-and-suspenders, mirrors loadBills
+        // Client-side section filter â€” belt-and-suspenders, mirrors loadBills
         var section = getAccountOfficerSection(); // "primary", "high", or "both"
         if (section !== 'both') {
           plans = plans.filter(function(p) {
@@ -1229,11 +1250,11 @@
             : p.status === 'approved' ? '<span class="aa-badge aa-badge-success">Approved</span>'
             : '<span class="aa-badge aa-badge-danger">Rejected</span>';
           var milestonesSummary = (p.milestones || []).map(function(m, i) {
-            return '<small>' + (i+1) + '. ' + (m.dueDate||'') + ' — \u20a6' + Number(m.amount||0).toLocaleString() + (m.paid ? ' <i class="fa fa-check" style="color:#10b981;"></i>' : '') + '</small>';
+            return '<small>' + (i+1) + '. ' + (m.dueDate||'') + ' â€” \u20a6' + Number(m.amount||0).toLocaleString() + (m.paid ? ' <i class="fa fa-check" style="color:#10b981;"></i>' : '') + '</small>';
           }).join('<br>');
           var actions = p.status === 'pending'
             ? '<button class="aa-btn aa-btn-success aa-btn-xs" onclick="approvePlan(\'' + p.id + '\')" style="margin-right:4px;"><i class="fa fa-check"></i> Approve</button><button class="aa-btn aa-btn-xs" style="background:#ef4444;color:#fff;" onclick="rejectPlan(\'' + p.id + '\')"><i class="fa fa-times"></i> Reject</button>'
-            : '<span style="color:#64748b;font-size:12px;">—</span>';
+            : '<span style="color:#64748b;font-size:12px;">â€”</span>';
           return '<tr><td>' + (p.studentName||'') + '</td><td>' + (p.term||'') + ' ' + (p.session||'') + '</td><td>\u20a6' + Number(p.totalAmount||0).toLocaleString() + '</td><td>' + milestonesSummary + '</td><td>' + statusBadge + '</td><td>' + actions + '</td></tr>';
         }).join('');
       }, null, true);
