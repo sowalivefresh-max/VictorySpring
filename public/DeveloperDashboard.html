@@ -1381,16 +1381,31 @@
     }
 
     function populateTeacherDropdowns() {
-      var teachers = globalUsers.filter(function(u) {
-        if (!(u.role === 'teacher' || u.role === 'primary_teacher') || !(u.id || u.iD)) return false;
-        if (institutionType === 'primary') return u.role === 'primary_teacher' || u.section === 'primary' || u.section === 'both';
-        if (false) return u.role === 'teacher' || u.section === 'high' || u.section === 'both';
+      // Class teachers dropdown: Only teachers with role 'primary_teacher' (Class Teachers)
+      // Subject teachers ('teacher') should NOT be assigned as class teachers
+      var classTeachers = globalUsers.filter(function(u) {
+        if (u.role !== 'primary_teacher' || !(u.id || u.iD)) return false;
         return true;
       });
-      var options = '<option value="">Select Teacher</option>';
-      teachers.forEach(function(t){ options += '<option value="'+(t.id || t.iD)+'">'+t.fullName+'</option>'; });
-      document.getElementById('classTeacherSelect').innerHTML = options;
-      document.getElementById('subjectTeacherSelect').innerHTML = options;
+      var classOptions = '<option value="">Select Class Teacher</option>';
+      classTeachers.forEach(function(t){ classOptions += '<option value="'+(t.id || t.iD)+'">'+t.fullName+'</option>'; });
+      if (document.getElementById('classTeacherSelect')) {
+        document.getElementById('classTeacherSelect').innerHTML = classOptions;
+      }
+
+      // Subject teachers dropdown: Anyone who can teach a subject (Subject Teachers 'teacher' and Class Teachers 'primary_teacher')
+      var subjectTeachers = globalUsers.filter(function(u) {
+        if (!(u.role === 'teacher' || u.role === 'primary_teacher') || !(u.id || u.iD)) return false;
+        return true;
+      });
+      var subjectOptions = '<option value="">No Teacher Assigned</option>';
+      subjectTeachers.forEach(function(t){
+        var roleBadge = t.role === 'teacher' ? ' (Subject Teacher)' : ' (Class Teacher)';
+        subjectOptions += '<option value="'+(t.id || t.iD)+'">'+t.fullName + roleBadge + '</option>';
+      });
+      if (document.getElementById('subjectTeacherSelect')) {
+        document.getElementById('subjectTeacherSelect').innerHTML = subjectOptions;
+      }
     }
 
     // Normalize section value to canonical form: 'high', 'primary', or 'both'
@@ -1489,7 +1504,7 @@
       var isSingleSection = isPrimaryOnly || isSecondaryOnly;
 
       // Roles available per section type
-      var primaryRoles   = ['primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'storekeeper', 'nurse', 'developer'];
+      var primaryRoles   = ['teacher', 'primary_teacher', 'headteacher', 'parent', 'admin', 'admin_assistant', 'accounts', 'storekeeper', 'nurse', 'developer'];
       var secondaryRoles = ['teacher', 'principal', 'vp', 'parent', 'admin', 'admin_assistant', 'accounts', 'storekeeper', 'nurse', 'developer'];
       var bothRoles      = ['teacher', 'primary_teacher', 'principal', 'vp', 'headteacher', 'accounts', 'storekeeper', 'nurse', 'parent', 'admin', 'admin_assistant', 'external', 'developer'];
 

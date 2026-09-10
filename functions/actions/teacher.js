@@ -64,12 +64,15 @@ module.exports = function(db, notificationsActions) {
           return res.json({ success: true, data: subjects });
         } else {
           // Standard teacher, just get explicitly assigned subjects
-          const subjectsSnap = await db.collection("subjects").where("assignedTeacherId", "==", String(userId)).get();
+          const subjectsSnap = await db.collection("subjects").get();
           const subjects = [];
           subjectsSnap.forEach(doc => {
             let sub = doc.data();
             sub.id = doc.id;
-            subjects.push(sub);
+            const tId = sub.assignedTeacherId || sub.teacherId;
+            if (tId && String(tId) === String(userId)) {
+              subjects.push(sub);
+            }
           });
           return res.json({ success: true, data: subjects });
         }
@@ -90,10 +93,16 @@ module.exports = function(db, notificationsActions) {
             studentCount = snap.data().count;
           }
         } else {
-          const subSnap = await db.collection("subjects").where("assignedTeacherId", "==", String(userId)).get();
-          if (!subSnap.empty) {
-            const subjectIds = [];
-            subSnap.forEach(d => subjectIds.push(d.id));
+          const subSnap = await db.collection("subjects").get();
+          const subjectIds = [];
+          subSnap.forEach(d => {
+            const sub = d.data();
+            const tId = sub.assignedTeacherId || sub.teacherId;
+            if (tId && String(tId) === String(userId)) {
+              subjectIds.push(d.id);
+            }
+          });
+          if (subjectIds.length > 0) {
             let uniqueStudents = new Set();
             for (let i = 0; i < subjectIds.length; i += 30) {
               const chunk = subjectIds.slice(i, i + 30);
