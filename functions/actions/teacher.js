@@ -774,15 +774,34 @@ module.exports = function(db, notificationsActions) {
         
         let html = `<html><body style="font-family:sans-serif; padding:20px;">
           <h2 style="text-align:center;">Lesson Plan</h2>
-          <p><strong>Topic:</strong> ${p.topic}</p>
-          <p><strong>Subject:</strong> ${p.subject}</p>
-          <p><strong>Class:</strong> ${p.className}</p>
-          <p><strong>Teacher:</strong> ${p.teacherName}</p>
+          <hr/>
+          <p><strong>Topic:</strong> ${p.topic || ''}</p>
+          <p><strong>Subject:</strong> ${p.subjectName || p.subject || ''}</p>
+          <p><strong>Class:</strong> ${p.className || ''}</p>
+          <p><strong>Week:</strong> ${p.week || ''}</p>
+          <p><strong>Teacher:</strong> ${p.teacherName || ''}</p>
+          <p><strong>Reference Book:</strong> ${p.referenceBook || ''}</p>
           <hr/>
           <h4>Objectives</h4>
           <p>${p.objectives || ''}</p>
-          <h4>Content</h4>
-          <p>${p.content || ''}</p>
+          
+          <h4>Entry Behaviour</h4>
+          <p>${p.entryBehaviour || ''}</p>
+          
+          <h4>Teaching Aids</h4>
+          <p>${p.teachingAids || ''}</p>
+          
+          <h4>Lesson Content</h4>
+          <div>${p.content || ''}</div>
+          
+          <h4>Presentation Steps</h4>
+          <p>${p.presentationSteps || ''}</p>
+          
+          <h4>Evaluation</h4>
+          <p>${p.evaluation || ''}</p>
+          
+          <h4>Assignment</h4>
+          <p>${p.assignment || ''}</p>
           <hr/>
           <p><strong>Status:</strong> ${p.status || 'Pending'}</p>
         </body></html>`;

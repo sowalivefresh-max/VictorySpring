@@ -470,6 +470,14 @@
         <button class="aa-modal-close" onclick="closeModal('planModal')">×</button>
       </div>
       <div class="aa-modal-body" style="padding:0;">
+        <div style="padding:10px 20px; background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:rgba(255,255,255,0.7);"><i class="fa fa-info-circle"></i> Have a previously downloaded lesson plan?</span>
+          <div>
+            <input type="file" id="uploadPlanFile" accept=".pdf,.docx" style="display:none;" onchange="parseLessonPlanFromFile(this)">
+            <button type="button" class="aa-btn aa-btn-outline aa-btn-sm" onclick="document.getElementById('uploadPlanFile').click()"><i class="fa fa-upload" style="margin-right:5px;"></i> Upload Plan</button>
+          </div>
+        </div>
+        <div id="planUploadStatus" style="padding: 0 20px; font-size:12px; color: var(--aa-gold); font-weight:bold;"></div>
         <form id="planForm">
           <input type="hidden" id="planId" name="id">
 
@@ -1021,6 +1029,95 @@
           return html;
         });
       }, null, true);
+    }
+    async function parseLessonPlanFromFile(input) {
+      if (!input.files || !input.files[0]) return;
+      var file = input.files[0];
+      var statusEl = document.getElementById('planUploadStatus');
+      statusEl.textContent = 'Extracting text from ' + file.name + '...';
+      input.value = '';
+
+      try {
+        var text = '';
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+          if (typeof pdfjsLib === 'undefined') { showToast('PDF library not loaded yet.', 'error'); statusEl.textContent = ''; return; }
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          var arrayBuffer = await file.arrayBuffer();
+          var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          for (var p = 1; p <= pdf.numPages; p++) {
+            var page = await pdf.getPage(p);
+            var content = await page.getTextContent();
+            text += content.items.map(function(i) { return i.str; }).join(' ') + '\n';
+          }
+        } else if (file.name.toLowerCase().endsWith('.docx')) {
+          if (typeof mammoth === 'undefined') { showToast('Word doc library not loaded yet.', 'error'); statusEl.textContent = ''; return; }
+          var arrayBuffer = await file.arrayBuffer();
+          var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+          text = result.value;
+        } else {
+          showToast('Only PDF and .docx files are supported.', 'error'); statusEl.textContent = ''; return;
+        }
+
+        if (!text.trim()) {
+          showToast('No readable text found in this file.', 'error'); statusEl.textContent = ''; return;
+        }
+
+        statusEl.textContent = 'Mapping fields...';
+
+        function extractBetween(startPattern, endPattern) {
+          var regex = new RegExp(startPattern + '\\s*([\\s\\S]*?)' + (endPattern ? '(?=' + endPattern + ')' : '$'), 'i');
+          var match = text.match(regex);
+          return match ? match[1].trim() : '';
+        }
+
+        var topic = text.match(/Topic:\s*(.*)/i);
+        var subjectName = text.match(/Subject:\s*(.*)/i);
+        var className = text.match(/Class:\s*(.*)/i);
+        var week = text.match(/Week:\s*(.*)/i);
+        var referenceBook = text.match(/Reference Book:\s*(.*)/i);
+
+        var objectives = extractBetween('Objectives', 'Entry Behaviour|Teaching Aids|Lesson Content|Presentation Steps|Evaluation|Assignment|Status:');
+        var entryBehaviour = extractBetween('Entry Behaviour', 'Teaching Aids|Lesson Content|Presentation Steps|Evaluation|Assignment|Status:');
+        var teachingAids = extractBetween('Teaching Aids', 'Lesson Content|Presentation Steps|Evaluation|Assignment|Status:');
+        var lessonContent = extractBetween('Lesson Content', 'Presentation Steps|Evaluation|Assignment|Status:');
+        var presentationSteps = extractBetween('Presentation Steps', 'Evaluation|Assignment|Status:');
+        var evaluation = extractBetween('Evaluation', 'Assignment|Status:');
+        var assignment = extractBetween('Assignment', 'Status:');
+
+        var form = document.getElementById('planForm');
+        if (topic) form.topic.value = topic[1].trim();
+        if (className) form.className.value = className[1].trim();
+        if (week) form.week.value = week[1].trim();
+        if (referenceBook) form.referenceBook.value = referenceBook[1].trim();
+        
+        form.objectives.value = objectives;
+        form.entryBehaviour.value = entryBehaviour;
+        form.teachingAids.value = teachingAids;
+        form.presentationSteps.value = presentationSteps;
+        form.evaluation.value = evaluation;
+        form.assignment.value = assignment;
+
+        if (window.quillPlanEditor && lessonContent) {
+           window.quillPlanEditor.root.innerHTML = lessonContent.replace(/\n/g, '<br>');
+        }
+
+        if (subjectName) {
+          var sn = subjectName[1].trim().toLowerCase();
+          var opts = form.subjectId.options;
+          for (var i=0; i<opts.length; i++) {
+            if (opts[i].text.toLowerCase() === sn) {
+              form.subjectId.selectedIndex = i; break;
+            }
+          }
+        }
+
+        statusEl.textContent = 'Lesson plan successfully loaded!';
+        setTimeout(function(){ statusEl.textContent = ''; }, 3000);
+
+      } catch (err) {
+        showToast('Failed to parse file: ' + err.message, 'error');
+        statusEl.textContent = '';
+      }
     }
 
     function saveLessonPlan() {
