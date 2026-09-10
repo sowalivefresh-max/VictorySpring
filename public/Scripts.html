@@ -1,4 +1,4 @@
-﻿<script>
+<script>
 /* ============================================================
    ABECEDARIAN ACADEMY - Shared Frontend JavaScript
    All dashboards include this file via <?!= include('Scripts') ?>
@@ -236,7 +236,7 @@ function showToast(message, type, duration) {
   toast.className = 'aa-toast ' + t;
   toast.innerHTML = '<span class="aa-toast-icon">' + (icons[t] || '') + '</span>' +
     '<span class="aa-toast-msg">' + message + '</span>' +
-    '<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;color:#888;font-size:16px;">Ãƒ-</button>';
+    '<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;color:#888;font-size:16px;">×</button>';
   container.appendChild(toast);
 
   setTimeout(function() { if (toast.parentNode) toast.remove(); }, duration || 4000);
@@ -694,4 +694,3 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
-
