@@ -9,6 +9,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
+  
+  <!-- KaTeX for math formulas -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+  <!-- Quill Editor -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 </head>
 <body>
   <div class="aa-layout">
@@ -502,6 +509,11 @@
             <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.65);">&#9313; Content &amp; Methodology</span>
           </div>
           <div style="padding:16px 20px 4px;">
+            <div class="aa-form-group" style="margin-bottom: 24px;">
+              <label class="aa-label">Lesson Content <span style="color:#e74c3c;">*</span></label>
+              <input type="hidden" name="content" id="planContent">
+              <div id="planContentEditor" style="min-height:200px; background:#fff; color:#333; border-radius:4px;"></div>
+            </div>
             <div class="aa-form-group">
               <label class="aa-label">Behavioural Objectives</label>
               <textarea name="objectives" class="aa-textarea" placeholder="By the end of the lesson, pupils should be able to..."></textarea>
@@ -584,6 +596,28 @@
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('pt-tabs'); AA.init();
       document.getElementById('attDate').valueAsDate = new Date();
+
+      // Initialize Quill Editor
+      window.quillPlanEditor = new Quill('#planContentEditor', {
+        theme: 'snow',
+        modules: {
+          formula: true,
+          toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'align': [] }],
+            ['link', 'image', 'video', 'formula'],
+            ['clean']
+          ]
+        }
+      });
+
       function initDashboard() {
         if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
@@ -990,6 +1024,9 @@
     }
 
     function saveLessonPlan() {
+      if (window.quillPlanEditor) {
+        document.getElementById('planContent').value = window.quillPlanEditor.root.innerHTML;
+      }
       var data = getFormData('planForm'); data.term = currentTerm; data.session = currentSession;
       var id = data.id; var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
       callServer(fn, [AA.token, id||data, data], function(res) {
@@ -997,6 +1034,9 @@
       }, null, true);
     }
     function saveThenSubmitPlan() {
+      if (window.quillPlanEditor) {
+        document.getElementById('planContent').value = window.quillPlanEditor.root.innerHTML;
+      }
       var data = getFormData('planForm'); data.term = currentTerm; data.session = currentSession;
       var id = data.id; var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
       var btn = document.getElementById('btnSaveSubmit');
@@ -1020,7 +1060,14 @@
     function editLessonPlan(id) {
       callServer('teacherGetMyLessonPlans', [AA.token, currentTerm, currentSession], function(data) {
         var p = data.find(function(x){return String(x.id||x.iD)===String(id);});
-        if(p) { document.getElementById('planId').value=id; setFormData('planForm', p); openModal('planModal'); }
+        if(p) {
+          document.getElementById('planId').value=id;
+          setFormData('planForm', p);
+          if (window.quillPlanEditor) {
+            window.quillPlanEditor.root.innerHTML = p.content || '';
+          }
+          openModal('planModal');
+        }
       }, null, true);
     }
     function submitLessonPlan(id) {
