@@ -421,24 +421,29 @@
           { key: 'className' },
           { key: 'section', render: function(r){ return normalizeSection(r.section) === 'high' ? 'High' : 'Primary'; } },
           { key: 'classTeacherId', render: function(r){ 
-             var tId = r.classTeacherId || r.classTeacherID;
-             if (!tId) return 'None';
-             var t = globalUsers.find(function(u){return String(u.id||u.iD)===String(tId);});
-             return t ? t.fullName : 'None'; 
+             var tIds = r.classTeacherIds || (r.classTeacherId ? [r.classTeacherId] : (r.classTeacherID ? [r.classTeacherID] : []));
+             if (tIds.length === 0) return 'None';
+             var names = [];
+             tIds.forEach(function(tId) {
+               var t = globalUsers.find(function(u){return String(u.id||u.iD)===String(tId);});
+               if(t) names.push(t.fullName);
+             });
+             return names.length > 0 ? names.join(', ') : 'None'; 
           }},
           { key: 'academicSession' }
         ], data, function(r) {
           var id = r.id || r.iD;
-          var tId = r.classTeacherId || r.classTeacherID || '';
+          var tIds = r.classTeacherIds || (r.classTeacherId ? [r.classTeacherId] : (r.classTeacherID ? [r.classTeacherID] : []));
+          var tIdStr = tIds.join(',');
           return '<button class="aa-btn aa-btn-info aa-btn-xs" title="Generate Bulk Results" onclick="generateBulkClassResult(\''+r.className+'\')"><i class="fa fa-file-pdf"></i></button> ' +
-                 '<button class="aa-btn aa-btn-outline aa-btn-xs" title="Edit Class" onclick="editClass(\''+id+'\', \''+r.className+'\', \''+r.section+'\', \''+tId+'\')"><i class="fa fa-edit"></i></button> ' +
+                 '<button class="aa-btn aa-btn-outline aa-btn-xs" title="Edit Class" onclick="editClass(\''+id+'\', \''+r.className+'\', \''+r.section+'\', \''+tIdStr+'\')"><i class="fa fa-edit"></i></button> ' +
                  '<button class="aa-btn aa-btn-danger aa-btn-xs" title="Delete Class" onclick="deleteClass(\''+id+'\')"><i class="fa fa-trash"></i></button>';
         });
       }, null, true);
     }
-    function editClass(id, name, sec, teacherId) {
+    function editClass(id, name, sec, teacherIdsStr) {
       document.getElementById('classId').value = id;
-      setFormData('classForm', {className:name, section:sec, classTeacherId: teacherId || ''});
+      setFormData('classForm', {className:name, section:sec, classTeacherIds: teacherIdsStr || ''});
       openModal('classModal');
     }
     function saveClass() {

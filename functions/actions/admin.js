@@ -270,7 +270,7 @@ module.exports = function(db, notificationsActions) {
             if ((d.campusId || null) !== campusId) return;
           }
           
-          teachers.push({ id: doc.id, fullName: d.fullName, role: d.role, classAssigned: d.classAssigned });
+          teachers.push({ id: doc.id, fullName: d.fullName, role: d.role, classAssigned: d.classAssigned, classesAssigned: d.classesAssigned });
         });
         
         // 2. Attendance Compliance (Today)
@@ -287,7 +287,13 @@ module.exports = function(db, notificationsActions) {
         let attendanceCompliant = [];
         let attendanceDefaulted = [];
         teachers.forEach(t => {
-          if (attendanceTeacherIds.has(t.id) || (t.classAssigned && attendanceClasses.has(t.classAssigned))) {
+          let isClassCompliant = false;
+          if (t.classesAssigned && Array.isArray(t.classesAssigned)) {
+            isClassCompliant = t.classesAssigned.some(c => attendanceClasses.has(c));
+          } else if (t.classAssigned && attendanceClasses.has(t.classAssigned)) {
+            isClassCompliant = true;
+          }
+          if (attendanceTeacherIds.has(t.id) || isClassCompliant) {
             attendanceCompliant.push(t);
           } else {
             attendanceDefaulted.push(t);
@@ -1176,6 +1182,11 @@ module.exports = function(db, notificationsActions) {
     adminCreateClass: async (req, res) => {
       const data = req.body.data;
       if (!data || !data.className) return res.json({ success: false, message: "Class name is required." });
+      if (data.classTeacherIds && typeof data.classTeacherIds === 'string') {
+        const ids = data.classTeacherIds.split(',').filter(x => x.trim() !== '');
+        data.classTeacherIds = ids;
+        if (ids.length > 0) data.classTeacherId = ids[0];
+      }
       try {
         const docRef = db.collection("classes").doc();
         await docRef.set({ ...data, createdAt: new Date().toISOString() });
@@ -1188,6 +1199,12 @@ module.exports = function(db, notificationsActions) {
     adminUpdateClass: async (req, res) => {
       const { classId, updates } = req.body;
       if (!classId || !updates) return res.json({ success: false, message: "Class ID and updates required." });
+      if (updates.classTeacherIds && typeof updates.classTeacherIds === 'string') {
+        const ids = updates.classTeacherIds.split(',').filter(x => x.trim() !== '');
+        updates.classTeacherIds = ids;
+        if (ids.length > 0) updates.classTeacherId = ids[0];
+        else updates.classTeacherId = '';
+      }
       try {
         await db.collection("classes").doc(classId).update(updates);
         return res.json({ success: true, message: "Class updated successfully." });

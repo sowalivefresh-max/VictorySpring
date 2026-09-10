@@ -408,8 +408,8 @@ function setFormData(formId, data) {
   Object.keys(data).forEach(function(k) {
     var el = form.querySelector('[name="' + k + '"]');
     if (el) {
-      if (el.multiple && typeof data[k] === 'string') {
-        var vals = data[k].split(',');
+      if (el.multiple && (typeof data[k] === 'string' || Array.isArray(data[k]))) {
+        var vals = Array.isArray(data[k]) ? data[k] : data[k].split(',');
         for(var i = 0; i < el.options.length; i++) {
           el.options[i].selected = vals.indexOf(el.options[i].value) !== -1;
         }

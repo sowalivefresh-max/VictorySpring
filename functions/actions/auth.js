@@ -103,9 +103,18 @@ module.exports = function(db) {
 
       // Dynamically attach classAssigned if the user is a class teacher
       if (sess.role === "teacher" || sess.role === "primary_teacher") {
-        const classesSnap = await db.collection("classes").where("classTeacherId", "==", uDoc.id).get();
-        if (!classesSnap.empty) {
-          userData.classAssigned = classesSnap.docs[0].data().className;
+        const classesSnap1 = await db.collection("classes").where("classTeacherId", "==", uDoc.id).get();
+        const classesSnap2 = await db.collection("classes").where("classTeacherIds", "array-contains", uDoc.id).get();
+        
+        const allDocs = [...classesSnap1.docs, ...classesSnap2.docs];
+        // Remove duplicates by doc.id
+        const uniqueDocsMap = new Map();
+        allDocs.forEach(d => uniqueDocsMap.set(d.id, d));
+        const uniqueDocs = Array.from(uniqueDocsMap.values());
+
+        if (uniqueDocs.length > 0) {
+          userData.classAssigned = uniqueDocs[0].data().className;
+          userData.classesAssigned = uniqueDocs.map(d => d.data().className);
           userData.isClassTeacher = true;
         }
       }

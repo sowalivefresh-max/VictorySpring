@@ -86,13 +86,20 @@ async function enrichReportData(dbInstance, reportData, cfg) {
       const classSnap = await dbInstance.collection("classes").where("className", "==", student.className).limit(1).get();
       if (!classSnap.empty) {
         let classData = classSnap.docs[0].data();
-        if (classData.classTeacherId) {
-          const ctSnap = await dbInstance.collection("users").doc(classData.classTeacherId).get();
-          if (ctSnap.exists) {
-            let ctData = ctSnap.data();
-            if (ctData.signature) cfg.class_teacher_signature = ctData.signature;
-            if (ctData.fullName) cfg.class_teacher_name = ctData.fullName;
+        let tIds = classData.classTeacherIds || (classData.classTeacherId ? [classData.classTeacherId] : []);
+        if (tIds.length > 0) {
+          let signatures = [];
+          let names = [];
+          for (let tId of tIds) {
+            const ctSnap = await dbInstance.collection("users").doc(tId).get();
+            if (ctSnap.exists) {
+              let ctData = ctSnap.data();
+              if (ctData.signature) signatures.push(ctData.signature);
+              if (ctData.fullName) names.push(ctData.fullName);
+            }
           }
+          if (signatures.length > 0) cfg.class_teacher_signature = signatures[0];
+          if (names.length > 0) cfg.class_teacher_name = names.join(" & ");
         }
       }
     }

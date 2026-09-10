@@ -3,8 +3,10 @@ module.exports = function(db, notificationsActions) {
     const userDoc = await db.collection("users").doc(userId).get();
     let cls = userDoc.exists ? userDoc.data().classAssigned : null;
     if (!cls) {
-      const snap = await db.collection("classes").where("classTeacherId", "==", userId).get();
-      if (!snap.empty) cls = snap.docs[0].data().className;
+      const snap1 = await db.collection("classes").where("classTeacherId", "==", userId).get();
+      const snap2 = await db.collection("classes").where("classTeacherIds", "array-contains", userId).get();
+      if (!snap1.empty) cls = snap1.docs[0].data().className;
+      else if (!snap2.empty) cls = snap2.docs[0].data().className;
     }
     return cls;
   }
