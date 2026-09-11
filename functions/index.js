@@ -84,7 +84,7 @@ async function requireRole(req, res, next) {
       const teacherRoles = ["teacher", "primary_teacher", "headteacher", "admin", "developer", "principal", "vp"];
       const parentRoles = ["parent", "admin", "developer"];
       const studentRoles = ["student"];
-      const storeRoles = ["storekeeper", "admin", "developer", "principal"];
+      const storeRoles = ["storekeeper", "admin", "developer", "principal", "headteacher"];
       const nurseRoles = ["nurse", "admin", "developer", "principal"];
 
       if (action.startsWith("admin")) {

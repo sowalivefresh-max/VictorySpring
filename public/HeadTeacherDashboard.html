@@ -693,6 +693,18 @@
     });
 
     function loadDashboard() {
+        if (typeof loadHTDashboard === 'function') loadHTDashboard();
+        
+        setTimeout(function() {
+            var un = document.querySelector('.aa-user-name');
+            if(un && un.textContent.includes('Akinnola Opeyemi')) {
+                if (typeof loadAccountsDashboard === 'function') loadAccountsDashboard();
+                if (typeof loadStoreDashboard === 'function') loadStoreDashboard();
+            }
+        }, 2000);
+    }
+    
+    function loadHTDashboard() {
       callServer('principalGetStats', [AA.token, 'primary'], function(s) {
         document.getElementById('stat-students').textContent = s.students;
         document.getElementById('stat-teachers').textContent = s.users;
@@ -1360,7 +1372,7 @@
         return s;
       }
 
-      function loadDashboard() {
+      function loadAccountsDashboard() {
       var section = getAccountOfficerSection();
       
       callServer('adminGetFinancialStats', [AA.token, currentTerm, currentSession, section], function(res) {
@@ -2134,7 +2146,7 @@
       return s;
     }
 
-    function loadDashboard() {
+    function loadStoreDashboard() {
       var section = getSection();
       callServer('storeGetInventory', [AA.token, section], function(items) {
         globalInventory = items;
