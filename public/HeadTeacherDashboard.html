@@ -686,7 +686,7 @@
       function initDashboard() {
         if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
-        document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
+        var el = document.getElementById('currentTermText'); if(el) el.textContent = currentTerm + ' - ' + currentSession;
         loadDashboard();
       }
       initDashboard();
@@ -706,11 +706,11 @@
     
     function loadHTDashboard() {
       callServer('principalGetStats', [AA.token, 'primary'], function(s) {
-        document.getElementById('stat-students').textContent = s.students;
-        document.getElementById('stat-teachers').textContent = s.users;
+        var el = document.getElementById('stat-students'); if(el) el.textContent = s.students;
+        var el = document.getElementById('stat-teachers'); if(el) el.textContent = s.users;
       }, null, true);
       callServer('principalGetLessonPlans', [AA.token, currentTerm, currentSession, 'primary'], function(p) {
-        document.getElementById('stat-plans').textContent = p.length;
+        var el = document.getElementById('stat-plans'); if(el) el.textContent = p.length;
       });
       callServer('adminGetSchoolPerformanceAnalytics', [AA.token, currentTerm, currentSession, 'primary'], function(res) {
         var html = '<div class="aa-stat-card"><h6>Overall Performance</h6><div class="mt-2">';
@@ -812,9 +812,9 @@
     var chartInstances = {};
     function loadAnalytics() {
       callServer('adminGetSchoolPerformanceAnalytics', [AA.token, currentTerm, currentSession, 'primary'], function(res) {
-        document.getElementById('analytics-overall').textContent = (res.overallAverage || 0) + '%';
-        document.getElementById('analytics-best-class').textContent = res.bestClass || 'N/A';
-        document.getElementById('analytics-best-subject').textContent = res.bestSubject || 'N/A';
+        var el = document.getElementById('analytics-overall'); if(el) el.textContent = (res.overallAverage || 0) + '%';
+        var el = document.getElementById('analytics-best-class'); if(el) el.textContent = res.bestClass || 'N/A';
+        var el = document.getElementById('analytics-best-subject'); if(el) el.textContent = res.bestSubject || 'N/A';
 
         if (chartInstances.classPerf) chartInstances.classPerf.destroy();
         var classCtx = document.getElementById('chartClassPerformance');
@@ -1250,7 +1250,7 @@
       function initDashboard() {
         if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
-        document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
+        var el = document.getElementById('currentTermText'); if(el) el.textContent = currentTerm + ' - ' + currentSession;
         document.getElementById('expDate').valueAsDate = new Date();
         loadStudentsDropdown();
         loadClassesDropdown();
@@ -1332,7 +1332,7 @@
       if (!student) return showToast('Student not found. Wait for load.', 'error');
       
       document.getElementById('discountStudentId').value = studentId;
-      document.getElementById('discountStudentName').textContent = student.fullName;
+      var el = document.getElementById('discountStudentName'); if(el) el.textContent = student.fullName;
       
       var config = student.discountConfig || { type: 'none', value: '' };
       document.getElementById('discountType').value = config.type || 'none';
@@ -1376,12 +1376,12 @@
       var section = getAccountOfficerSection();
       
       callServer('adminGetFinancialStats', [AA.token, currentTerm, currentSession, section], function(res) {
-        document.getElementById('stat-billed').textContent = formatNaira(res.totalBilled);
-        document.getElementById('stat-collected').textContent = formatNaira(res.totalCollected);
-        document.getElementById('stat-outstanding').textContent = formatNaira(res.totalOutstanding);
-        document.getElementById('stat-expenses').textContent = formatNaira(res.totalExpenses);
-        document.getElementById('stat-net').textContent = formatNaira(res.netBalance);
-        document.getElementById('stat-net').style.color = res.netBalance >= 0 ? 'var(--aa-success)' : 'var(--aa-danger)';
+        var el = document.getElementById('stat-billed'); if(el) el.textContent = formatNaira(res.totalBilled);
+        var el = document.getElementById('stat-collected'); if(el) el.textContent = formatNaira(res.totalCollected);
+        var el = document.getElementById('stat-outstanding'); if(el) el.textContent = formatNaira(res.totalOutstanding);
+        var el = document.getElementById('stat-expenses'); if(el) el.textContent = formatNaira(res.totalExpenses);
+        var el = document.getElementById('stat-net'); if(el) el.textContent = formatNaira(res.netBalance);
+        var el2 = document.getElementById('stat-net'); if(el2) el2.style.color = res.netBalance >= 0 ? 'var(--aa-success)' : 'var(--aa-danger)';
       }, null, true);
 
       callServer('adminGetDebtors', [AA.token, currentTerm, currentSession, section], function(data) {
@@ -1480,7 +1480,7 @@
       document.querySelectorAll('#feeItemsList .fee-item-amount').forEach(function(inp){
         total += parseFloat(inp.value || 0);
       });
-      document.getElementById('feeTotalDisplay').textContent = formatNaira(total);
+      var el = document.getElementById('feeTotalDisplay'); if(el) el.textContent = formatNaira(total);
     }
 
     function openNewFeeModal() {
@@ -2125,11 +2125,11 @@
       function initDashboard() {
         if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
-        document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
+        var el = document.getElementById('currentTermText'); if(el) el.textContent = currentTerm + ' - ' + currentSession;
         
         var uName = AA.user.fullName || AA.user.name || 'Store Keeper';
-        document.getElementById('profDisplayName').textContent = uName;
-        document.getElementById('profNameDisplay').textContent = uName;
+        var el = document.getElementById('profDisplayName'); if(el) el.textContent = uName;
+        var el = document.getElementById('profNameDisplay'); if(el) el.textContent = uName;
 
         loadDashboard();
       }
@@ -2150,12 +2150,12 @@
       var section = getSection();
       callServer('storeGetInventory', [AA.token, section], function(items) {
         globalInventory = items;
-        document.getElementById('stat-total-items').textContent = items.length;
+        var el = document.getElementById('stat-total-items'); if(el) el.textContent = items.length;
         var lowStock = items.filter(function(i) { return Number(i.stock || 0) < 10; }).length;
-        document.getElementById('stat-low-stock').textContent = lowStock;
+        var el = document.getElementById('stat-low-stock'); if(el) el.textContent = lowStock;
         
         callServer('storeGetPaidItems', [AA.token, section], function(orders) {
-           document.getElementById('stat-pending-orders').textContent = orders.length;
+           var el = document.getElementById('stat-pending-orders'); if(el) el.textContent = orders.length;
         });
 
         callServer('storeGetRecords', [AA.token, section], function(records) {
