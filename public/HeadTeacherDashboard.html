@@ -10,9 +10,9 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <link href="styles.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
 </head>
 <body>
 <div class="aa-layout">
@@ -536,27 +536,52 @@
 </main>
 </div>
 <!-- Promotion Status Modal -->
-
 <!-- Profile Modal -->
-
 <!-- Receive Stock Modal -->
 <div class="aa-modal-backdrop" id="receiveModal">
 <div class="aa-modal">
 <div class="aa-modal-header">
-<h5 class="aa-modal-title">Declare Promotion Status</h5>
-<button class="aa-modal-close" onclick="closeModal('promotionModal')">×</button>
+<h5 class="aa-modal-title">Receive Stock / Add Item</h5>
+<button class="aa-modal-close" onclick="closeModal('receiveModal')">×</button>
 </div>
 <div class="aa-modal-body">
-<input id="promoStudentId" type="hidden"/>
+<form id="receiveForm">
+<input id="receiveItemId" type="hidden"/>
 <div class="aa-form-group">
-<label class="aa-label">Promotion Status (Third Term Only)</label>
-<input class="aa-input" id="promoStatusInput" placeholder="e.g., Promoted to Primary 2" type="text"/>
-<small style="color:#666; font-size:12px; margin-top:5px; display:block;">This status will automatically be printed at the bottom of the student's Third Term report card.</small>
+<label class="aa-label">Item Name</label>
+<input class="aa-input" id="receiveItemName" placeholder="e.g. School Uniform (Boy)" required="" type="text"/>
+</div>
+<div class="aa-grid-2">
+<div class="aa-form-group">
+<label class="aa-label">Category</label>
+<input class="aa-input" id="receiveCategory" placeholder="e.g. Uniforms, Books" required="" type="text"/>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Unit Price (₦)</label>
+<input class="aa-input" id="receivePrice" min="0" type="number" value="0"/>
 </div>
 </div>
-<div class="aa-modal-footer">
-<button class="aa-btn aa-btn-secondary" onclick="closeModal('promotionModal')">Cancel</button>
-<button class="aa-btn aa-btn-primary" onclick="savePromotionStatus()">Save Status</button>
+<div class="aa-grid-2">
+<div class="aa-form-group">
+<label class="aa-label">Quantity to Add</label>
+<input class="aa-input" id="receiveQuantity" min="1" required="" type="number" value="1"/>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Section Applicability</label>
+<select class="aa-select" id="receiveSection">
+<option value="primary">Primary School</option>
+</select>
+</div>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Size (Optional - for uniforms)</label>
+<input class="aa-input" id="receiveSize" placeholder="e.g. Size 10, Medium" type="text"/>
+</div>
+<div class="d-flex justify-content-end mt-3 gap-2">
+<button class="aa-btn aa-btn-outline" onclick="closeModal('receiveModal')" type="button">Cancel</button>
+<button class="aa-btn aa-btn-primary" type="submit">Save Stock</button>
+</div>
+</form>
 </div>
 </div>
 </div>
@@ -577,33 +602,77 @@
 </div>
 </div>
 <!-- Profile Modal -->
+
+
+
+
+
+<!-- Timetable Config Modal -->
+<div class="aa-modal-backdrop" id="modal-timetable-config">
+<div class="aa-modal" style="max-width: 600px;">
+<div class="aa-modal-header">
+<h3>Configure Timetable Format</h3>
+<button class="aa-modal-close" onclick="closeModal('modal-timetable-config')"><i class="fa fa-times"></i></button>
+</div>
+<div class="aa-modal-body">
+<div class="aa-form-group">
+<label>Days of the Week (Comma separated)</label>
+<input class="aa-input" id="tt-cfg-days" type="text" value="Monday, Tuesday, Wednesday, Thursday, Friday"/>
+</div>
+<div class="aa-header-between mb-2">
+<label style="margin:0;">Time Slots / Periods</label>
+<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="addTimetableSlot()"><i class="fa fa-plus"></i> Add Slot</button>
+</div>
+<div id="tt-cfg-slots"></div>
+<div class="mt-3">
+<button class="aa-btn aa-btn-primary w-100" onclick="saveTimetableConfig()">Save Configuration</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Timetable Generate Modal -->
+<div class="aa-modal-backdrop" id="modal-timetable-generate">
+<div class="aa-modal">
+<div class="aa-modal-header">
+<h3>Generate Timetables</h3>
+<button class="aa-modal-close" onclick="closeModal('modal-timetable-generate')"><i class="fa fa-times"></i></button>
+</div>
+<div class="aa-modal-body">
+<p class="text-muted mb-3">Select the classes you want to generate a timetable for. The system will avoid scheduling conflicts for teachers.</p>
+<div class="aa-form-group">
+<label>Select Classes</label>
+<div id="tt-gen-classes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;"></div>
+<div class="mt-2">
+<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(true)">Select All</button>
+<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(false)">Deselect All</button>
+</div>
+</div>
+<div class="mt-3">
+<button class="aa-btn aa-btn-success w-100" id="btn-generate-timetable" onclick="generateTimetable()">Generate Now</button>
+</div>
+</div>
+</div>
+</div>
 <div class="aa-modal-backdrop" id="profileModal">
+<!-- Similar to Accounts Dashboard -->
 <div class="aa-modal">
 <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">×</button></div>
 <div class="aa-modal-body">
 <div class="text-center mb-4">
-<div class="position-relative d-inline-block">
-<div class="aa-user-avatar" style="width:100px;height:100px;font-size:40px;margin:0 auto 10px;border:3px solid #f0f4f8;"></div>
-<label class="position-absolute" for="profPhotoInput" style="bottom:5px;right:5px;background:#f0a500;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;">
-<i class="fa fa-camera"></i>
-</label>
-<input accept="image/*" id="profPhotoInput" onchange="previewProfilePhoto(this)" style="display:none;" type="file"/>
-<input id="profPhotoBase64" type="hidden"/>
-</div>
-<div class="aa-user-name fs-20 fw-700 mt-2"></div>
-<div class="aa-user-role text-muted fs-14"></div>
+<div class="aa-user-name fs-20 fw-700 mt-2" id="profNameDisplay"></div>
+<div class="aa-user-role text-muted fs-14">Store Keeper</div>
 </div>
 <div class="aa-form-group">
 <label class="aa-label">Full Name</label>
-<input class="aa-input" id="profName" placeholder="Your full name" type="text"/>
+<input class="aa-input" id="profName" type="text"/>
 </div>
 <div class="aa-form-group">
 <label class="aa-label">Email Address</label>
-<input class="aa-input" id="profEmail" placeholder="Your email address" type="email"/>
+<input class="aa-input" id="profEmail" type="email"/>
 </div>
 <div class="aa-form-group">
 <label class="aa-label">Phone Number</label>
-<input class="aa-input" id="profPhone" placeholder="e.g. +234..." type="text"/>
+<input class="aa-input" id="profPhone" type="text"/>
 </div>
 <hr class="my-4" style="border:0;border-top:1px solid #eee;"/>
 <h6 class="mb-3">Change Password</h6>
@@ -626,32 +695,36 @@
 </div>
 </div>
 </div>
-
-
 <div class="aa-modal-backdrop" id="promotionModal">
-  <div class="aa-modal">
-    <div class="aa-modal-header">
-      <h5 class="aa-modal-title">Declare Promotion Status</h5>
-      <button class="aa-modal-close" onclick="closeModal('promotionModal')"><i class="fa fa-times"></i></button>
-    </div>
-    <div class="aa-modal-body">
-      <input type="hidden" id="promoStudentId">
-      <div class="aa-form-group">
-        <label class="aa-label">Promotion Status (Third Term Only)</label>
-        <input type="text" id="promoStatusInput" class="aa-input" placeholder="e.g., Promoted to Primary 2">
-        <small style="color:#666; font-size:12px; margin-top:5px; display:block;">This status will automatically be printed at the bottom of the student's Third Term report card.</small>
-      </div>
-    </div>
-    <div class="aa-modal-footer">
-      <button class="aa-btn aa-btn-secondary" onclick="closeModal('promotionModal')">Cancel</button>
-      <button class="aa-btn aa-btn-primary" onclick="savePromotionStatus()">Save Status</button>
-    </div>
-  </div>
+<div class="aa-modal">
+<div class="aa-modal-header">
+<h5 class="aa-modal-title">Declare Promotion Status</h5>
+<button class="aa-modal-close" onclick="closeModal('promotionModal')"><i class="fa fa-times"></i></button>
+</div>
+<div class="aa-modal-body">
+<form id="promoForm">
+<input id="promoStudentId" type="hidden"/>
+<div class="aa-form-group">
+<label class="aa-label">Promotion Status (Third Term Only)</label>
+<input class="aa-input" id="promoStatusInput" placeholder="e.g., Promoted to Primary 2" type="text"/>
+<small style="color:#666; font-size:12px; margin-top:5px; display:block;">This status will automatically be printed at the bottom of the student's Third Term report card.</small>
+</div>
+</form>
+</div>
+<div class="aa-modal-footer">
+<button class="aa-btn aa-btn-secondary" onclick="closeModal('promotionModal')">Cancel</button>
+<button class="aa-btn aa-btn-primary" onclick="savePromotionStatus()">Save Status</button>
+</div>
+</div>
 </div>
 
-<script src="api.js?v=3"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="api.js?v=4"></script>
 <script src="scripts.js?v=1788044468"></script>
 <script>
+
     var currentTerm = ''; var currentSession = '';
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('ht-tabs'); AA.init();
@@ -925,245 +998,21 @@
         }
       }, null, true);
     }
-  </script>
-<!-- Timetable Config Modal -->
-<div class="aa-modal-backdrop" id="modal-timetable-config">
-<div class="aa-modal" style="max-width: 600px;">
-<div class="aa-modal-header">
-<h3>Configure Timetable Format</h3>
-<button class="aa-modal-close" onclick="closeModal('modal-timetable-config')"><i class="fa fa-times"></i></button>
-</div>
-<div class="aa-modal-body">
-<div class="aa-form-group">
-<label>Days of the Week (Comma separated)</label>
-<input class="aa-input" id="tt-cfg-days" type="text" value="Monday, Tuesday, Wednesday, Thursday, Friday"/>
-</div>
-<div class="aa-header-between mb-2">
-<label style="margin:0;">Time Slots / Periods</label>
-<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="addTimetableSlot()"><i class="fa fa-plus"></i> Add Slot</button>
-</div>
-<div id="tt-cfg-slots"></div>
-<div class="mt-3">
-<button class="aa-btn aa-btn-primary w-100" onclick="saveTimetableConfig()">Save Configuration</button>
-</div>
-</div>
-</div>
-</div>
-<!-- Timetable Generate Modal -->
-<div class="aa-modal-backdrop" id="modal-timetable-generate">
-<div class="aa-modal">
-<div class="aa-modal-header">
-<h3>Generate Timetables</h3>
-<button class="aa-modal-close" onclick="closeModal('modal-timetable-generate')"><i class="fa fa-times"></i></button>
-</div>
-<div class="aa-modal-body">
-<p class="text-muted mb-3">Select the classes you want to generate a timetable for. The system will avoid scheduling conflicts for teachers.</p>
-<div class="aa-form-group">
-<label>Select Classes</label>
-<div id="tt-gen-classes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;"></div>
-<div class="mt-2">
-<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(true)">Select All</button>
-<button class="aa-btn aa-btn-sm aa-btn-outline" onclick="selectAllTtClasses(false)">Deselect All</button>
-</div>
-</div>
-<div class="mt-3">
-<button class="aa-btn aa-btn-success w-100" id="btn-generate-timetable" onclick="generateTimetable()">Generate Now</button>
-</div>
-</div>
-</div>
-</div>
-</body>
-</html>
-<!-- Fee Structure Modal -->
-<div class="aa-modal-backdrop" id="feeModal">
-<div class="aa-modal aa-modal-lg">
-<div class="aa-modal-header"><h5 class="aa-modal-title">Fee Structure</h5><button class="aa-modal-close" onclick="closeModal('feeModal')">×</button></div>
-<div class="aa-modal-body">
-<input id="feeId" type="hidden"/>
-<div class="aa-grid-2 mb-3">
-<div class="aa-form-group">
-<label class="aa-label">Class Name <small>(Hold Ctrl/Cmd to select multiple)</small></label>
-<select class="aa-select" id="feeClassName" required=""></select>
-</div>
-<div class="aa-form-group">
-<label class="aa-label">Section</label>
-<select class="aa-select" id="feeSectionSelect">
-<option value="primary">Primary School</option>
-</select>
-</div>
-</div>
-<div class="d-flex justify-content-between align-items-center mb-2">
-<label class="aa-label mb-0">Fee Components</label>
-<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="addFeeItem()" type="button"><i class="fa fa-plus"></i> Add Item</button>
-</div>
-<div id="feeItemsList">
-<!-- fee items injected here -->
-</div>
-<div class="d-flex justify-content-end mt-3" style="border-top:1px solid #eee;padding-top:12px;">
-<span style="font-size:14px;color:#666;">Total: <strong id="feeTotalDisplay">₦0.00</strong></span>
-</div>
-</div>
-<div class="aa-modal-footer">
-<button class="aa-btn aa-btn-outline" onclick="closeModal('feeModal')">Cancel</button>
-<button class="aa-btn aa-btn-primary" onclick="saveFeeStructure()">Save Structure</button>
-</div>
-</div>
-</div>
-<!-- Payment Modal -->
-<div class="aa-modal-backdrop" id="paymentModal">
-<div class="aa-modal">
-<div class="aa-modal-header"><h5 class="aa-modal-title">Record Payment</h5><button class="aa-modal-close" onclick="closeModal('paymentModal')">×</button></div>
-<div class="aa-modal-body">
-<form id="paymentForm">
-<div class="aa-form-group">
-<label class="aa-label">Student (Select or Search)</label>
-<select class="aa-select" id="payStudentSelect" name="studentId" required=""></select>
-</div>
-<div class="aa-grid-2">
-<div class="aa-form-group"><label class="aa-label">Amount Paid</label><input class="aa-input" name="amount" required="" type="number"/></div>
-<div class="aa-form-group"><label class="aa-label">Payment Method</label>
-<select class="aa-select" name="method">
-<option value="Cash">Cash</option><option value="Bank Transfer">Bank Transfer</option>
-<option value="POS">POS</option><option value="Cheque">Cheque</option>
-</select>
-</div>
-</div>
-</form>
-</div>
-<div class="aa-modal-footer">
-<button class="aa-btn aa-btn-outline" onclick="closeModal('paymentModal')">Cancel</button>
-<button class="aa-btn aa-btn-success" onclick="savePayment()">Record Payment</button>
-</div>
-</div>
-</div>
-<!-- Discount Modal -->
-<div class="aa-modal-backdrop" id="discountModal">
-<div class="aa-modal">
-<div class="aa-modal-header"><h5 class="aa-modal-title">Set Student Discount</h5><button class="aa-modal-close" onclick="closeModal('discountModal')">×</button></div>
-<div class="aa-modal-body">
-<input id="discountStudentId" type="hidden"/>
-<p style="font-size:13px; color:var(--aa-muted); margin-bottom:15px;">Configure a fee discount for <strong class="text-navy" id="discountStudentName"></strong>. This discount will be applied automatically whenever term bills are generated for their class.</p>
-<div class="aa-form-group">
-<label class="aa-label">Discount Type</label>
-<select class="aa-select" id="discountType" onchange="toggleDiscountValueField()">
-<option value="none">None (No Discount)</option>
-<option value="fixed">Fixed Amount (₦)</option>
-<option value="percentage">Percentage (of Tuition)</option>
-</select>
-</div>
-<div class="aa-form-group" id="discountValueWrap" style="display:none;">
-<label class="aa-label" id="discountValueLabel">Discount Value</label>
-<input class="aa-input" id="discountValue" min="0" placeholder="e.g. 5000 or 10" type="number"/>
-</div>
-</div>
-<div class="aa-modal-footer">
-<button class="aa-btn aa-btn-outline" onclick="closeModal('discountModal')">Cancel</button>
-<button class="aa-btn aa-btn-primary" onclick="saveStudentDiscount()">Save Discount</button>
-</div>
-</div>
-</div>
-<!-- Expense Modal -->
-<div class="aa-modal-backdrop" id="expenseModal">
-<div class="aa-modal">
-<div class="aa-modal-header"><h5 class="aa-modal-title">Record Expense</h5><button class="aa-modal-close" onclick="closeModal('expenseModal')">×</button></div>
-<div class="aa-modal-body">
-<form id="expenseForm">
-<input id="expenseId" name="id" type="hidden"/>
-<div class="aa-grid-2">
-<div class="aa-form-group"><label class="aa-label">Category</label>
-<select class="aa-select" name="category" required="">
-<option value="Utilities">Utilities</option><option value="Maintenance">Maintenance</option>
-<option value="Supplies">Supplies</option><option value="Salaries">Salaries</option>
-<option value="Other">Other</option>
-</select>
-</div>
-<div class="aa-form-group"><label class="aa-label">Amount</label><input class="aa-input" name="amount" required="" type="number"/></div>
-</div>
-<div class="aa-form-group"><label class="aa-label">Description</label><input class="aa-input" name="description" required="" type="text"/></div>
-<div class="aa-form-group"><label class="aa-label">Date</label><input class="aa-input" id="expDate" name="date" required="" type="date"/></div>
-</form>
-</div>
-<div class="aa-modal-footer">
-<button class="aa-btn aa-btn-outline" onclick="closeModal('expenseModal')">Cancel</button>
-<button class="aa-btn aa-btn-primary" onclick="saveExpense()">Save Expense</button>
-</div>
-</div>
-</div>
-<!-- Ledger Modal -->
-<div class="aa-modal-backdrop" id="ledgerModal">
-<div class="aa-modal aa-modal-lg">
-<div class="aa-modal-header"><h5 class="aa-modal-title">Student Ledger</h5><button class="aa-modal-close" onclick="closeModal('ledgerModal')">×</button></div>
-<div class="aa-modal-body">
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #ddd;">
-<div style="display:flex; gap:10px; align-items:center;">
-<label style="font-size:12px; font-weight:bold;">From:</label>
-<input class="aa-input" id="ledgerStartDate" style="height:32px; width:130px;" type="date"/>
-<label style="font-size:12px; font-weight:bold;">To:</label>
-<input class="aa-input" id="ledgerEndDate" style="height:32px; width:130px;" type="date"/>
-</div>
-<div>
-<button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadLedgerPDF()"><i class="fa fa-download"></i> Download PDF</button>
-</div>
-</div>
-<input id="ledgerStudentId" type="hidden"/>
-<div id="ledgerContent">Loading...</div>
-</div>
-</div>
-</div>
-<!-- Review Payment Modal -->
-<div class="aa-modal-backdrop" id="reviewPaymentModal">
-<div class="aa-modal">
-<div class="aa-modal-header">
-<h5 class="aa-modal-title">Review Parent Payment</h5>
-<button class="aa-modal-close" onclick="closeModal('reviewPaymentModal')">×</button>
-</div>
-<div class="aa-modal-body">
-<input id="revPayId" type="hidden"/>
-<div class="aa-form-group">
-<label class="aa-label">Student</label>
-<input class="aa-input" id="revPayStudent" readonly="" type="text"/>
-</div>
-<div class="aa-grid-2">
-<div class="aa-form-group">
-<label class="aa-label">Amount Paid</label>
-<input class="aa-input" id="revPayAmount" readonly="" type="text"/>
-</div>
-<div class="aa-form-group">
-<label class="aa-label">Method</label>
-<input class="aa-input" id="revPayMethod" readonly="" type="text"/>
-</div>
-</div>
-<div class="aa-form-group">
-<label class="aa-label">Parent's Comment / Note</label>
-<textarea class="aa-input" id="revPayComment" placeholder="No comment provided" readonly="" rows="2"></textarea>
-</div>
-<div class="aa-form-group">
-<label class="aa-label">Proof of Payment</label>
-<div id="revPayProofContainer" style="border:1px solid #ccc; border-radius:6px; overflow:hidden; text-align:center; padding:10px; background:#f9f9f9;">
-<a href="#" id="revPayProofLink" target="_blank">
-<img id="revPayProofImg" src="" style="max-width:100%; max-height:300px; display:none;"/>
-</a>
-<div id="revPayProofMissing" style="display:none; color:#999; padding:20px;">No proof uploaded</div>
-</div>
-</div>
-<div class="d-flex gap-2 mt-3">
-<button class="aa-btn aa-btn-danger w-100" onclick="rejectPayment()"><i class="fa fa-times"></i> Reject</button>
-<button class="aa-btn aa-btn-success w-100" onclick="approvePayment()"><i class="fa fa-check"></i> Approve</button>
-</div>
-</div>
-</div>
-</div>
-<script src="api.js?v=3"></script>
-<script src="scripts.js?v=1788044468"></script>
-<script>
-    var currentTerm = ''; var currentSession = '';
+  
+
+
+
+
+
+
+    
     var globalStudents = [];
     var globalStoreItems = [];
 
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('acc-tabs'); AA.init();
-      function initDashboard() {
-        if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
+      function loadAccountsDashboard() {
+        if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(loadAccountsDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
         var el = document.getElementById('currentTermText'); if(el) el.textContent = currentTerm + ' - ' + currentSession;
         document.getElementById('expDate').valueAsDate = new Date();
@@ -1171,8 +1020,7 @@
         loadClassesDropdown();
         loadDashboard();
       }
-      initDashboard();
-    });
+      });
 
     function changePwd() {
       var o = document.getElementById('oldPwd').value.trim();
@@ -1824,8 +1672,13 @@
             }
         }, null, true);
     }
-  </script>
-<script>
+  
+
+
+
+
+
+
     // ====================================
     // INSTALLMENT PLANS JS
     // ====================================
@@ -1932,21 +1785,21 @@
         }, null, true);
       }, null, true);
     }
-  </script>
+  
 
-<!-- Profile Modal -->
 
-<script src="api.js?v=4"></script>
-<script src="scripts.js?v=1788044468"></script>
-<script>
-    var currentTerm = ''; var currentSession = '';
+
+
+
+
+    
     var globalInventory = [];
     var globalStudents = [];
 
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('store-tabs'); AA.init();
-      function initDashboard() {
-        if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
+      function loadStoreDashboard() {
+        if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(loadStoreDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
         var el = document.getElementById('currentTermText'); if(el) el.textContent = currentTerm + ' - ' + currentSession;
         
@@ -1956,8 +1809,7 @@
 
         loadDashboard();
       }
-      initDashboard();
-    });
+      });
 
     function getSection() {
       var s = (AA.user && AA.user.section && AA.user.section !== 'both') ? AA.user.section : 'both';
@@ -2250,4 +2102,198 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 2000); // Wait for profile fetch
 });
+
+// Automatically exported functions for inline HTML onclick handlers
+
+
 </script>
+
+</body>
+</html>
+<!-- Fee Structure Modal -->
+<div class="aa-modal-backdrop" id="feeModal">
+<div class="aa-modal aa-modal-lg">
+<div class="aa-modal-header"><h5 class="aa-modal-title">Fee Structure</h5><button class="aa-modal-close" onclick="closeModal('feeModal')">×</button></div>
+<div class="aa-modal-body">
+<input id="feeId" type="hidden"/>
+<div class="aa-grid-2 mb-3">
+<div class="aa-form-group">
+<label class="aa-label">Class Name <small>(Hold Ctrl/Cmd to select multiple)</small></label>
+<select class="aa-select" id="feeClassName" required=""></select>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Section</label>
+<select class="aa-select" id="feeSectionSelect">
+<option value="primary">Primary School</option>
+</select>
+</div>
+</div>
+<div class="d-flex justify-content-between align-items-center mb-2">
+<label class="aa-label mb-0">Fee Components</label>
+<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="addFeeItem()" type="button"><i class="fa fa-plus"></i> Add Item</button>
+</div>
+<div id="feeItemsList">
+<!-- fee items injected here -->
+</div>
+<div class="d-flex justify-content-end mt-3" style="border-top:1px solid #eee;padding-top:12px;">
+<span style="font-size:14px;color:#666;">Total: <strong id="feeTotalDisplay">₦0.00</strong></span>
+</div>
+</div>
+<div class="aa-modal-footer">
+<button class="aa-btn aa-btn-outline" onclick="closeModal('feeModal')">Cancel</button>
+<button class="aa-btn aa-btn-primary" onclick="saveFeeStructure()">Save Structure</button>
+</div>
+</div>
+</div>
+<!-- Payment Modal -->
+<div class="aa-modal-backdrop" id="paymentModal">
+<div class="aa-modal">
+<div class="aa-modal-header"><h5 class="aa-modal-title">Record Payment</h5><button class="aa-modal-close" onclick="closeModal('paymentModal')">×</button></div>
+<div class="aa-modal-body">
+<form id="paymentForm">
+<div class="aa-form-group">
+<label class="aa-label">Student (Select or Search)</label>
+<select class="aa-select" id="payStudentSelect" name="studentId" required=""></select>
+</div>
+<div class="aa-grid-2">
+<div class="aa-form-group"><label class="aa-label">Amount Paid</label><input class="aa-input" name="amount" required="" type="number"/></div>
+<div class="aa-form-group"><label class="aa-label">Payment Method</label>
+<select class="aa-select" name="method">
+<option value="Cash">Cash</option><option value="Bank Transfer">Bank Transfer</option>
+<option value="POS">POS</option><option value="Cheque">Cheque</option>
+</select>
+</div>
+</div>
+</form>
+</div>
+<div class="aa-modal-footer">
+<button class="aa-btn aa-btn-outline" onclick="closeModal('paymentModal')">Cancel</button>
+<button class="aa-btn aa-btn-success" onclick="savePayment()">Record Payment</button>
+</div>
+</div>
+</div>
+<!-- Discount Modal -->
+<div class="aa-modal-backdrop" id="discountModal">
+<div class="aa-modal">
+<div class="aa-modal-header"><h5 class="aa-modal-title">Set Student Discount</h5><button class="aa-modal-close" onclick="closeModal('discountModal')">×</button></div>
+<div class="aa-modal-body">
+<input id="discountStudentId" type="hidden"/>
+<p style="font-size:13px; color:var(--aa-muted); margin-bottom:15px;">Configure a fee discount for <strong class="text-navy" id="discountStudentName"></strong>. This discount will be applied automatically whenever term bills are generated for their class.</p>
+<div class="aa-form-group">
+<label class="aa-label">Discount Type</label>
+<select class="aa-select" id="discountType" onchange="toggleDiscountValueField()">
+<option value="none">None (No Discount)</option>
+<option value="fixed">Fixed Amount (₦)</option>
+<option value="percentage">Percentage (of Tuition)</option>
+</select>
+</div>
+<div class="aa-form-group" id="discountValueWrap" style="display:none;">
+<label class="aa-label" id="discountValueLabel">Discount Value</label>
+<input class="aa-input" id="discountValue" min="0" placeholder="e.g. 5000 or 10" type="number"/>
+</div>
+</div>
+<div class="aa-modal-footer">
+<button class="aa-btn aa-btn-outline" onclick="closeModal('discountModal')">Cancel</button>
+<button class="aa-btn aa-btn-primary" onclick="saveStudentDiscount()">Save Discount</button>
+</div>
+</div>
+</div>
+<!-- Expense Modal -->
+<div class="aa-modal-backdrop" id="expenseModal">
+<div class="aa-modal">
+<div class="aa-modal-header"><h5 class="aa-modal-title">Record Expense</h5><button class="aa-modal-close" onclick="closeModal('expenseModal')">×</button></div>
+<div class="aa-modal-body">
+<form id="expenseForm">
+<input id="expenseId" name="id" type="hidden"/>
+<div class="aa-grid-2">
+<div class="aa-form-group"><label class="aa-label">Category</label>
+<select class="aa-select" name="category" required="">
+<option value="Utilities">Utilities</option><option value="Maintenance">Maintenance</option>
+<option value="Supplies">Supplies</option><option value="Salaries">Salaries</option>
+<option value="Other">Other</option>
+</select>
+</div>
+<div class="aa-form-group"><label class="aa-label">Amount</label><input class="aa-input" name="amount" required="" type="number"/></div>
+</div>
+<div class="aa-form-group"><label class="aa-label">Description</label><input class="aa-input" name="description" required="" type="text"/></div>
+<div class="aa-form-group"><label class="aa-label">Date</label><input class="aa-input" id="expDate" name="date" required="" type="date"/></div>
+</form>
+</div>
+<div class="aa-modal-footer">
+<button class="aa-btn aa-btn-outline" onclick="closeModal('expenseModal')">Cancel</button>
+<button class="aa-btn aa-btn-primary" onclick="saveExpense()">Save Expense</button>
+</div>
+</div>
+</div>
+<!-- Ledger Modal -->
+<div class="aa-modal-backdrop" id="ledgerModal">
+<div class="aa-modal aa-modal-lg">
+<div class="aa-modal-header"><h5 class="aa-modal-title">Student Ledger</h5><button class="aa-modal-close" onclick="closeModal('ledgerModal')">×</button></div>
+<div class="aa-modal-body">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #ddd;">
+<div style="display:flex; gap:10px; align-items:center;">
+<label style="font-size:12px; font-weight:bold;">From:</label>
+<input class="aa-input" id="ledgerStartDate" style="height:32px; width:130px;" type="date"/>
+<label style="font-size:12px; font-weight:bold;">To:</label>
+<input class="aa-input" id="ledgerEndDate" style="height:32px; width:130px;" type="date"/>
+</div>
+<div>
+<button class="aa-btn aa-btn-primary aa-btn-sm" onclick="downloadLedgerPDF()"><i class="fa fa-download"></i> Download PDF</button>
+</div>
+</div>
+<input id="ledgerStudentId" type="hidden"/>
+<div id="ledgerContent">Loading...</div>
+</div>
+</div>
+</div>
+<!-- Review Payment Modal -->
+<div class="aa-modal-backdrop" id="reviewPaymentModal">
+<div class="aa-modal">
+<div class="aa-modal-header">
+<h5 class="aa-modal-title">Review Parent Payment</h5>
+<button class="aa-modal-close" onclick="closeModal('reviewPaymentModal')">×</button>
+</div>
+<div class="aa-modal-body">
+<input id="revPayId" type="hidden"/>
+<div class="aa-form-group">
+<label class="aa-label">Student</label>
+<input class="aa-input" id="revPayStudent" readonly="" type="text"/>
+</div>
+<div class="aa-grid-2">
+<div class="aa-form-group">
+<label class="aa-label">Amount Paid</label>
+<input class="aa-input" id="revPayAmount" readonly="" type="text"/>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Method</label>
+<input class="aa-input" id="revPayMethod" readonly="" type="text"/>
+</div>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Parent's Comment / Note</label>
+<textarea class="aa-input" id="revPayComment" placeholder="No comment provided" readonly="" rows="2"></textarea>
+</div>
+<div class="aa-form-group">
+<label class="aa-label">Proof of Payment</label>
+<div id="revPayProofContainer" style="border:1px solid #ccc; border-radius:6px; overflow:hidden; text-align:center; padding:10px; background:#f9f9f9;">
+<a href="#" id="revPayProofLink" target="_blank">
+<img id="revPayProofImg" src="" style="max-width:100%; max-height:300px; display:none;"/>
+</a>
+<div id="revPayProofMissing" style="display:none; color:#999; padding:20px;">No proof uploaded</div>
+</div>
+</div>
+<div class="d-flex gap-2 mt-3">
+<button class="aa-btn aa-btn-danger w-100" onclick="rejectPayment()"><i class="fa fa-times"></i> Reject</button>
+<button class="aa-btn aa-btn-success w-100" onclick="approvePayment()"><i class="fa fa-check"></i> Approve</button>
+</div>
+</div>
+</div>
+</div>
+
+
+
+
+<!-- Profile Modal -->
+
+
+
