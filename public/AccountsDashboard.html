@@ -771,13 +771,21 @@
     }
 
     // -- Fee Structure --
-    function addFeeItem(name, amount) {
+    function addFeeItem(name, amount, gender, isOptional) {
       var list = document.getElementById('feeItemsList');
-      var idx = list.children.length;
       var row = document.createElement('div');
       row.className = 'd-flex gap-2 mb-2 align-items-center fee-item-row';
-      row.innerHTML = '<input type="text" class="aa-input fee-item-name" placeholder="Fee name (e.g. Tuition Fee)" value="'+(name||'')+'" style="flex:2;" oninput="recalcFeeTotal()">'+
+      row.innerHTML = '<input type="text" class="aa-input fee-item-name" placeholder="Fee name (e.g. Tuition)" value="'+(name||'')+'" style="flex:2;" oninput="recalcFeeTotal()">'+
         '<input type="number" class="aa-input fee-item-amount" placeholder="Amount" value="'+(amount||'')+'" min="0" style="flex:1;" oninput="recalcFeeTotal()">'+
+        '<select class="aa-select fee-item-gender" style="flex:1;">'+
+        '<option value="All" '+(gender==='All'?'selected':'')+'>All</option>'+
+        '<option value="Male" '+(gender==='Male'?'selected':'')+'>Boys</option>'+
+        '<option value="Female" '+(gender==='Female'?'selected':'')+'>Girls</option>'+
+        '</select>'+
+        '<select class="aa-select fee-item-optional" style="flex:1;">'+
+        '<option value="false" '+(!isOptional?'selected':'')+'>Mandatory</option>'+
+        '<option value="true" '+(isOptional?'selected':'')+'>Optional</option>'+
+        '</select>'+
         '<button type="button" class="aa-btn aa-btn-danger aa-btn-xs" onclick="this.closest(\'div\').remove();recalcFeeTotal();"><i class="fa fa-trash"></i></button>';
       list.appendChild(row);
     }
@@ -804,8 +812,8 @@
       
       document.getElementById('feeItemsList').innerHTML = '';
       // Seed with 2 default rows
-      addFeeItem('Tuition Fee', '');
-      addFeeItem('Development Levy', '');
+      addFeeItem('Tuition Fee', '', 'All', false);
+      addFeeItem('Development Levy', '', 'All', false);
       recalcFeeTotal();
       openModal('feeModal');
     }
@@ -871,8 +879,8 @@
           if (f.examFee) items.push({name:'Exam Fee', amount: f.examFee});
           if (f.sportsFee) items.push({name:'Sports Fee', amount: f.sportsFee});
         }
-        if (items.length === 0) addFeeItem('Tuition Fee', '');
-        items.forEach(function(item){ addFeeItem(item.name, item.amount); });
+        if (items.length === 0) addFeeItem('Tuition Fee', '', 'All', false);
+        items.forEach(function(item){ addFeeItem(item.name, item.amount, item.gender || 'All', item.isOptional || false); });
         recalcFeeTotal();
         openModal('feeModal');
       }, null, true);
@@ -969,8 +977,10 @@
       rows.forEach(function(row) {
         var name = row.querySelector('.fee-item-name').value.trim();
         var amount = parseFloat(row.querySelector('.fee-item-amount').value || 0);
+        var gender = row.querySelector('.fee-item-gender').value;
+        var isOptional = row.querySelector('.fee-item-optional').value === 'true';
         if (!name) { hasError = true; return; }
-        items.push({name: name, amount: amount});
+        items.push({name: name, amount: amount, gender: gender, isOptional: isOptional});
       });
       if (hasError) return showToast('All fee items must have a name.', 'error');
       if (items.length === 0) return showToast('Add at least one fee item.', 'error');

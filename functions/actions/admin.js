@@ -859,11 +859,23 @@ module.exports = function(db, notificationsActions) {
             continue;
           }
 
-          const originalFeeTotal = parseFloat(fee.totalFee) || parseFloat(fee.totalAmount) || 0;
-          let total = originalFeeTotal;
-          
           let lineItems = [];
           try { lineItems = typeof fee.lineItems === 'string' ? JSON.parse(fee.lineItems) : (fee.lineItems || []); } catch(e){}
+
+          // Filter gender-specific fees
+          const sGender = (student.gender || '').toLowerCase().trim();
+          lineItems = lineItems.filter(item => {
+            const iGender = (item.gender || 'All').toLowerCase().trim();
+            if (iGender === 'male' && sGender === 'female') return false;
+            if (iGender === 'female' && sGender === 'male') return false;
+            return true;
+          });
+
+          // Calculate mandatory fee total
+          const originalFeeTotal = lineItems.reduce((sum, item) => {
+            return sum + (item.isOptional === true || item.isOptional === 'true' ? 0 : (parseFloat(item.amount) || 0));
+          }, 0);
+          let total = originalFeeTotal;
           
           let discountAmount = 0;
           if (student.discountConfig && student.discountConfig.type && student.discountConfig.type !== 'none') {
@@ -911,7 +923,7 @@ module.exports = function(db, notificationsActions) {
           currentBatch.set(newBillRef, {
             id: newBillRef.id, studentId: sid, studentName: student.fullName, className: className,
             term: term, session: session, originalFeeTotal, arrears: pastArrears, totalBilled: total, discountAmount: discountAmount, totalPaid: appliedCredit,
-            balance: finalBalance, status: billStatus, lineItems: fee.lineItems,
+            balance: finalBalance, status: billStatus, lineItems: JSON.stringify(lineItems),
             createdAt: new Date().toISOString(),
             earlyBirdDeadline: earlyBirdDeadline,
             earlyBirdDiscountPercent: earlyBirdDiscountPercent,

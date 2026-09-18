@@ -211,6 +211,7 @@
           <i class="fa fa-info-circle" style="margin-top:2px;"></i>
           <div>Please enter the amount paid and upload a clear picture/screenshot of your payment receipt. The accounts office will validate it.</div>
         </div>
+        <div id="optionalFeesContainer" style="display:none; background:#f9fafb; padding:10px; border-radius:6px; margin-bottom:15px; border:1px solid #e2e8f0;"></div>
         <div class="aa-form-group">
           <label class="aa-label">Amount Paid (&#8358;)</label>
           <input type="number" id="payAmount" class="aa-input" placeholder="e.g. 50000">
@@ -505,9 +506,57 @@
       }, null, true);
     }
 
+    function updateOptionalFee(checkbox) {
+      var amt = parseFloat(document.getElementById('payAmount').value || 0);
+      var extra = parseFloat(checkbox.getAttribute('data-amount') || 0);
+      if(checkbox.checked) {
+        document.getElementById('payAmount').value = amt + extra;
+      } else {
+        document.getElementById('payAmount').value = Math.max(0, amt - extra);
+      }
+      
+      var cbs = document.querySelectorAll('.optional-fee-cb:checked');
+      var names = [];
+      cbs.forEach(function(cb) { names.push(cb.getAttribute('data-name')); });
+      var commentInput = document.getElementById('payComment');
+      if (commentInput) {
+        var existing = commentInput.value.replace(/Including optional items:.*$/i, '').trim();
+        if(names.length > 0) {
+           commentInput.value = (existing ? existing + (existing.endsWith('|')?'':' | ') : '') + "Including optional items: " + names.join(", ");
+        } else {
+           commentInput.value = existing.replace(/ \| $/, '');
+        }
+      }
+    }
+
     function openSubmitPaymentModal() {
       var sid = document.getElementById('finChildSelect').value;
       if(!sid) return showToast('Please select a child first.', 'warning');
+      
+      var unpaidBills = window._activeFinBills || [];
+      var optionalItemsHtml = '';
+      unpaidBills.forEach(function(b) {
+        var items = [];
+        try { items = typeof b.lineItems === 'string' ? JSON.parse(b.lineItems) : (b.lineItems || []); } catch(e){}
+        items.forEach(function(item) {
+          if (item.isOptional === true || item.isOptional === 'true') {
+            optionalItemsHtml += '<div style="margin-bottom:5px;">'+
+              '<label><input type="checkbox" class="optional-fee-cb" data-name="'+item.name+'" data-amount="'+(item.amount||0)+'" onchange="updateOptionalFee(this)"> '+
+              item.name + ' - ' + formatNaira(item.amount) + ' (' + b.term + ' ' + b.session + ')</label>'+
+              '</div>';
+          }
+        });
+      });
+      
+      var container = document.getElementById('optionalFeesContainer');
+      if (optionalItemsHtml) {
+        container.innerHTML = '<label class="aa-label" style="font-weight:bold;margin-bottom:8px;">Optional Fees (Check to include)</label>' + optionalItemsHtml;
+        container.style.display = 'block';
+      } else if (container) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+      }
+
       document.getElementById('payAmount').value = '';
       document.getElementById('payMethod').value = 'Bank Transfer';
       document.getElementById('proofContainer').style.display = 'block';
@@ -515,6 +564,7 @@
       document.getElementById('payProofBase64').value = '';
       document.getElementById('payProofPreview').style.display = 'none';
       document.getElementById('payProofPreview').innerHTML = '';
+      if(document.getElementById('payComment')) document.getElementById('payComment').value = '';
       openModal('submitPaymentModal');
     }
 
