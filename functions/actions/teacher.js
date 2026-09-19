@@ -13,71 +13,73 @@ module.exports = function(db, notificationsActions) {
 
   return {
     teacherGetMySubjects: async (req, res) => {
-      // Session attached by middleware
       const session = req.session;
-      const role = session.role;
       const userId = session.userId;
-      
+
       try {
-        if (role === 'primary_teacher') {
-          // Fetch the user to get their assigned class
-          const myClass = (await getTeacherClass(userId)) || "";
-          const myClassNormalized = myClass.toLowerCase().trim();
-          
-          const subjectsSnap = await db.collection("subjects").get();
-          const subjects = [];
-          
-          subjectsSnap.forEach(doc => {
-            let sub = doc.data();
-            sub.id = doc.id;
-            
-            const sec = sub.section ? String(sub.section).toLowerCase().trim() : "";
-            let classList = sub.className || sub.class || sub.targetClasses || "";
-            if (Array.isArray(classList)) classList = classList.join(",");
-            const classListNormalized = classList.toLowerCase().trim();
-            
-            let isMySubject = false;
-            
-            // 1. Explicitly assigned to this teacher
-            if (sub.assignedTeacherId && String(sub.assignedTeacherId) === String(userId)) {
-              isMySubject = true;
-            } 
-            // 2. Assigned to this specific class
-            else if (myClassNormalized && (classListNormalized.includes(myClassNormalized) || myClassNormalized.includes(classListNormalized))) {
-              isMySubject = true;
-            }
-            // 3. Assigned to all primary (if section is primary and no specific class constraint)
-            else if (sec === 'primary' && (!classListNormalized || classListNormalized === 'all' || classListNormalized === '')) {
-              isMySubject = true;
-            }
-            // 4. Fallback: if section is primary and class list contains the generic 'primary' string
-            else if (sec === 'primary' && classListNormalized.includes('primary') && !myClassNormalized) {
-              isMySubject = true;
-            }
-            // 5. Fallback: if explicitly assigned to 'all' classes regardless of section
-            else if (classListNormalized === 'all' || classListNormalized === 'both') {
-              isMySubject = true;
-            }
-            
-            if (isMySubject) {
-              subjects.push(sub);
+        // Get the class this teacher is assigned to (works for any role)
+        const myClass = (await getTeacherClass(userId)) || "";
+        const myClassNormalized = myClass.toLowerCase().trim();
+
+        // If they have a class, look up the section of that class from the classes collection
+        let myClassSection = "";
+        if (myClassNormalized) {
+          const classesSnap = await db.collection("classes").get();
+          classesSnap.forEach(doc => {
+            const cn = (doc.data().className || "").toLowerCase().trim();
+            if (cn === myClassNormalized) {
+              myClassSection = (doc.data().section || "").toLowerCase().trim();
             }
           });
-          return res.json({ success: true, data: subjects });
-        } else {
-          // Standard teacher, just get explicitly assigned subjects
-          const subjectsSnap = await db.collection("subjects").get();
-          const subjects = [];
-          subjectsSnap.forEach(doc => {
-            let sub = doc.data();
-            sub.id = doc.id;
-            const tId = sub.assignedTeacherId || sub.teacherId;
-            if (tId && String(tId) === String(userId)) {
-              subjects.push(sub);
-            }
-          });
-          return res.json({ success: true, data: subjects });
         }
+
+        const subjectsSnap = await db.collection("subjects").get();
+        const subjects = [];
+
+        subjectsSnap.forEach(doc => {
+          let sub = doc.data();
+          sub.id = doc.id;
+
+          const subSection = (sub.section || "").toLowerCase().trim();
+          const tId = sub.assignedTeacherId || sub.teacherId;
+
+          // Resolve target class field (multiple naming conventions)
+          let classList = sub.className || sub.class || sub.targetClasses || "";
+          if (Array.isArray(classList)) classList = classList.join(",");
+          const classListNormalized = classList.toLowerCase().trim();
+          
+          // Split comma-separated class list for exact matching
+          const classListItems = classListNormalized
+            ? classListNormalized.split(/[,;]/).map(c => c.trim()).filter(Boolean)
+            : [];
+
+          let isMySubject = false;
+
+          // Priority 1: Explicitly assigned to this teacher
+          if (tId && String(tId) === String(userId)) {
+            isMySubject = true;
+          }
+          // Priority 2: Subject targets teacher's specific class (case-insensitive exact match)
+          else if (myClassNormalized && classListItems.length > 0 &&
+                   classListItems.some(c => c === myClassNormalized)) {
+            isMySubject = true;
+          }
+          // Priority 3: No specific class restriction and section matches teacher's class section
+          else if (myClassNormalized && classListItems.length === 0 &&
+                   myClassSection &&
+                   (subSection === myClassSection || subSection === "both" || subSection === "")) {
+            isMySubject = true;
+          }
+          // Priority 4: Subject explicitly targets 'all' or 'both'
+          else if (classListNormalized === "all" || classListNormalized === "both") {
+            isMySubject = true;
+          }
+
+          if (isMySubject) {
+            subjects.push(sub);
+          }
+        });
+        return res.json({ success: true, data: subjects });
       } catch (err) {
         return res.json({ success: false, message: "Error fetching subjects: " + err.message });
       }
