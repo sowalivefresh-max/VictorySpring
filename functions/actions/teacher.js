@@ -158,26 +158,66 @@ module.exports = function(db, notificationsActions) {
         const sid = req.body.studentId;
         if (!sid) return res.json({ success: false, message: "Student ID required" });
         
-        const teacherClass = await getTeacherClass(req.session.userId);
+        const userId = req.session.userId;
+        const teacherClass = await getTeacherClass(userId);
         if (!teacherClass) return res.json({ success: false, message: "You are not assigned as a class teacher." });
         
+        const teacherClassNormalized = teacherClass.toLowerCase().trim();
+        
+        // Fetch teacher's class section
+        let myClassSection = "";
+        const classesSnap = await db.collection("classes").get();
+        classesSnap.forEach(doc => {
+          if ((doc.data().className || "").toLowerCase().trim() === teacherClassNormalized) {
+            myClassSection = (doc.data().section || "").toLowerCase().trim();
+          }
+        });
+
         const studentDoc = await db.collection("students").doc(sid).get();
         const studentClassSS = studentDoc.exists ? (studentDoc.data().className || '') : '';
-        if (!studentDoc.exists || studentClassSS.toLowerCase().trim() !== teacherClass.toLowerCase().trim()) {
+        if (!studentDoc.exists || studentClassSS.toLowerCase().trim() !== teacherClassNormalized) {
           return res.json({ success: false, message: "Student not found in your assigned class." });
         }
         
-        const role = req.session.role;
-        const targetSection = 'primary';
+        // Fetch ALL subjects and filter to those applicable to the class
+        const subjectsSnap = await db.collection("subjects").get();
+        const classSubjects = [];
         
-        const subjectsSnap = await db.collection("subjects").where("section", "==", targetSection).get();
-        const allSubjects = subjectsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+        subjectsSnap.forEach(doc => {
+          let sub = doc.data();
+          sub.id = doc.id;
+          
+          const subSection = (sub.section || "").toLowerCase().trim();
+          const tId = sub.assignedTeacherId || sub.teacherId;
+          
+          let classList = sub.className || sub.class || sub.targetClasses || "";
+          if (Array.isArray(classList)) classList = classList.join(",");
+          const classListNormalized = classList.toLowerCase().trim();
+          
+          const classListItems = classListNormalized
+            ? classListNormalized.split(/[,;]/).map(c => c.trim()).filter(Boolean)
+            : [];
+            
+          let isMySubject = false;
+          
+          if (tId && String(tId) === String(userId)) {
+            isMySubject = true;
+          } else if (teacherClassNormalized && classListItems.length > 0 && classListItems.some(c => c === teacherClassNormalized)) {
+            isMySubject = true;
+          } else if (teacherClassNormalized && classListItems.length === 0 && myClassSection && (subSection === myClassSection || subSection === "both" || subSection === "")) {
+            isMySubject = true;
+          } else if (classListNormalized === "all" || classListNormalized === "both") {
+            isMySubject = true;
+          }
+          
+          if (isMySubject) classSubjects.push(sub);
+        });
         
         const enrollSnap = await db.collection("student_subjects").where("studentId", "==", sid).get();
         const enrolledIds = enrollSnap.docs.map(d => d.data().subjectId);
         
-        const enrolled = allSubjects.filter(s => enrolledIds.includes(s.id));
-        const available = allSubjects.filter(s => !enrolledIds.includes(s.id));
+        const enrolled = classSubjects.filter(s => enrolledIds.includes(s.id));
+        const available = classSubjects.filter(s => !enrolledIds.includes(s.id));
         
         return res.json({ success: true, data: { enrolled, available } });
       } catch (err) { return res.json({ success: false, message: err.message }); }
