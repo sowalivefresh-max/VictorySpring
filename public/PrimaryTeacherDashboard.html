@@ -1277,10 +1277,11 @@
       var availHtml = '';
       currentEnrollment.available.forEach(function(s) {
         var subId = s.id || s.iD;
-        var sectionLabel = s.section === 'primary' ? 'Primary' : 'High';
+        var sec = (s.section || '').toLowerCase().trim();
+        var sectionLabel = sec === 'primary' ? 'Primary' : (sec === 'high' ? 'High' : 'Both');
         var classLabel = s.class || s.className || 'All';
         availHtml += '<div class="d-flex justify-content-between align-items-center mb-1 fs-12 p-1 border-bottom">' +
-                     '<span>'+s.subjectName+' <span class="aa-badge aa-badge-'+(s.section==='primary'?'info':'navy')+'" style="font-size:9px;">'+sectionLabel+'</span> ('+classLabel+')</span>' +
+                     '<span>'+s.subjectName+' <span class="aa-badge aa-badge-'+(sec==='primary'?'info':'navy')+'" style="font-size:9px;">'+sectionLabel+'</span> ('+classLabel+')</span>' +
                      '<button class="aa-btn aa-btn-success aa-btn-xs" onclick="enrollSubject(\''+sid+'\', \''+subId+'\')">Add</button></div>';
       });
       document.getElementById('available-subjects').innerHTML = availHtml || 'No more subjects available';
