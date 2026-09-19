@@ -91,8 +91,13 @@ module.exports = function(db, notificationsActions) {
         if (role === 'primary_teacher') {
           const myClass = await getTeacherClass(userId);
           if (myClass) {
-            const snap = await db.collection("students").where("className", "==", myClass).count().get();
-            studentCount = snap.data().count;
+            // Case-insensitive student count
+            const myClassLower = myClass.toLowerCase().trim();
+            const allStudentsSnap = await db.collection("students").get();
+            allStudentsSnap.forEach(doc => {
+              const cn = doc.data().className || '';
+              if (cn.toLowerCase().trim() === myClassLower) studentCount++;
+            });
           }
         } else {
           const subSnap = await db.collection("subjects").get();
@@ -123,18 +128,21 @@ module.exports = function(db, notificationsActions) {
     teacherGetClassStudents: async (req, res) => {
       const className = req.body.className;
       if (!className) return res.json({ success: false, message: "Class name required." });
+      const classNameLower = className.toLowerCase().trim();
       
       try {
+        // Fetch all active students and filter case-insensitively
         const studentsSnap = await db.collection("students")
-          .where("className", "==", className)
           .where("status", "==", "active")
           .get();
           
         const students = [];
         studentsSnap.forEach(doc => {
           let st = doc.data();
-          st.id = doc.id;
-          students.push(st);
+          if (st.className && st.className.toLowerCase().trim() === classNameLower) {
+            st.id = doc.id;
+            students.push(st);
+          }
         });
         
         return res.json({ success: true, data: students });
@@ -152,7 +160,8 @@ module.exports = function(db, notificationsActions) {
         if (!teacherClass) return res.json({ success: false, message: "You are not assigned as a class teacher." });
         
         const studentDoc = await db.collection("students").doc(sid).get();
-        if (!studentDoc.exists || studentDoc.data().className !== teacherClass) {
+        const studentClassSS = studentDoc.exists ? (studentDoc.data().className || '') : '';
+        if (!studentDoc.exists || studentClassSS.toLowerCase().trim() !== teacherClass.toLowerCase().trim()) {
           return res.json({ success: false, message: "Student not found in your assigned class." });
         }
         
@@ -210,7 +219,8 @@ module.exports = function(db, notificationsActions) {
         
         const teacherClass = await getTeacherClass(req.session.userId);
         const studentDoc = await db.collection("students").doc(studentId).get();
-        if (!studentDoc.exists || studentDoc.data().className !== teacherClass) {
+        const studentClassEN = studentDoc.exists ? (studentDoc.data().className || '') : '';
+        if (!studentDoc.exists || studentClassEN.toLowerCase().trim() !== (teacherClass || '').toLowerCase().trim()) {
           return res.json({ success: false, message: "Student not found in your assigned class." });
         }
         
@@ -233,8 +243,9 @@ module.exports = function(db, notificationsActions) {
         if (!studentId || !subjectId) return res.json({ success: false, message: "Student and Subject ID required" });
         
         const teacherClass = await getTeacherClass(req.session.userId);
-        const studentDoc = await db.collection("students").doc(studentId).get();
-        if (!studentDoc.exists || studentDoc.data().className !== teacherClass) {
+        const studentDocU = await db.collection("students").doc(studentId).get();
+        const studentClassUE = studentDocU.exists ? (studentDocU.data().className || '') : '';
+        if (!studentDocU.exists || studentClassUE.toLowerCase().trim() !== (teacherClass || '').toLowerCase().trim()) {
           return res.json({ success: false, message: "Student not found in your assigned class." });
         }
         

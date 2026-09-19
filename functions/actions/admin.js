@@ -2795,6 +2795,14 @@ module.exports = function(db, notificationsActions) {
         if (!prefix || prefix.length === 0) prefix = "SCH";
         const year = String(new Date().getFullYear()).slice(-2);
 
+        // Build a case-insensitive lookup map of canonical class names from Firestore
+        const classesSnap = await db.collection("classes").get();
+        const canonicalClassMap = {}; // lowercase => canonical casing
+        classesSnap.forEach(doc => {
+          const cn = doc.data().className;
+          if (cn) canonicalClassMap[cn.toLowerCase().trim()] = cn.trim();
+        });
+
         const numMissing = students.filter(s => !s.admissionNumber || s.admissionNumber.trim() === '').length;
         let currentSerial = 1;
 
@@ -2821,6 +2829,11 @@ module.exports = function(db, notificationsActions) {
             if (!st.admissionNumber || st.admissionNumber.trim() === '') {
               const serialStr = String(currentSerial++).padStart(4, '0');
               st.admissionNumber = `${prefix}/${year}/${serialStr}`;
+            }
+            // Normalize className to match canonical casing in the database
+            if (st.className) {
+              const normalized = canonicalClassMap[st.className.toLowerCase().trim()];
+              if (normalized) st.className = normalized;
             }
             st.status = "active";
             const docRef = db.collection("students").doc();
