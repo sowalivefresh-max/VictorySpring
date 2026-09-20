@@ -306,7 +306,7 @@ module.exports = function(db) {
     },
 
     parentSelfRegister: async (req, res) => {
-      const { token, fullName, email, password, phone } = req.body;
+      const { token, fullName, email, password, phone, address } = req.body;
 
       if (!token || !fullName || !email || !password) {
         return res.json({ success: false, message: "All required fields must be filled." });
@@ -332,6 +332,7 @@ module.exports = function(db) {
           fullName: fullName.trim(),
           email: email.trim().toLowerCase(),
           phone: phone || "",
+          address: address || "",
           role: "parent",
           section: "both",
           status: "active",

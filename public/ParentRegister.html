@@ -232,6 +232,13 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">Home Address</label>
+        <div class="input-wrap">
+          <i class="fa fa-map-marker-alt icon" style="top:16px;transform:none;"></i>
+          <textarea id="regAddress" class="form-input" placeholder="e.g. 12 Adeola Street, Ibadan" autocomplete="street-address" rows="2" style="padding-top:10px;padding-bottom:10px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="form-label">Password *</label>
         <div class="input-wrap">
           <i class="fa fa-lock icon"></i>
@@ -339,6 +346,7 @@
       var name = document.getElementById('regName').value.trim();
       var email = document.getElementById('regEmail').value.trim();
       var phone = document.getElementById('regPhone').value.trim();
+      var address = document.getElementById('regAddress').value.trim();
       var password = document.getElementById('regPassword').value;
       var confirm = document.getElementById('regConfirm').value;
       var errEl = document.getElementById('formError');
@@ -353,7 +361,7 @@
       btn.disabled = true;
       btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating Account...';
 
-      runBackendAction('parentSelfRegister', [inviteToken, name, email, password, phone])
+      runBackendAction('parentSelfRegister', [inviteToken, name, email, password, phone, address])
         .then(function(res) {
           if (res.success) {
             showScreen('success');
