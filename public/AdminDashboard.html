@@ -295,6 +295,7 @@
                       <th style="cursor:pointer" onclick="sortTable('studentsTable', 1)">Name <i class="fa fa-sort" style="color:#aaa; margin-left:4px;"></i></th>
                       <th style="cursor:pointer" onclick="sortTable('studentsTable', 2)">Class <i class="fa fa-sort" style="color:#aaa; margin-left:4px;"></i></th>
                       <th>Gender</th>
+                      <th>Date of Birth</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -1643,6 +1644,7 @@
           { key: 'fullName' },
           { key: 'className', render: function(r){ return r.className || r.class || ''; } },
           { key: 'gender' },
+          { key: 'dob', render: function(r){ var d = r.dob || r.dateOfBirth || ''; if(!d) return '-'; var dt = new Date(d); return isNaN(dt) ? d : dt.toLocaleDateString('en-GB'); } },
           { key: 'status', render: function(r){ return formatStatus(r.status); } }
         ], data, function(r) {
           var id = r.id || r.iD;
