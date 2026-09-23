@@ -533,6 +533,32 @@ module.exports = function(db, notificationsActions) {
       }
 
       try {
+        // Prevent double entry by checking if another teacher already marked it
+        const existingAttendance = await db.collection("attendance")
+          .where("className", "==", className)
+          .where("date", "==", date)
+          .limit(1)
+          .get();
+
+        if (!existingAttendance.empty) {
+          const existingData = existingAttendance.docs[0].data();
+          if (existingData.teacherId && existingData.teacherId !== req.session.userId) {
+            let otherTeacherName = "another teacher";
+            try {
+              const otherTeacherDoc = await db.collection("users").doc(existingData.teacherId).get();
+              if (otherTeacherDoc.exists) {
+                otherTeacherName = otherTeacherDoc.data().fullName || otherTeacherName;
+              }
+            } catch (e) {
+              // Ignore user fetch errors
+            }
+            return res.json({ 
+              success: false, 
+              message: `Attendance for this class on this date has already been marked by ${otherTeacherName}.` 
+            });
+          }
+        }
+
         const batch = db.batch();
         let count = 0;
         
