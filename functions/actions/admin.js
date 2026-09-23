@@ -297,21 +297,52 @@ module.exports = function(db, notificationsActions) {
           });
         }
         
+        // Build a teacher -> Set<className> map from the classes collection.
+        // This is the AUTHORITATIVE source for class-teacher assignments.
+        // A teacher's class may be stored in classes.classTeacherId / classes.classTeacherIds
+        // and may NOT be reflected on the teacher's user profile (classAssigned / classesAssigned).
+        // Without this, co-teachers who didn't personally submit get wrongly flagged as defaulters.
+        const classesSnap = await db.collection("classes").get();
+        const teacherClassMap = {}; // teacherId -> Set of lowercase class names
+        classesSnap.forEach(doc => {
+          const d = doc.data();
+          const className = (d.className || '').toLowerCase().trim();
+          if (!className) return;
+          const assignedIds = [];
+          if (d.classTeacherId) assignedIds.push(String(d.classTeacherId));
+          if (d.classTeacherIds && Array.isArray(d.classTeacherIds)) {
+            d.classTeacherIds.forEach(id => { if (id) assignedIds.push(String(id)); });
+          }
+          assignedIds.forEach(tId => {
+            if (!teacherClassMap[tId]) teacherClassMap[tId] = new Set();
+            teacherClassMap[tId].add(className);
+          });
+        });
+
         let attendanceCompliant = [];
         let attendanceDefaulted = [];
         teachers.forEach(t => {
-          // Primary check: teacher personally submitted attendance (by teacherId)
+          // Primary check: teacher personally submitted attendance
           const submittedPersonally = attendanceTeacherIds.has(t.id);
-          
-          // Secondary check: attendance was submitted for the teacher's assigned class
-          // (case-insensitive comparison to handle casing differences)
-          let isClassCompliant = false;
-          if (t.classesAssigned && Array.isArray(t.classesAssigned)) {
-            isClassCompliant = t.classesAssigned.some(c => attendanceClasses.has((c || '').toLowerCase().trim()));
-          } else if (t.classAssigned) {
-            isClassCompliant = attendanceClasses.has((t.classAssigned || '').toLowerCase().trim());
+
+          // Secondary check: attendance exists for any class this teacher is assigned to.
+          // A class can have multiple co-teachers — if any one submits, all are compliant.
+          // Combine class assignments from ALL sources (classes collection + user profile).
+          const myClasses = new Set();
+          // Source 1: classes collection (authoritative)
+          if (teacherClassMap[t.id]) {
+            teacherClassMap[t.id].forEach(c => myClasses.add(c));
           }
-          
+          // Source 2: user profile fields (supplementary fallback)
+          if (t.classesAssigned && Array.isArray(t.classesAssigned)) {
+            t.classesAssigned.forEach(c => { if (c) myClasses.add(c.toLowerCase().trim()); });
+          }
+          if (t.classAssigned) {
+            myClasses.add((t.classAssigned || '').toLowerCase().trim());
+          }
+
+          const isClassCompliant = myClasses.size > 0 && [...myClasses].some(c => c && attendanceClasses.has(c));
+
           if (submittedPersonally || isClassCompliant) {
             attendanceCompliant.push(t);
           } else {
