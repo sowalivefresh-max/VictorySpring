@@ -603,7 +603,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       initTabs('pt-tabs'); AA.init();
-      document.getElementById('attDate').valueAsDate = new Date();
+      (function() {
+        var d = new Date();
+        var localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        document.getElementById('attDate').value = localDate;
+      })();
 
       // Initialize Quill Editor
       window.quillPlanEditor = new Quill('#planContentEditor', {

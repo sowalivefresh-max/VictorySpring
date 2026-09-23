@@ -274,26 +274,45 @@ module.exports = function(db, notificationsActions) {
         });
         
         // 2. Attendance Compliance (Today)
-        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        const attendanceSnap = await db.collection("attendance").where("date", "==", todayStr).get();
+        // Use local date (WAT = UTC+1) to avoid timezone boundary mismatches.
+        // We query for both UTC today and WAT today to be safe.
+        const nowUtc = new Date();
+        const todayStr = nowUtc.toISOString().split('T')[0]; // YYYY-MM-DD (UTC)
+        // Also compute WAT local date (UTC+1) in case the server and client dates differ
+        const watOffset = 60; // WAT = UTC+1, in minutes
+        const watNow = new Date(nowUtc.getTime() + watOffset * 60 * 1000);
+        const todayStrLocal = watNow.toISOString().split('T')[0]; // YYYY-MM-DD (WAT local)
+        
+        // Fetch attendance for today — check both UTC and local date to be safe
+        const datesToCheck = [...new Set([todayStr, todayStrLocal])];
         const attendanceTeacherIds = new Set();
         const attendanceClasses = new Set();
-        attendanceSnap.forEach(doc => {
-          const d = doc.data();
-          if (d.teacherId) attendanceTeacherIds.add(d.teacherId);
-          if (d.className) attendanceClasses.add(d.className);
-        });
+        
+        for (const dateStr of datesToCheck) {
+          const attendanceSnap = await db.collection("attendance").where("date", "==", dateStr).get();
+          attendanceSnap.forEach(doc => {
+            const d = doc.data();
+            if (d.teacherId) attendanceTeacherIds.add(d.teacherId);
+            if (d.className) attendanceClasses.add(d.className.toLowerCase().trim());
+          });
+        }
         
         let attendanceCompliant = [];
         let attendanceDefaulted = [];
         teachers.forEach(t => {
+          // Primary check: teacher personally submitted attendance (by teacherId)
+          const submittedPersonally = attendanceTeacherIds.has(t.id);
+          
+          // Secondary check: attendance was submitted for the teacher's assigned class
+          // (case-insensitive comparison to handle casing differences)
           let isClassCompliant = false;
           if (t.classesAssigned && Array.isArray(t.classesAssigned)) {
-            isClassCompliant = t.classesAssigned.some(c => attendanceClasses.has(c));
-          } else if (t.classAssigned && attendanceClasses.has(t.classAssigned)) {
-            isClassCompliant = true;
+            isClassCompliant = t.classesAssigned.some(c => attendanceClasses.has((c || '').toLowerCase().trim()));
+          } else if (t.classAssigned) {
+            isClassCompliant = attendanceClasses.has((t.classAssigned || '').toLowerCase().trim());
           }
-          if (attendanceTeacherIds.has(t.id) || isClassCompliant) {
+          
+          if (submittedPersonally || isClassCompliant) {
             attendanceCompliant.push(t);
           } else {
             attendanceDefaulted.push(t);

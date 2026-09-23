@@ -997,7 +997,10 @@ Answer: A
       if (!cls) return;
       // Set today's date on the attendance date picker
       var attDateEl = document.getElementById('classAttDate');
-      if (attDateEl && !attDateEl.value) attDateEl.valueAsDate = new Date();
+      if (attDateEl && !attDateEl.value) {
+        var _d = new Date();
+        attDateEl.value = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
+      }
       loadTimesSchoolOpened(cls);
       callServer('teacherGetClassStudents', [AA.token, cls], function(data) {
         myClassStudents = data;
