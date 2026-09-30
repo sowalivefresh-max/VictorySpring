@@ -45,6 +45,13 @@ async function runBackendAction(action, args = []) {
     // Legacy support: if the backend returned { success: true, data: ... }, unwrap it
     // so the frontend receives the raw array/object as it did with google.script.run
     if (data && typeof data === 'object' && data.success === true && data.data !== undefined) {
+      if (typeof data.data === 'object' && data.data !== null) {
+        try {
+          Object.defineProperty(data.data, 'success', { value: true, enumerable: false });
+          Object.defineProperty(data.data, 'message', { value: data.message, enumerable: false });
+          Object.defineProperty(data.data, 'data', { value: data.data, enumerable: false });
+        } catch(e) {}
+      }
       return data.data;
     }
     
