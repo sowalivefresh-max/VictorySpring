@@ -903,7 +903,7 @@ module.exports = function(db, notificationsActions) {
             continue;
           }
 
-          const fee = feeStructures.find(f => f.className === className);
+          const fee = feeStructures.find(f => (f.className || "").toLowerCase().trim() === className.toLowerCase().trim());
           if (!fee) {
             skipped++;
             continue;
