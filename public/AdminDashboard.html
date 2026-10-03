@@ -3544,6 +3544,20 @@
         </div>
         <div class="aa-modal-body">
           <p class="text-muted mb-3">Select the classes you want to generate a timetable for. The system will avoid scheduling conflicts for teachers.</p>
+          <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
+            <div class="aa-form-group" style="flex:1; min-width:130px; margin-bottom:0;">
+              <label>Term</label>
+              <select class="aa-input" id="tt-gen-term-select" style="width:100%;">
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+              </select>
+            </div>
+            <div class="aa-form-group" style="flex:1; min-width:130px; margin-bottom:0;">
+              <label>Session</label>
+              <select class="aa-input" id="tt-gen-session-select" style="width:100%;"></select>
+            </div>
+          </div>
           <div class="aa-form-group">
             <label>Select Classes</label>
             <div id="tt-gen-classes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;"></div>

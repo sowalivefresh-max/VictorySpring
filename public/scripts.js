@@ -1272,6 +1272,30 @@ function saveTimetableConfig() {
 
 function openTimetableGenerateModal() {
     loadTimetable();
+
+    // Populate modal-specific term/session selects
+    var sessVal = (typeof currentSession !== 'undefined' && currentSession) ? currentSession :
+                  (AA.settings && AA.settings.current_session ? AA.settings.current_session : '');
+    var termVal = (typeof currentTerm !== 'undefined' && currentTerm) ? currentTerm :
+                  (AA.settings && AA.settings.current_term ? String(AA.settings.current_term) : '');
+
+    var genTermSel = document.getElementById('tt-gen-term-select');
+    if (genTermSel && termVal) genTermSel.value = termVal;
+
+    var genSessSel = document.getElementById('tt-gen-session-select');
+    if (genSessSel) {
+        var currentYear = parseInt((sessVal || '').split('/')[0]) || new Date().getFullYear();
+        var html = '';
+        for (var i = 0; i < 5; i++) {
+            var y1 = currentYear - i;
+            var y2 = y1 + 1;
+            var val = y1 + '/' + y2;
+            var sel = (val === sessVal) ? 'selected' : '';
+            html += '<option value="' + val + '" ' + sel + '>' + val + '</option>';
+        }
+        genSessSel.innerHTML = html;
+    }
+
     openModal('modal-timetable-generate');
 }
 
@@ -1283,8 +1307,14 @@ function generateTimetable() {
     var classes = Array.from(document.querySelectorAll('.tt-class-chk:checked')).map(function(c) { return c.value; });
     if (classes.length === 0) return showToast('Please select at least one class.', 'warning');
 
-    var term = document.getElementById('timetable-term-select').value;
-    var session = document.getElementById('timetable-session-select').value;
+    // Read from modal-specific selects first, fall back to main view selects
+    var termEl = document.getElementById('tt-gen-term-select') || document.getElementById('timetable-term-select');
+    var sessEl = document.getElementById('tt-gen-session-select') || document.getElementById('timetable-session-select');
+    var term = termEl ? termEl.value : '';
+    var session = sessEl ? sessEl.value : '';
+
+    if (!term) return showToast('Please select a term.', 'warning');
+    if (!session) return showToast('Please select a session.', 'warning');
 
     var btn = document.getElementById('btn-generate-timetable');
     btn.disabled = true;
