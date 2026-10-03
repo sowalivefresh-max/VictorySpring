@@ -669,8 +669,8 @@ function openPDFViewer(previewUrl, downloadUrl, title) {
   modal.className = 'aa-modal-backdrop open';
   modal.innerHTML = '<div class="aa-modal aa-modal-lg">' +
     '<div class="aa-modal-header">' +
-    '<h5 class="aa-modal-title">≡ƒôä ' + (title || 'Document Viewer') + '</h5>' +
-    '<button class="aa-modal-close" onclick="document.getElementById(\'aa-pdf-modal\').remove()">├ù</button></div>' +
+    '<h5 class="aa-modal-title"><i class="fa fa-file-pdf"></i> ' + (title || 'Document Viewer') + '</h5>' +
+    '<button class="aa-modal-close" onclick="document.getElementById(\'aa-pdf-modal\').remove()">&times;</button></div>' +
     '<div class="aa-modal-body" style="padding:0;">' +
     '<iframe src="' + previewUrl + '" style="width:100%;height:70vh;border:none;"></iframe></div>' +
     '<div class="aa-modal-footer">' +
