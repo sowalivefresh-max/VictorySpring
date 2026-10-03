@@ -494,6 +494,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminGetStudentLedger(req, res));
       case "adminDownloadLedgerPDF":
         return requireRole(req, res, () => adminActions.adminDownloadLedgerPDF(req, res));
+      case "adminDownloadBillInvoice":
+        return requireRole(req, res, () => adminActions.adminDownloadBillInvoice(req, res));
       case "adminGenerateReceipt":
         return requireRole(req, res, () => adminActions.adminGenerateReceipt(req, res));
       case "adminRecordExpense":
