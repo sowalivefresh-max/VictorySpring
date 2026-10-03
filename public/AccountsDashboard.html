@@ -1078,6 +1078,15 @@
         }, null, true);
       });
     }
+    function downloadBillInvoice(billId) {
+      callServer('adminDownloadBillInvoice', [AA.token, billId], function(res) {
+        if (res.success) {
+          openPDFViewer(res.previewUrl, res.downloadUrl, 'Bill Invoice');
+        } else {
+          showToast(res.message || 'Error generating invoice.', 'error');
+        }
+      }, null, true);
+    }
     function savePayment() {
       var data = getFormData('paymentForm');
       data.term = currentTerm;
