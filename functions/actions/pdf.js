@@ -638,7 +638,7 @@ module.exports = {
     const schoolName = cfg.schoolName || cfg.school_name || "Victory Spring Academy";
     const schoolAddress = cfg.schoolAddress || "123 Education Avenue, Lagos, Nigeria";
     const schoolEmail = cfg.schoolEmail || cfg.smtp_email || "info@victoryspringacademy.com";
-    const schoolWebsite = cfg.schoolWebsite || "www.victoryspringacademy.com";
+    const schoolWebsite = cfg.schoolWebsite || "www.victoryspring.org";
     
     // Generate Invoice Number
     const dateObj = new Date();
@@ -708,8 +708,7 @@ module.exports = {
     html += '<div class="hdr">';
     html += '<div class="school-info">';
     html += '<div class="school-name">' + schoolName + '</div>';
-    html += '<div style="margin-bottom:15px;">' + schoolAddress + '</div>';
-    html += '<div>e-mail: ' + schoolEmail + '</div>';
+    html += '<div style="margin-top:15px;">e-mail: ' + schoolEmail + '</div>';
     html += '<div>website: ' + schoolWebsite + '</div>';
     html += '</div>';
     html += logoHtml;
