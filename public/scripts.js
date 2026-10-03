@@ -1273,31 +1273,36 @@ function saveTimetableConfig() {
 function openTimetableGenerateModal() {
     loadTimetable();
 
-    // Populate modal-specific term/session selects
-    var sessVal = (typeof currentSession !== 'undefined' && currentSession) ? currentSession :
-                  (AA.settings && AA.settings.current_session ? AA.settings.current_session : '');
-    var termVal = (typeof currentTerm !== 'undefined' && currentTerm) ? currentTerm :
-                  (AA.settings && AA.settings.current_term ? String(AA.settings.current_term) : '');
-
-    var genTermSel = document.getElementById('tt-gen-term-select');
-    if (genTermSel && termVal) genTermSel.value = termVal;
-
-    var genSessSel = document.getElementById('tt-gen-session-select');
-    if (genSessSel) {
-        var currentYear = parseInt((sessVal || '').split('/')[0]) || new Date().getFullYear();
-        var html = '';
-        for (var i = 0; i < 5; i++) {
-            var y1 = currentYear - i;
-            var y2 = y1 + 1;
-            var val = y1 + '/' + y2;
-            var sel = (val === sessVal) ? 'selected' : '';
-            html += '<option value="' + val + '" ' + sel + '>' + val + '</option>';
-        }
-        genSessSel.innerHTML = html;
-    }
-
+    // Open modal immediately so the user sees it loading
     openModal('modal-timetable-generate');
+
+    // Fetch current settings from server to reliably populate term/session
+    callServer('adminGetSettings', [AA.token], function(res) {
+        var s = (res && res.data !== undefined) ? res.data : (res || {});
+        var sessVal = s.current_session || (AA.settings && AA.settings.current_session) || '';
+        var termVal = String(s.current_term || (AA.settings && AA.settings.current_term) || '');
+
+        // Populate session dropdown
+        var genSessSel = document.getElementById('tt-gen-session-select');
+        if (genSessSel) {
+            var currentYear = parseInt((sessVal || '').split('/')[0]) || new Date().getFullYear();
+            var html = '';
+            for (var i = 0; i < 5; i++) {
+                var y1 = currentYear - i;
+                var y2 = y1 + 1;
+                var val = y1 + '/' + y2;
+                var sel = (val === sessVal) ? 'selected' : '';
+                html += '<option value="' + val + '" ' + sel + '>' + val + '</option>';
+            }
+            genSessSel.innerHTML = html;
+        }
+
+        // Set term dropdown
+        var genTermSel = document.getElementById('tt-gen-term-select');
+        if (genTermSel && termVal) genTermSel.value = termVal;
+    });
 }
+
 
 function selectAllTtClasses(val) {
     document.querySelectorAll('.tt-class-chk').forEach(function(c) { c.checked = val; });
