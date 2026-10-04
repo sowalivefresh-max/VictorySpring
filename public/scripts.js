@@ -1063,6 +1063,7 @@ function handleMasterTimetableUpload(input) {
     showLoading();
     callServer('adminUploadMasterTimetable', [AA.token, { fileBase64: e.target.result }], function(res) {
       hideLoading();
+      input.value = ''; // Reset input to allow re-uploading the same file
       if(res && res.success) {
         showToast(res.message || 'Timetable uploaded successfully.', 'success');
       } else {
