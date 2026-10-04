@@ -671,6 +671,17 @@
             </div>
           </div>
           
+          <div class="aa-card" style="margin-bottom: 20px;">
+            <div class="aa-card-header">
+              <h3>Master School Timetable</h3>
+            </div>
+            <div class="aa-card-body" style="display:flex; gap:15px; flex-wrap:wrap;">
+              <button class="aa-btn aa-btn-info" onclick="viewMasterTimetable()"><i class="fa fa-eye"></i> View Master Timetable</button>
+              <button class="aa-btn aa-btn-gold" onclick="document.getElementById('master-timetable-upload-dev').click()"><i class="fa fa-upload"></i> Upload Prepared Timetable</button>
+              <input type="file" id="master-timetable-upload-dev" style="display:none;" accept="image/*,.pdf" onchange="handleMasterTimetableUpload(this)">
+            </div>
+          </div>
+          
           <div class="aa-card">
             <div class="aa-card-header">
               <h3>View Timetable</h3>

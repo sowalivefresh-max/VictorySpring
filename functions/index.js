@@ -482,6 +482,15 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminGetBills(req, res));
       case "adminDeleteBill":
         return requireRole(req, res, () => adminActions.adminDeleteBill(req, res));
+      case "adminUploadMasterTimetable":
+        return requireRole(req, res, () => adminActions.adminUploadMasterTimetable(req, res));
+      case "getMasterTimetable":
+        try {
+          const doc = await db.collection("settings").doc("master_timetable").get();
+          return res.json({ success: true, data: doc.exists ? doc.data() : null });
+        } catch (e) {
+          return res.json({ success: false, message: e.message });
+        }
       
       // New Accounts & Finance Endpoints
       case "adminGetFinancialStats":

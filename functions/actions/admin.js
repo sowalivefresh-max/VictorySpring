@@ -2354,6 +2354,17 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    adminUploadMasterTimetable: async (req, res) => {
+      try {
+        const { fileBase64 } = req.body;
+        if (!fileBase64) return res.json({ success: false, message: "No file provided." });
+        await db.collection("settings").doc("master_timetable").set({ url: fileBase64, updatedAt: new Date().toISOString() });
+        return res.json({ success: true, message: "Master timetable uploaded successfully." });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
     adminRecordExpense: async (req, res) => {
       try {
         const { data } = req.body;

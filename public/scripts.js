@@ -1055,6 +1055,41 @@ function generateBroadsheet() {
 
 
 
+function handleMasterTimetableUpload(input) {
+  if (!input.files || input.files.length === 0) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    showLoading();
+    callServer('adminUploadMasterTimetable', [AA.token, { fileBase64: e.target.result }], function(res) {
+      hideLoading();
+      if(res && res.success) {
+        showToast(res.message || 'Timetable uploaded successfully.', 'success');
+      } else {
+        showToast(res.message || 'Failed to upload timetable.', 'error');
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewMasterTimetable() {
+  showLoading();
+  callServer('getMasterTimetable', [AA.token], function(res) {
+    hideLoading();
+    if(res && res.success && res.data && res.data.url) {
+      var url = res.data.url;
+      if (url.startsWith('data:application/pdf')) {
+        openPDFViewer(url, url, 'School Timetable');
+      } else {
+        openPDFViewer(url, url, 'School Timetable');
+      }
+    } else {
+      showToast('No school timetable has been uploaded yet.', 'info');
+    }
+  });
+}
+
 // ==========================================
 // TIMETABLE GENERATOR FRONTEND LOGIC
 // ==========================================
