@@ -101,7 +101,7 @@ async function requireRole(req, res, next) {
         isAllowed = nurseRoles.includes(role);
       } else {
         // Explicitly allow general authenticated actions
-        const generalAuthActions = ["userUpdateProfile", "userChangePassword", "markNotificationRead", "getGradingSystems"];
+        const generalAuthActions = ["userUpdateProfile", "userChangePassword", "markNotificationRead", "getGradingSystems", "getMasterTimetable"];
         if (generalAuthActions.includes(action)) {
           isAllowed = true;
         }
@@ -250,6 +250,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminManageCampuses") { req.body.campuses = args[1]; }
         if (action === "adminGetStoreItems") { req.body.section = args[1] || null; }
         if (action === "adminCreateStoreOrder") { req.body.data = args[1]; }
+        if (action === "adminUploadMasterTimetable") { req.body.fileBase64 = args[1].fileBase64; }
         
         // Teacher Subject Assignment Mappings
         if (action === "teacherGetStudentSubjects") { req.body.studentId = args[1]; }
