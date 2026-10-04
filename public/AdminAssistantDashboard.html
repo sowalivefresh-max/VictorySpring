@@ -1491,13 +1491,7 @@
         
         var renderActions = function(r) {
           var uid = r.id || r.iD;
-          // Do not show Impersonate button for the current admin user to avoid self-impersonation looping
-          var impersonateBtn = (String(uid) !== String(AA.user.id || AA.user.iD)) 
-            ? '<button class="aa-btn aa-btn-info aa-btn-xs" title="Impersonate (Login As)" onclick="impersonateUser(\''+uid+'\')"><i class="fa fa-user-secret"></i></button> '
-            : '';
-            
-          return impersonateBtn +
-                 '<button class="aa-btn aa-btn-outline aa-btn-xs" title="Edit" onclick="editUser(\''+uid+'\')"><i class="fa fa-edit"></i></button> ' +
+          return '<button class="aa-btn aa-btn-outline aa-btn-xs" title="Edit" onclick="editUser(\''+uid+'\')"><i class="fa fa-edit"></i></button> ' +
                  '<button class="aa-btn aa-btn-warning aa-btn-xs" title="Reset Pwd" onclick="adminResetPassword(\''+uid+'\')"><i class="fa fa-key"></i></button> ' +
                  '<button class="aa-btn aa-btn-danger aa-btn-xs" title="Delete" onclick="deleteUser(\''+uid+'\')"><i class="fa fa-trash"></i></button>';
         };
@@ -1530,39 +1524,7 @@
       showToast('Parents data exported successfully!', 'success');
     }
 
-    function impersonateUser(id) {
-      // Open tab immediately to prevent popup blockers
-      var newTab = window.open('about:blank', '_blank');
-      if (newTab) {
-        newTab.document.write('<div style="font-family:sans-serif;padding:50px;text-align:center;color:#1e3a5f;"><h2>Securely switching accounts...</h2><p>Please wait.</p></div>');
-      } else {
-        showToast('Popup blocked! Please allow popups for this site.', 'warning');
-      }
-      
-      callServer('adminImpersonateUser', [AA.token, id], function(res) {
-        if (res.success && res.token && res.role) {
-          var dashboardMap = {
-            developer: 'AdminDashboard.html', admin: 'AdminDashboard.html', admin_assistant: 'AdminAssistantDashboard.html',
-            principal: 'PrincipalDashboard.html', vp: 'VPDashboard.html',
-            headteacher: 'HeadTeacherDashboard.html', teacher: 'TeacherDashboard.html',
-            primary_teacher: 'PrimaryTeacherDashboard.html', accounts: 'AccountsDashboard.html',
-            parent: 'ParentDashboard.html', student: 'StudentDashboard.html', storekeeper: 'StorekeeperDashboard.html',
-            nurse: 'NurseDashboard.html'
-          };
-          var dashboard = dashboardMap[res.role] || 'Login.html';
-          var redirectUrl = dashboard + '?token=' + encodeURIComponent(res.token);
 
-          if (newTab) {
-            newTab.location.href = redirectUrl;
-          } else {
-            window.open(redirectUrl, '_blank');
-          }
-        } else {
-          if (newTab) newTab.close();
-          showToast(res.message || 'Failed to impersonate user.', 'error');
-        }
-      }, null, false); // Don't show the spinner in this tab
-    }
     function editUser(id) {
       var u = globalUsers.find(function(x) { return String(x.id||x.iD) === String(id); });
       if(!u) return;

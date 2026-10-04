@@ -1708,6 +1708,9 @@ module.exports = function(db, notificationsActions) {
     },
     adminImpersonateUser: async (req, res) => { 
       try {
+        if (!['admin', 'developer', 'principal'].includes(req.session.role)) {
+          return res.status(403).json({ success: false, message: "Forbidden: You do not have permission to impersonate users." });
+        }
         const userId = req.body.userId;
         if (!userId) return res.json({ success: false, message: "User ID required" });
         
