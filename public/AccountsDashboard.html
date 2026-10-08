@@ -1165,17 +1165,17 @@
     }
     
     function editPayment(payId, studentId, currentAmount) {
-      aaPrompt('Enter the correct payment amount (Numbers only):', currentAmount, function(newAmount) {
-        if (!newAmount || isNaN(newAmount) || Number(newAmount) < 0) return showToast('Invalid amount', 'error');
-        callServer('adminEditPaymentAmount', [AA.token, payId, Number(newAmount)], function(res) {
-          showToast(res.message, res.success ? 'success' : 'error');
-          if (res.success) {
-            viewLedger(studentId);
-            loadBills();
-            loadDashboard();
-          }
-        }, null, true);
-      });
+      var newAmount = prompt('Enter the correct payment amount (Numbers only):', currentAmount);
+      if (newAmount === null) return;
+      if (!newAmount || isNaN(newAmount) || Number(newAmount) < 0) return showToast('Invalid amount', 'error');
+      callServer('adminEditPaymentAmount', [AA.token, payId, Number(newAmount)], function(res) {
+        showToast(res.message, res.success ? 'success' : 'error');
+        if (res.success) {
+          viewLedger(studentId);
+          loadBills();
+          loadDashboard();
+        }
+      }, null, true);
     }
 
     function downloadReceipt(payId) {
