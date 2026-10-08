@@ -2568,6 +2568,21 @@ module.exports = function(db, notificationsActions) {
         return res.json({ success: false, message: err.message });
       }
     },
+    
+    adminEditPaymentAmount: async (req, res) => {
+      try {
+        const { paymentId, amount } = req.body;
+        if (!paymentId || amount === undefined) return res.json({ success: false, message: "Payment ID and new amount are required." });
+        
+        const payDoc = await db.collection("payments").doc(paymentId).get();
+        if (!payDoc.exists) return res.json({ success: false, message: "Payment record not found." });
+        
+        await db.collection("payments").doc(paymentId).update({ amount: Number(amount) });
+        return res.json({ success: true, message: "Payment amount updated successfully." });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
 
     adminSendReminders: async (req, res) => {
       try {

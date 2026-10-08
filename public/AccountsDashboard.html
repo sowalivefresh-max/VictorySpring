@@ -1140,7 +1140,8 @@
           var pid = p.id||p.iD;
           html += '<tr><td>'+formatDate(p.paymentDate||p.date)+'</td><td>'+p.term+' '+p.session+'</td><td>'+(p.receiptRef||'')+'</td><td><strong class="text-success">'+formatNaira(p.amount)+'</strong></td><td>'+p.method+'</td>'+
           '<td><button class="aa-btn aa-btn-outline aa-btn-xs" onclick="downloadReceipt(\''+pid+'\')"  title="Download Receipt"><i class="fa fa-download"></i></button></td>'+
-          '<td><button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deletePayment(\''+pid+'\',\''+_sid+'\')"  title="Delete payment entry"><i class="fa fa-trash"></i></button></td></tr>'; 
+          '<td><button class="aa-btn aa-btn-outline aa-btn-xs" style="margin-right:4px;" onclick="editPayment(\''+pid+'\',\''+_sid+'\',\''+(p.amount||0)+'\')" title="Edit Amount"><i class="fa fa-edit"></i></button>'+
+          '<button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deletePayment(\''+pid+'\',\''+_sid+'\')"  title="Delete payment entry"><i class="fa fa-trash"></i></button></td></tr>'; 
         });
         if(res.payments.length===0) html += '<tr><td colspan="7" class="text-center text-muted">No payments found.</td></tr>';
         html += '</tbody></table>';
@@ -1161,6 +1162,20 @@
           showToast(res.message || 'Failed to delete payment.', 'error');
         }
       }, null, true);
+    }
+    
+    function editPayment(payId, studentId, currentAmount) {
+      aaPrompt('Enter the correct payment amount (Numbers only):', currentAmount, function(newAmount) {
+        if (!newAmount || isNaN(newAmount) || Number(newAmount) < 0) return showToast('Invalid amount', 'error');
+        callServer('adminEditPaymentAmount', [AA.token, payId, Number(newAmount)], function(res) {
+          showToast(res.message, res.success ? 'success' : 'error');
+          if (res.success) {
+            viewLedger(studentId);
+            loadBills();
+            loadDashboard();
+          }
+        }, null, true);
+      });
     }
 
     function downloadReceipt(payId) {

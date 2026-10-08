@@ -260,6 +260,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminRecordExpense") { req.body.data = args[1]; }
         if (action === "adminDeleteExpense") { req.body.expenseId = args[1]; }
         if (action === "adminDeletePayment") { req.body.paymentId = args[1]; }
+        if (action === "adminEditPaymentAmount") { req.body.paymentId = args[1]; req.body.amount = args[2]; }
         if (action === "adminDeleteBill") { req.body.billId = args[1]; }
         if (action === "adminSendReminders") { req.body.term = args[1]; req.body.session = args[2]; req.body.batchSize = args[3]; }
         if (action === "adminGetSubjects") { /* no args */ }
@@ -518,6 +519,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminDeleteExpense(req, res));
       case "adminDeletePayment":
         return requireRole(req, res, () => adminActions.adminDeletePayment(req, res));
+      case "adminEditPaymentAmount":
+        return requireRole(req, res, () => adminActions.adminEditPaymentAmount(req, res));
       case "adminSendReminders":
         return requireRole(req, res, () => adminActions.adminSendReminders(req, res));
       case "adminGetComplianceRules":
