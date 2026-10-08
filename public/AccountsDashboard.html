@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json" />
@@ -851,10 +851,20 @@
           {key:'totalFee',render:function(r){return '<strong>'+formatNaira(r.totalFee)+'</strong>';}}
         ], filtered, function(r) {
           var id = r.id||r.iD;
-          return '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="editFee(\''+id+'\')"><i class="fa fa-edit"></i></button> '+
-                 '<button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deleteFee(\''+id+'\')"><i class="fa fa-trash"></i></button>';
+          return '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="editFee(\''+id+'\')" title="Edit Fee"><i class="fa fa-edit"></i></button> '+
+                 '<button class="aa-btn aa-btn-primary aa-btn-xs" style="margin-left:3px; margin-right:3px;" onclick="regenerateClassBills(\''+r.className+'\')" title="Regenerate all bills for this class"><i class="fa fa-sync"></i> Bills</button> '+
+                 '<button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deleteFee(\''+id+'\')" title="Delete Fee"><i class="fa fa-trash"></i></button>';
         });
       }, null, true);
+    }
+
+    function regenerateClassBills(className) {
+      aaConfirm('Regenerate bills for all active students in ' + className + '?\n\nThis will safely clear their old bills and generate new ones based on the updated fee structure. Payments previously made are 100% safe and will automatically attach to the new bills.', function() {
+        callServer('adminRegenerateClassBills', [AA.token, currentTerm, currentSession, className], function(res) {
+          showToast(res.message, res.success ? 'success' : 'error');
+          if (res.success) { loadBills(); loadDashboard(); }
+        }, null, true);
+      });
     }
 
     function editFee(id) {

@@ -208,6 +208,7 @@ app.post("/api", async (req, res) => {
         if (action === "adminSaveFeeStructure") { req.body.data = args[1]; }
         if (action === "adminDeleteFeeStructure") { req.body.feeId = args[1]; }
         if (action === "adminGenerateBills") { req.body.term = args[1]; req.body.session = args[2]; req.body.classFilters = args[3]; }
+        if (action === "adminRegenerateClassBills") { req.body.term = args[1]; req.body.session = args[2]; req.body.className = args[3]; }
         
         // Phase 2 Mappings
         if (action === "adminGetStudentSubjects") { req.body.studentId = args[1]; }
@@ -480,6 +481,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminDeleteFeeStructure(req, res));
       case "adminGenerateBills":
         return requireRole(req, res, () => adminActions.adminGenerateBills(req, res));
+      case "adminRegenerateClassBills":
+        return requireRole(req, res, () => adminActions.adminRegenerateClassBills(req, res));
       case "adminGetBills":
         return requireRole(req, res, () => adminActions.adminGetBills(req, res));
       case "adminDeleteBill":

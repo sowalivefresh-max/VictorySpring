@@ -1103,6 +1103,119 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    adminRegenerateClassBills: async (req, res) => {
+      const { term, session, className } = req.body;
+      const recordedByUserId = req.session.userId;
+      try {
+        // 1. Get the fee structure for this class
+        const feeSnap = await db.collection("feeStructure").where("term", "==", term).where("session", "==", session).where("className", "==", className).get();
+        if (feeSnap.empty) return res.json({ success: false, message: "No fee structure found for this class in this term/session." });
+        const fee = feeSnap.docs[0].data();
+
+        // 2. Get active students in this class
+        let studentsSnap = await db.collection("students").where("className", "==", className).get();
+        let students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        students = students.filter(s => !s.status || s.status === 'active');
+        if (students.length === 0) return res.json({ success: false, message: "No active students found in this class." });
+        const studentIds = students.map(s => s.id);
+
+        // 3. Delete existing bills for these students
+        const billsSnap = await db.collection("bills").where("term", "==", term).where("session", "==", session).get();
+        const deleteBatch = db.batch();
+        let deletedCount = 0;
+        billsSnap.forEach(doc => {
+           const d = doc.data();
+           const sid = d.studentId || d.studentID;
+           if (studentIds.includes(sid)) {
+              deleteBatch.delete(doc.ref);
+              deletedCount++;
+           }
+        });
+        if (deletedCount > 0) await deleteBatch.commit();
+
+        // 4. Fetch global arrears & early bird
+        const earlyBirdDoc = await db.collection("settings").doc("early_bird_config").get();
+        const earlyBirdCfg = earlyBirdDoc.exists ? earlyBirdDoc.data() : null;
+        
+        let globalBalances = {};
+        const allBillsSnap = await db.collection("bills").get();
+        const allPaymentsSnap = await db.collection("payments").where("status", "==", "Approved").get();
+        
+        allBillsSnap.forEach(doc => {
+          const b = doc.data();
+          if(!globalBalances[b.studentId]) globalBalances[b.studentId] = { billed: 0, paid: 0 };
+          let pureFee = Number(b.originalFeeTotal || b.totalBilled || 0) - Number(b.discountAmount || 0);
+          globalBalances[b.studentId].billed += pureFee;
+        });
+        allPaymentsSnap.forEach(doc => {
+          const p = doc.data();
+          const sid = p.studentId || p.studentID;
+          if(globalBalances[sid]) globalBalances[sid].paid += Number(p.amount || 0);
+        });
+
+        // 5. Generate new bills
+        const createBatch = db.batch();
+        let generated = 0;
+        
+        let lineItems = [];
+        try { lineItems = typeof fee.lineItems === 'string' ? JSON.parse(fee.lineItems) : (fee.lineItems || []); } catch(e){}
+
+        for (let student of students) {
+          const sGender = (student.gender || '').toLowerCase().trim();
+          let studentItems = lineItems.filter(item => {
+            const iGender = (item.gender || 'All').toLowerCase().trim();
+            if (iGender === 'male' && sGender === 'female') return false;
+            if (iGender === 'female' && sGender === 'male') return false;
+            return true;
+          });
+
+          const originalFeeTotal = studentItems.reduce((sum, item) => sum + (item.isOptional === true || item.isOptional === 'true' ? 0 : (parseFloat(item.amount) || 0)), 0);
+          let total = originalFeeTotal;
+          let discountAmount = 0;
+
+          if (student.discountConfig && student.discountConfig.type && student.discountConfig.type !== 'none') {
+            if (student.discountConfig.type === 'fixed') { discountAmount = parseFloat(student.discountConfig.value) || 0; }
+            else if (student.discountConfig.type === 'percentage') {
+              const tuition = studentItems.find(i => i.name && i.name.toLowerCase().includes('tuition'));
+              if (tuition) discountAmount = (parseFloat(student.discountConfig.value) || 0) / 100 * (parseFloat(tuition.amount) || 0);
+            }
+          }
+          if (discountAmount > 0) total = Math.max(0, total - discountAmount);
+
+          let pastArrears = 0;
+          if (globalBalances[student.id]) {
+             let owed = globalBalances[student.id].billed - globalBalances[student.id].paid;
+             if (owed > 0) pastArrears = owed;
+          }
+
+          let appliedEB = null;
+          if (earlyBirdCfg && earlyBirdCfg.active && earlyBirdCfg.discountPercent && earlyBirdCfg.deadline) {
+             appliedEB = { discountPercent: Number(earlyBirdCfg.discountPercent), deadline: earlyBirdCfg.deadline, claimed: false };
+          }
+
+          const billRef = db.collection("bills").doc();
+          createBatch.set(billRef, {
+            studentId: student.id, studentName: student.fullName, className: student.className || "",
+            section: fee.section || "high", term: term, session: session,
+            lineItems: JSON.stringify(studentItems), originalFeeTotal: originalFeeTotal,
+            discountAmount: discountAmount, totalBilled: total, pastArrears: pastArrears,
+            totalAmountDue: total + pastArrears, earlyBird: appliedEB, createdAt: new Date().toISOString()
+          });
+          generated++;
+        }
+        
+        if (generated > 0) {
+          const auditRef = db.collection("audit_logs").doc();
+          createBatch.set(auditRef, { timestamp: new Date().toISOString(), userId: recordedByUserId, userName: req.session.fullName || 'System Admin', action: "REGENERATE_BILLS", details: `${term} ${session} [${className}]: ${generated} bills generated.` });
+          await createBatch.commit();
+        }
+        
+        return res.json({ success: true, message: `${generated} bill(s) successfully regenerated for ${className}.` });
+      } catch (err) {
+        return res.json({ success: false, message: "Error regenerating bills: " + err.message });
+      }
+    },
+
     // --- NEW CORE CRUD ENDPOINTS ---
 
     adminCreateUser: async (req, res) => {
