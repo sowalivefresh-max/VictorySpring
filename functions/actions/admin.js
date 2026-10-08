@@ -2197,13 +2197,39 @@ module.exports = function(db, notificationsActions) {
         const billsSnap = await db.collection("bills").where("studentId", "==", studentId).get();
         const paymentsSnap = await db.collection("payments").where("studentId", "==", studentId).get();
         
-        const bills = billsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let bills = billsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const payments = paymentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Calculate paid map per term/session
+        const paidMap = {};
+        payments.filter(p => p.status === 'Approved').forEach(p => {
+          const sid = p.studentId || p.studentID;
+          const term = p.term || '';
+          const session = p.session || '';
+          if (sid) {
+            const key = sid + "_" + term + "_" + session;
+            paidMap[key] = (paidMap[key] || 0) + Number(p.amount || 0);
+          }
+        });
+
+        // Enrich bills with actual paid amounts
+        bills = bills.map(b => {
+          const sid = b.studentId || b.studentID;
+          const term = b.term || '';
+          const session = b.session || '';
+          const key = sid + "_" + term + "_" + session;
+          
+          const totalPaid = paidMap[key] || 0;
+          const netBilled = Number(b.totalBilled || 0);
+          const balance = Math.max(0, netBilled - totalPaid);
+          const status = balance === 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+          return { ...b, totalPaid, balance, status };
+        });
 
         // Calculate credit balance (overpayments)
         const totalBilled = bills.reduce((s, b) => s + Number(b.totalBilled || 0), 0);
-        const totalPaid = payments.filter(p => p.status === 'Approved').reduce((s, p) => s + Number(p.amount || 0), 0);
-        const creditBalance = Math.max(0, totalPaid - totalBilled);
+        const totalPaidAll = payments.filter(p => p.status === 'Approved').reduce((s, p) => s + Number(p.amount || 0), 0);
+        const creditBalance = Math.max(0, totalPaidAll - totalBilled);
         
         return res.json({ success: true, bills, payments, creditBalance });
       } catch (err) {
@@ -2226,6 +2252,30 @@ module.exports = function(db, notificationsActions) {
         
         let bills = billsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         let payments = paymentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const paidMap = {};
+        payments.filter(p => p.status === 'Approved').forEach(p => {
+          const sid = p.studentId || p.studentID;
+          const term = p.term || '';
+          const session = p.session || '';
+          if (sid) {
+            const key = sid + "_" + term + "_" + session;
+            paidMap[key] = (paidMap[key] || 0) + Number(p.amount || 0);
+          }
+        });
+
+        bills = bills.map(b => {
+          const sid = b.studentId || b.studentID;
+          const term = b.term || '';
+          const session = b.session || '';
+          const key = sid + "_" + term + "_" + session;
+          
+          const totalPaid = paidMap[key] || 0;
+          const netBilled = Number(b.totalBilled || 0);
+          const balance = Math.max(0, netBilled - totalPaid);
+          const status = balance === 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+          return { ...b, totalPaid, balance, status };
+        });
         
         // Filter by Date
         if (startDate && endDate) {
