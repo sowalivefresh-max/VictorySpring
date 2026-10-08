@@ -513,6 +513,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminRecordExpense(req, res));
       case "adminDeleteExpense":
         return requireRole(req, res, () => adminActions.adminDeleteExpense(req, res));
+      case "adminDeletePayment":
+        return requireRole(req, res, () => adminActions.adminDeletePayment(req, res));
       case "adminSendReminders":
         return requireRole(req, res, () => adminActions.adminSendReminders(req, res));
       case "adminGetComplianceRules":
