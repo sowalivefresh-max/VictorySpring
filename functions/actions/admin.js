@@ -2393,6 +2393,19 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    adminDeletePayment: async (req, res) => {
+      try {
+        const { paymentId } = req.body;
+        if (!paymentId) return res.json({ success: false, message: "Payment ID is required." });
+        const payDoc = await db.collection("payments").doc(paymentId).get();
+        if (!payDoc.exists) return res.json({ success: false, message: "Payment record not found." });
+        await db.collection("payments").doc(paymentId).delete();
+        return res.json({ success: true, message: "Payment deleted and account balance has been reversed." });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
     adminSendReminders: async (req, res) => {
       try {
         const { term, session } = req.body;

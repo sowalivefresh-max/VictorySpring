@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json" />
@@ -1124,18 +1124,35 @@
         }
         html += '<h6>Term Bills</h6><table class="aa-table mb-4"><thead><tr><th>Term/Session</th><th>Billed</th><th>Paid</th><th>Bal</th><th>Status</th></tr></thead><tbody>';
         res.bills.forEach(function(b){ html += '<tr><td>'+b.term+' '+b.session+'</td><td>'+formatNaira(b.totalBilled)+'</td><td>'+formatNaira(b.totalPaid)+'</td><td>'+formatNaira(b.balance)+'</td><td>'+formatStatus(b.status)+'</td></tr>'; });
-        html += '</tbody></table><h6>Payments History</h6><table class="aa-table"><thead><tr><th>Date</th><th>Term</th><th>Ref</th><th>Amount</th><th>Method</th><th>Receipt</th></tr></thead><tbody>';
+        html += '</tbody></table><h6>Payments History</h6><table class="aa-table"><thead><tr><th>Date</th><th>Term</th><th>Ref</th><th>Amount</th><th>Method</th><th>Receipt</th><th>Action</th></tr></thead><tbody>';
+        var _sid = document.getElementById('ledgerStudentId').value;
         res.payments.forEach(function(p){ 
           var pid = p.id||p.iD;
           html += '<tr><td>'+formatDate(p.paymentDate||p.date)+'</td><td>'+p.term+' '+p.session+'</td><td>'+(p.receiptRef||'')+'</td><td><strong class="text-success">'+formatNaira(p.amount)+'</strong></td><td>'+p.method+'</td>'+
-          '<td><button class="aa-btn aa-btn-outline aa-btn-xs" onclick="downloadReceipt(\''+pid+'\')"><i class="fa fa-download"></i></button></td></tr>'; 
+          '<td><button class="aa-btn aa-btn-outline aa-btn-xs" onclick="downloadReceipt(\\''+pid+'\\')" title="Download Receipt"><i class="fa fa-download"></i></button></td>'+
+          '<td><button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deletePayment(\\''+pid+'\\',\\''+_sid+'\\')" title="Delete payment entry"><i class="fa fa-trash"></i></button></td></tr>'; 
         });
-        if(res.payments.length===0) html += '<tr><td colspan="6" class="text-center text-muted">No payments found.</td></tr>';
+        if(res.payments.length===0) html += '<tr><td colspan="7" class="text-center text-muted">No payments found.</td></tr>';
         html += '</tbody></table>';
         document.getElementById('ledgerContent').innerHTML = html;
         openModal('ledgerModal');
       }, null, true);
     }
+    function deletePayment(payId, studentId) {
+      if (!confirm('Are you sure you want to delete this payment entry?\n\nThis action will permanently remove the payment record and reverse the student\'s account balance. This cannot be undone.')) return;
+      callServer('adminDeletePayment', [AA.token, payId], function(res) {
+        if (res.success) {
+          showToast('Payment deleted. Account balance has been updated.', 'success');
+          // Refresh the ledger to reflect the new balance
+          viewLedger(studentId);
+          // Refresh the bills table in the background
+          loadBills();
+        } else {
+          showToast(res.message || 'Failed to delete payment.', 'error');
+        }
+      }, null, true);
+    }
+
     function downloadReceipt(payId) {
       callServer('adminGenerateReceipt', [AA.token, payId], function(res){
         if(res.success) {
