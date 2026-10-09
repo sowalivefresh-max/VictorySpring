@@ -131,7 +131,7 @@ module.exports = {
       html += '</tbody></table>';
     });
 
-    html += '<div class="mon-cat">TEACHER\\'S COMMENTS & REINFORCEMENT</div>';
+    html += '<div class="mon-cat">TEACHERS COMMENTS & REINFORCEMENT</div>';
     html += '<div class="comments-grid">';
     const comments = [
       { label: "Cultural Studies - Science", key: "cmt_science" },
