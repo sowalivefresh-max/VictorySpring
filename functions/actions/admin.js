@@ -2790,13 +2790,24 @@ module.exports = function(db, notificationsActions) {
           psychomotor = psySnap.docs[0].data();
         }
         
+        let isMontessori = false;
+        let montessori = {};
+        const lowerClass = String(student.className || "").toLowerCase();
+        if (lowerClass.includes("nursery") || lowerClass.includes("kg")) {
+          isMontessori = true;
+          const monSnap = await db.collection("montessoriRecords").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", session).limit(1).get();
+          if (!monSnap.empty) montessori = monSnap.docs[0].data();
+        }
+        
         let reportData = {
           student: student,
           scores: scores,
           summary: { average: average, overallGrade: average >= 50 ? 'P' : 'F' },
           term: term,
           session: session,
-          psychomotor: psychomotor
+          psychomotor: psychomotor,
+          montessori: montessori,
+          isMontessori: isMontessori
         };
         
         const pdfGenerator = require("./pdf");
@@ -2806,7 +2817,7 @@ module.exports = function(db, notificationsActions) {
         
         await enrichReportData(db, reportData, cfg);
         
-        const html = pdfGenerator.generateStudentReportHTML(reportData, cfg);
+        const html = isMontessori ? pdfGenerator.generateMontessoriReportHTML(reportData, cfg) : pdfGenerator.generateStudentReportHTML(reportData, cfg);
         const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
         
         return res.json({ success: true, previewUrl: dataUri, downloadUrl: dataUri });

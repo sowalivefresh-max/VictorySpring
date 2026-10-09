@@ -317,6 +317,15 @@ module.exports = function(db) {
         const section = student.section || "";
         const overallGradeObj = computeDynamicGrade(avg, className, section, gradingSystems);
         
+        let isMontessori = false;
+        let montessori = {};
+        const lowerClass = String(className).toLowerCase();
+        if (lowerClass.includes("nursery") || lowerClass.includes("kg")) {
+          isMontessori = true;
+          const monSnap = await db.collection("montessoriRecords").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", academicSession).limit(1).get();
+          if (!monSnap.empty) montessori = monSnap.docs[0].data();
+        }
+
         const report = {
           student: student,
           scores: scores,
@@ -324,6 +333,8 @@ module.exports = function(db) {
           attendance: { percentage: 95 }, // Mock for now
           psychomotor: psySnap.empty ? {} : psySnap.docs[0].data(),
           affective: affSnap.empty ? {} : affSnap.docs[0].data(),
+          montessori: montessori,
+          isMontessori: isMontessori,
           term: term,
           session: academicSession,
           reportType: reportType
@@ -333,7 +344,7 @@ module.exports = function(db) {
         const { enrichReportData } = require("./reportUtil");
         await enrichReportData(db, report, cfg);
 
-        const html = pdfGenerator.generateStudentReportHTML(report, cfg);
+        const html = isMontessori ? pdfGenerator.generateMontessoriReportHTML(report, cfg) : pdfGenerator.generateStudentReportHTML(report, cfg);
         const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
         
         return res.json({ success: true, previewUrl: dataUri, downloadUrl: dataUri });

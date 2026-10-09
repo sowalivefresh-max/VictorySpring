@@ -50,6 +50,122 @@ module.exports = {
     return html;
   },
 
+  generateMontessoriReportHTML: function(report, cfg) {
+    const s = report.student || {};
+    const mon = report.montessori || {};
+    const att = report.attendance || { present: 0, absent: 0, late: 0, total: 0, percentage: 0 };
+    const term = report.term || '';
+    const session = report.session || '';
+    
+    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Montessori Report</title>`;
+    html += this.getReportCSS();
+    html += `
+    <style>
+      .mon-table { width:100%; border-collapse:collapse; margin-bottom:15px; font-size:10px; }
+      .mon-table th, .mon-table td { border:1px solid #000; padding:4px; text-align:left; }
+      .mon-table th { background:#eef; font-weight:bold; }
+      .mon-cat { background:#ccc; font-weight:bold; text-align:center; padding:5px; margin-top:10px; font-size:11px; text-transform:uppercase; border:1px solid #000; }
+      .mon-subcat { font-weight:bold; font-style:italic; padding-left:5px; background:#f9f9f9; }
+      .mon-skill { padding-left:15px; }
+      .mon-grade { text-align:center; width:30px; font-weight:bold; }
+      .legend-box { font-size:9px; border:1px solid #000; padding:5px; margin-bottom:10px; background:#f0f0f0; }
+      .comments-grid { display:flex; flex-wrap:wrap; gap:10px; }
+      .comment-item { flex:1 1 45%; border:1px solid #000; padding:5px; font-size:10px; min-height:40px; margin-bottom:5px; }
+    </style>
+    </head><body><div class="wrap" style="border:none;">
+    
+    <div class="hdr">
+      <div class="logo-ph">${cfg.schoolName ? cfg.schoolName.charAt(0) : 'S'}</div>
+      <div class="school-info">
+        <div class="school-name">${cfg.schoolName || 'MY SCHOOL PORTAL'}</div>
+        <div class="school-motto">${cfg.schoolAddress || ''}</div>
+        <div class="school-motto">${cfg.schoolPhone || ''} | ${cfg.schoolEmail || ''}</div>
+        <div class="rpt-title">MONTESSORI PROGRESS REPORT - ${String(term).toUpperCase()} TERM ${session}</div>
+      </div>
+    </div>
+    
+    <div class="bio-box">
+      <div class="bio-data">
+        <div class="bio-row">
+          <div class="bio-cell"><span class="bio-label">Name:</span> ${s.fullName || (s.firstName+' '+s.lastName)}</div>
+          <div class="bio-cell"><span class="bio-label">Admission No:</span> ${s.admissionNumber || s.regNo || 'N/A'}</div>
+        </div>
+        <div class="bio-row">
+          <div class="bio-cell"><span class="bio-label">Class:</span> ${s.className || 'Nursery'}</div>
+          <div class="bio-cell"><span class="bio-label">Gender:</span> ${s.gender || 'N/A'}</div>
+        </div>
+        <div class="bio-row">
+          <div class="bio-cell"><span class="bio-label">Age:</span> ${s.age || ''}</div>
+          <div class="bio-cell"><span class="bio-label">Attendance:</span> ${att.present||0} out of ${att.total||0} days</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="legend-box">
+      <strong>KEY TO GRADES:</strong> 
+      <strong>M</strong> = Mastered &nbsp;&nbsp;|&nbsp;&nbsp; 
+      <strong>S</strong> = Strongly Developing &nbsp;&nbsp;|&nbsp;&nbsp; 
+      <strong>D</strong> = Developing &nbsp;&nbsp;|&nbsp;&nbsp; 
+      <strong>N</strong> = Needs Attention &nbsp;&nbsp;|&nbsp;&nbsp; 
+      <strong>Blank</strong> = Not Presented
+    </div>
+    `;
+
+    const schema = require("./montessoriSchema");
+    schema.forEach((cat, cIdx) => {
+      html += '<div class="mon-cat">' + cat.category + '</div>';
+      html += '<table class="mon-table"><tbody>';
+      cat.subcategories.forEach((sub, sIdx) => {
+        if(sub.name) {
+          html += '<tr><td colspan="2" class="mon-subcat">' + sub.name + '</td></tr>';
+        }
+        sub.skills.forEach((skill, kIdx) => {
+          const fName = 'sk_'+cIdx+'_'+sIdx+'_'+kIdx;
+          const val = mon[fName] || '';
+          html += '<tr>';
+          html += '<td class="mon-skill">' + skill + '</td>';
+          html += '<td class="mon-grade">' + val + '</td>';
+          html += '</tr>';
+        });
+      });
+      html += '</tbody></table>';
+    });
+
+    html += '<div class="mon-cat">TEACHER\\'S COMMENTS & REINFORCEMENT</div>';
+    html += '<div class="comments-grid">';
+    const comments = [
+      { label: "Cultural Studies - Science", key: "cmt_science" },
+      { label: "Cultural Studies - Humanities", key: "cmt_humanities" },
+      { label: "Art and Crafts", key: "cmt_art" },
+      { label: "Taekwondo Enrichment", key: "cmt_taekwondo" },
+      { label: "General Teacher's Comment", key: "cmt_teacher" },
+      { label: "Areas for Reinforcement", key: "cmt_reinforcement" }
+    ];
+    comments.forEach(c => {
+      html += '<div class="comment-item">';
+      html += '<strong>' + c.label + ':</strong><br>';
+      html += (mon[c.key] || '').replace(/\\n/g, '<br>');
+      html += '</div>';
+    });
+    html += '</div>';
+    
+    html += `
+    <div class="sig-block" style="margin-top:20px;">
+      <div style="flex:1;">
+        <div style="font-weight:bold; font-size:10px;">Class Teacher's Signature:</div>
+        <div class="sig-line" style="margin-top:15px; width:80%;"></div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:bold; font-size:10px;">Head Teacher's Signature:</div>
+        <div class="sig-line" style="margin-top:15px; width:80%;"></div>
+      </div>
+    </div>
+    `;
+
+    html += '</div></body></html>';
+    return html;
+  },
+
   generateStudentReportHTML: function(report, cfg) {
     const s = report.student || {};
     const scores = report.scores || [];

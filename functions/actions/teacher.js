@@ -704,6 +704,32 @@ module.exports = function(db, notificationsActions) {
       }
     },
 
+    teacherGetMontessori: async (req, res) => {
+      const { studentId, term, session } = req.body;
+      if (!studentId || !term || !session) return res.json({ success: false, message: "Missing parameters." });
+      try {
+        const snap = await db.collection("montessoriRecords").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", session).get();
+        if (snap.empty) return res.json({});
+        return res.json(snap.docs[0].data());
+      } catch (err) { return res.json({}); }
+    },
+    
+    teacherSaveMontessori: async (req, res) => {
+      const { data } = req.body;
+      if (!data || !data.studentId || !data.term || !data.session) return res.json({ success: false, message: "Missing data." });
+      try {
+        const snap = await db.collection("montessoriRecords").where("studentId", "==", data.studentId).where("term", "==", data.term).where("session", "==", data.session).get();
+        if (snap.empty) {
+          await db.collection("montessoriRecords").add(data);
+        } else {
+          await db.collection("montessoriRecords").doc(snap.docs[0].id).set(data, { merge: true });
+        }
+        return res.json({ success: true, message: "Montessori report saved successfully." });
+      } catch (err) {
+        return res.json({ success: false, message: err.message });
+      }
+    },
+
     teacherGetPsychomotor: async (req, res) => {
       const { studentId, term, session } = req.body;
       if (!studentId || !term || !session) return res.json({ success: false, message: "Missing parameters." });

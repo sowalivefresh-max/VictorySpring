@@ -40,6 +40,9 @@
         <button class="aa-nav-item" id="nav-scores" onclick="switchTab('pt-tabs', 'tab-scores'); setActiveNav('nav-scores')">
           <i class="fa fa-pen-alt"></i> Gradebook
         </button>
+        <button class="aa-nav-item" id="nav-montessori" onclick="switchTab('pt-tabs', 'tab-montessori'); setActiveNav('nav-montessori')" style="display:none;">
+          <i class="fa fa-leaf"></i> Montessori Grades
+        </button>
         <button class="aa-nav-item" id="nav-traits" onclick="switchTab('pt-tabs', 'tab-traits'); setActiveNav('nav-traits')">
           <i class="fa fa-star"></i> Behavioral Traits
         </button>
@@ -76,6 +79,7 @@
           <div class="aa-tab active" data-tab="tab-dashboard" data-onload="loadDashboard"></div>
           <div class="aa-tab" data-tab="tab-attendance" data-onload="loadAttendanceTab"></div>
           <div class="aa-tab" data-tab="tab-scores" data-onload="loadMySubjectsForScores"></div>
+          <div class="aa-tab" data-tab="tab-montessori" data-onload="loadMontessoriTab"></div>
           <div class="aa-tab" data-tab="tab-traits" data-onload="loadTraitsTab"></div>
           <div class="aa-tab" data-tab="tab-lessonplans" data-onload="loadMyLessonPlans"></div>
         </div>
@@ -176,6 +180,59 @@
                 </thead>
                 <tbody></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Montessori Grades -->
+        <div class="aa-tab-content" data-group="pt-tabs" data-id="tab-montessori">
+          <div class="aa-card mb-4">
+            <div class="aa-card-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 class="aa-section-title" style="margin:0;">Montessori Progress Report</h3>
+                <div style="display:flex; gap:10px;">
+                  <select class="aa-select" id="montessoriStudentSelect" onchange="loadStudentMontessori()">
+                    <option value="">-- Select Student --</option>
+                  </select>
+                  <button class="aa-btn aa-btn-primary" id="btnSaveMontessori" onclick="saveMontessoriScores()" style="display:none;"><i class="fa fa-save"></i> Save Report</button>
+                </div>
+              </div>
+              <div id="montessoriFormContainer" style="display:none;">
+                <div class="aa-alert aa-alert-info mb-3">
+                  <strong>Grading Scale:</strong> N (Needs attention), D (Developing), S (Strongly developing), M (Mastered), or leave blank (Not presented).
+                </div>
+                <form id="montessoriForm">
+                  <div id="montessoriCategories"></div>
+                  
+                  <h4 style="margin-top:20px; border-bottom:1px solid #ddd; padding-bottom:5px;">Comments & Reinforcement</h4>
+                  <div class="aa-grid-2">
+                    <div class="aa-form-group">
+                      <label class="aa-label">Cultural Studies - Science</label>
+                      <textarea name="cmt_science" class="aa-input" rows="3"></textarea>
+                    </div>
+                    <div class="aa-form-group">
+                      <label class="aa-label">Cultural Studies - Humanities</label>
+                      <textarea name="cmt_humanities" class="aa-input" rows="3"></textarea>
+                    </div>
+                    <div class="aa-form-group">
+                      <label class="aa-label">Art and Crafts</label>
+                      <textarea name="cmt_art" class="aa-input" rows="3"></textarea>
+                    </div>
+                    <div class="aa-form-group">
+                      <label class="aa-label">Taekwondo Enrichment</label>
+                      <textarea name="cmt_taekwondo" class="aa-input" rows="3"></textarea>
+                    </div>
+                    <div class="aa-form-group">
+                      <label class="aa-label">General Teacher's Comment</label>
+                      <textarea name="cmt_teacher" class="aa-input" rows="3"></textarea>
+                    </div>
+                    <div class="aa-form-group">
+                      <label class="aa-label">Areas for Reinforcement</label>
+                      <textarea name="cmt_reinforcement" class="aa-input" rows="3" placeholder="e.g. Number writing up to 200..."></textarea>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -599,6 +656,7 @@
     </div>
   </div>
 
+  <script src="montessoriSchema.js"></script>
   <script src="api.js?v=3"></script>
   <script src="scripts.js?v=1791060400"></script>
   <script>
@@ -640,6 +698,18 @@
         document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
         myClass = AA.user.classAssigned || '';
         document.getElementById('planClass').value = myClass;
+        
+        var lowerClass = String(myClass).toLowerCase();
+        if (lowerClass.includes('nursery') || lowerClass.includes('kg')) {
+          if(document.getElementById('nav-scores')) document.getElementById('nav-scores').style.display = 'none';
+          if(document.getElementById('nav-traits')) document.getElementById('nav-traits').style.display = 'none';
+          if(document.getElementById('nav-montessori')) document.getElementById('nav-montessori').style.display = 'block';
+        } else {
+          if(document.getElementById('nav-scores')) document.getElementById('nav-scores').style.display = 'block';
+          if(document.getElementById('nav-traits')) document.getElementById('nav-traits').style.display = 'block';
+          if(document.getElementById('nav-montessori')) document.getElementById('nav-montessori').style.display = 'none';
+        }
+        
         loadDashboard();
       }
       initDashboard();
@@ -737,6 +807,80 @@
     }
 
     // -- Gradebook --
+    function loadMontessoriTab() {
+      var sel = document.getElementById('montessoriStudentSelect');
+      sel.innerHTML = '<option value="">-- Select Student --</option>';
+      myStudents.forEach(function(s) {
+        sel.innerHTML += '<option value="'+(s.id||s.iD)+'">'+AA.escapeHTML(s.fullName)+'</option>';
+      });
+      
+      if (typeof montessoriSchema !== 'undefined') {
+        var html = '';
+        montessoriSchema.forEach(function(cat, cIdx) {
+          html += '<div style="margin-bottom:20px;">';
+          html += '<h4 style="background:#eef; padding:8px; margin-bottom:10px;">'+AA.escapeHTML(cat.category)+'</h4>';
+          cat.subcategories.forEach(function(sub, sIdx) {
+            if (sub.name) html += '<h5 style="margin-left:10px; margin-bottom:5px; text-decoration:underline;">'+AA.escapeHTML(sub.name)+'</h5>';
+            html += '<table class="aa-table" style="margin-left:10px; width:calc(100% - 10px); margin-bottom:10px;">';
+            html += '<tbody>';
+            sub.skills.forEach(function(skill, kIdx) {
+              var fName = 'sk_'+cIdx+'_'+sIdx+'_'+kIdx;
+              html += '<tr><td style="width:60%;">'+AA.escapeHTML(skill)+'</td>';
+              html += '<td>';
+              ['N','D','S','M',''].forEach(function(val) {
+                var label = val === '' ? 'Blank' : val;
+                html += '<label style="margin-right:10px; cursor:pointer;"><input type="radio" name="'+fName+'" value="'+val+'" '+(val===''?'checked':'')+'> '+label+'</label>';
+              });
+              html += '</td></tr>';
+            });
+            html += '</tbody></table>';
+          });
+          html += '</div>';
+        });
+        document.getElementById('montessoriCategories').innerHTML = html;
+      }
+    }
+    
+    function loadStudentMontessori() {
+      var sid = document.getElementById('montessoriStudentSelect').value;
+      if (!sid) {
+        document.getElementById('montessoriFormContainer').style.display = 'none';
+        document.getElementById('btnSaveMontessori').style.display = 'none';
+        return;
+      }
+      
+      callServer('teacherGetMontessori', [AA.token, sid, currentTerm, currentSession], function(res) {
+        document.getElementById('montessoriForm').reset();
+        if (res && Object.keys(res).length > 0) {
+          setFormData('montessoriForm', res);
+        }
+        document.getElementById('montessoriFormContainer').style.display = 'block';
+        document.getElementById('btnSaveMontessori').style.display = 'inline-block';
+      }, null, true);
+    }
+    
+    function saveMontessoriScores() {
+      var sid = document.getElementById('montessoriStudentSelect').value;
+      if (!sid) return showToast('Select student', 'error');
+      
+      var data = getFormData('montessoriForm');
+      data.studentId = sid;
+      data.className = myClass;
+      data.term = currentTerm;
+      data.session = currentSession;
+      
+      var btn = document.getElementById('btnSaveMontessori');
+      var oldTxt = btn.innerHTML;
+      btn.innerHTML = 'Saving...'; btn.disabled = true;
+      
+      callServer('teacherSaveMontessori', [AA.token, data], function(res) {
+        btn.innerHTML = oldTxt; btn.disabled = false;
+        showToast(res.message, res.success ? 'success' : 'error');
+      }, function() {
+        btn.innerHTML = oldTxt; btn.disabled = false;
+      }, true);
+    }
+
     function loadMySubjectsForScores() {}
     function loadStudentsForScoring() {
       var subId = document.getElementById('scoreSubjectSelect').value;
