@@ -127,10 +127,6 @@
                   <option value="Third Term">Third Term</option>
                 </select>
                 <select id="rptSessionSelect" class="aa-select" style="max-width:150px;">
-                  <option value="2027/2028">2027/2028</option>
-                  <option value="2026/2027">2026/2027</option>
-                  <option value="2025/2026">2025/2026</option>
-                  <option value="2024/2025">2024/2025</option>
                 </select>
                 <select id="rptTypeSelect" class="aa-select" style="max-width:150px;">
                   <option value="Full Term">Full Term</option>
@@ -310,7 +306,20 @@
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
         document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
         document.getElementById('rptTermSelect').value = currentTerm;
-        document.getElementById('rptSessionSelect').value = currentSession;
+        var sessionSelect = document.getElementById('rptSessionSelect');
+        if (sessionSelect) {
+          sessionSelect.innerHTML = '';
+          var startYear = 2023;
+          var endYear = new Date().getFullYear() + 1;
+          for (var y = endYear; y >= startYear; y--) {
+            var sessionName = y + '/' + (y + 1);
+            sessionSelect.innerHTML += '<option value="' + sessionName + '">' + sessionName + '</option>';
+          }
+          if (Array.from(sessionSelect.options).filter(function(o){ return o.value === currentSession; }).length === 0) {
+            sessionSelect.innerHTML = '<option value="'+currentSession+'">'+currentSession+'</option>' + sessionSelect.innerHTML;
+          }
+          sessionSelect.value = currentSession;
+        }
         loadDashboard();
       }
       initDashboard();
