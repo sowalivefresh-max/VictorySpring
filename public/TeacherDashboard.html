@@ -342,7 +342,7 @@
           <div class="aa-card">
             <div class="aa-card-header">
               <h3 class="aa-card-title">My Lesson Plans</h3>
-              <button class="aa-btn aa-btn-primary" onclick="openModal('planModal');resetForm('planForm');document.getElementById('planId').value='';"><i class="fa fa-plus"></i> Create Plan</button>
+              <button class="aa-btn aa-btn-primary" onclick="openCreatePlanModal()"><i class="fa fa-plus"></i> Create Plan</button>
             </div>
             <div class="aa-card-body" style="padding:0;">
               <table class="aa-table" id="myPlansTable">
@@ -1624,12 +1624,26 @@ Answer: A
       }
     }
 
+    function openCreatePlanModal() {
+      document.getElementById('planId').value = '';
+      resetForm('planForm');
+      if (window.quillPlanEditor) {
+        window.quillPlanEditor.root.innerHTML = '';
+      }
+      openModal('planModal');
+    }
+
     function saveLessonPlan() {
       if (window.quillPlanEditor) {
         document.getElementById('planContent').value = window.quillPlanEditor.root.innerHTML;
       }
       var data = getFormData('planForm');
       data.term = currentTerm; data.session = currentSession;
+      var subEl = document.getElementById('planSubject');
+      if (subEl && subEl.selectedIndex >= 0) {
+        data.subjectName = subEl.options[subEl.selectedIndex].text;
+      }
+      data.status = data.status || 'draft';
       var id = data.id;
       var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
       callServer(fn, [AA.token, id||data, data], function(res) {
@@ -1644,6 +1658,10 @@ Answer: A
       }
       var data = getFormData('planForm');
       data.term = currentTerm; data.session = currentSession;
+      var subEl = document.getElementById('planSubject');
+      if (subEl && subEl.selectedIndex >= 0) {
+        data.subjectName = subEl.options[subEl.selectedIndex].text;
+      }
       var id = data.id;
       var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
       var btn = document.getElementById('btnSaveSubmit');

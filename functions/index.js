@@ -99,6 +99,8 @@ async function requireRole(req, res, next) {
         isAllowed = storeRoles.includes(role);
       } else if (action.startsWith("sickbay")) {
         isAllowed = nurseRoles.includes(role);
+      } else if (action.startsWith("principal") || action.startsWith("head")) {
+        isAllowed = adminRoles.includes(role);
       } else {
         // Explicitly allow general authenticated actions
         const generalAuthActions = ["userUpdateProfile", "userChangePassword", "markNotificationRead", "getGradingSystems", "getMasterTimetable"];
@@ -292,13 +294,34 @@ app.post("/api", async (req, res) => {
         if (action === "teacherSavePsychomotor") { req.body.data = args[1]; }
         if (action === "teacherSaveAffective") { req.body.data = args[1]; }
 
-        // Legacy Teacher Dashboard Aliases
-        if (action === "teacherGetMyLessonPlans") { /* no args mapped to req.body needed, uses session */ }
+        // Lesson Plans & Teacher Aliases
+        if (action === "teacherGetMyLessonPlans" || action === "teacherGetLessonPlans") { /* uses session.userId */ }
+        if (action === "teacherCreateLessonPlan" || action === "teacherSaveLessonPlan") {
+          req.body.data = (typeof args[1] === "object" && args[1] !== null) ? args[1] : (args[2] || {});
+        }
+        if (action === "teacherUpdateLessonPlan") {
+          const data = (typeof args[2] === "object" && args[2] !== null) ? args[2] : (typeof args[1] === "object" ? args[1] : {});
+          if (typeof args[1] === "string") data.id = args[1];
+          req.body.data = data;
+        }
+        if (action === "teacherSubmitLessonPlan") {
+          req.body.planId = typeof args[1] === "string" ? args[1] : (args[1] && args[1].id ? args[1].id : args[1]);
+          req.body.status = "submitted";
+        }
+        if (action === "principalGetLessonPlans") {
+          req.body.term = args[1];
+          req.body.session = args[2];
+          req.body.section = args[3] || null;
+        }
+        if (action === "headApprovePlan") {
+          req.body.planId = args[1];
+          req.body.note = args[2] || "";
+        }
+        if (action === "headRejectPlan") {
+          req.body.planId = args[1];
+          req.body.note = args[2] || "";
+        }
         if (action === "principalGetAllStudents") { /* no args needed for adminGetStudents */ }
-        if (action === "teacherGetAttendanceByDate") { req.body.className = args[1]; req.body.date = args[2]; }
-        if (action === "teacherMarkAttendance") { req.body.className = args[1]; req.body.date = args[2]; req.body.records = args[3]; req.body.term = args[4]; req.body.session = args[5]; }
-        if (action === "teacherSubmitScores") { /* mock success, usually frontend expects {success:true} */ }
-        if (action === "teacherSubmitLessonPlan") { req.body.planId = args[1]; req.body.status = "submitted"; }
         if (action === "teacherGetSubjectStudents") { req.body.subjectId = args[1]; req.body.session = args[2]; req.body.term = args[3]; }
         if (action === "teacherGetSubjectAttendance") { Object.assign(req.body, args[1]); }
         if (action === "teacherSaveSubjectAttendance") { req.body.data = args[1]; Object.assign(req.body, args[1]); }
@@ -578,9 +601,20 @@ app.post("/api", async (req, res) => {
       case "teacherBulkSaveScores":
         return requireRole(req, res, () => teacherActions.teacherBulkSaveScores(req, res));
       case "teacherGetLessonPlans":
+      case "teacherGetMyLessonPlans":
         return requireRole(req, res, () => teacherActions.teacherGetLessonPlans(req, res));
+      case "teacherCreateLessonPlan":
+      case "teacherUpdateLessonPlan":
       case "teacherSaveLessonPlan":
         return requireRole(req, res, () => teacherActions.teacherSaveLessonPlan(req, res));
+      case "teacherSubmitLessonPlan":
+        return requireRole(req, res, () => teacherActions.teacherSubmitLessonPlan(req, res));
+      case "principalGetLessonPlans":
+        return requireRole(req, res, () => adminActions.adminGetLessonPlans(req, res));
+      case "headApprovePlan":
+        return requireRole(req, res, () => adminActions.adminApprovePlan(req, res));
+      case "headRejectPlan":
+        return requireRole(req, res, () => adminActions.adminRejectPlan(req, res));
       case "teacherGetAttendance":
         return requireRole(req, res, () => teacherActions.teacherGetAttendance(req, res));
       case "teacherSaveAttendance":
@@ -605,13 +639,6 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => teacherActions.teacherGetClassSettings(req, res));
       case "teacherSaveClassSettings":
         return requireRole(req, res, () => teacherActions.teacherSaveClassSettings(req, res));
-      
-      // Legacy Aliases for Teacher UI
-      case "teacherGetMyLessonPlans":
-        return requireRole(req, res, () => teacherActions.teacherGetLessonPlans(req, res));
-      case "teacherSubmitLessonPlan":
-        // Maps to save with submitted status
-        return requireRole(req, res, () => teacherActions.teacherSaveLessonPlan(req, res));
       case "teacherGetAttendanceByDate":
         return requireRole(req, res, () => teacherActions.teacherGetAttendance(req, res));
       case "teacherMarkAttendance":

@@ -339,10 +339,11 @@ module.exports = function(db, notificationsActions) {
     teacherGetLessonPlans: async (req, res) => {
       const session = req.session;
       try {
-        const plansSnap = await db.collection("lessonPlans")
-          .where("teacherId", "==", session.userId)
-          .orderBy("createdAt", "desc")
-          .get();
+        let query = db.collection("lessonPlans");
+        if (session && session.userId && session.role !== "admin" && session.role !== "developer") {
+          query = query.where("teacherId", "==", session.userId);
+        }
+        const plansSnap = await query.get();
           
         const plans = [];
         plansSnap.forEach(doc => {
@@ -350,6 +351,7 @@ module.exports = function(db, notificationsActions) {
           p.id = doc.id;
           plans.push(p);
         });
+        plans.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
         
         return res.json({ success: true, data: plans });
       } catch (err) {
@@ -461,35 +463,80 @@ module.exports = function(db, notificationsActions) {
     },
 
     teacherSaveLessonPlan: async (req, res) => {
-      if(req.session) { db.collection("audit_logs").add({ timestamp: new Date().toISOString(), userId: req.session.userId, userName: req.session.fullName || "User", action: "UPLOAD_LESSON_NOTE", details: `Uploaded/Saved lesson note` }).catch(()=>{}); }
-      const data = req.body.data;
       const session = req.session;
+      if (session) {
+        db.collection("audit_logs").add({
+          timestamp: new Date().toISOString(),
+          userId: session.userId,
+          userName: session.fullName || "User",
+          action: "UPLOAD_LESSON_NOTE",
+          details: "Uploaded/Saved lesson note"
+        }).catch(() => {});
+      }
+      const data = req.body.data || {};
+      const topic = data.topic || data.title;
       
-      if (!data || !data.title) {
-        return res.json({ success: false, message: "Plan title is required." });
+      if (!topic) {
+        return res.json({ success: false, message: "Lesson Topic is required." });
       }
 
       try {
+        const planData = {
+          ...data,
+          topic: topic,
+          title: topic,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (session && session.userId) {
+          planData.teacherId = planData.teacherId || session.userId;
+          planData.teacherName = planData.teacherName || session.fullName || "Teacher";
+        }
+
         if (data.id) {
-          await db.collection("lessonPlans").doc(data.id).update({
-            ...data,
-            updatedAt: new Date().toISOString()
-          });
-          return res.json({ success: true, message: "Lesson plan updated." });
+          await db.collection("lessonPlans").doc(data.id).update(planData);
+          return res.json({ success: true, id: data.id, message: "Lesson plan updated." });
         } else {
           const newRef = db.collection("lessonPlans").doc();
-          await newRef.set({
-            ...data,
-            id: newRef.id,
-            teacherId: session.userId,
-            teacherName: session.fullName,
-            createdAt: new Date().toISOString(),
-            status: "Pending" // requires admin/principal approval usually
-          });
-          return res.json({ success: true, message: "Lesson plan submitted." });
+          planData.id = newRef.id;
+          planData.createdAt = new Date().toISOString();
+          planData.status = data.status || "draft";
+          await newRef.set(planData);
+          return res.json({ success: true, id: newRef.id, message: "Lesson plan saved successfully." });
         }
       } catch (err) {
         return res.json({ success: false, message: "Error saving lesson plan: " + err.message });
+      }
+    },
+
+    teacherSubmitLessonPlan: async (req, res) => {
+      const session = req.session;
+      const planId = req.body.planId || req.body.id;
+      if (!planId) return res.json({ success: false, message: "Plan ID is required." });
+      try {
+        const planRef = db.collection("lessonPlans").doc(planId);
+        const planDoc = await planRef.get();
+        if (!planDoc.exists) return res.json({ success: false, message: "Lesson plan not found." });
+        
+        await planRef.update({
+          status: "submitted",
+          submittedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        
+        if (session) {
+          db.collection("audit_logs").add({
+            timestamp: new Date().toISOString(),
+            userId: session.userId,
+            userName: session.fullName || "Teacher",
+            action: "SUBMIT_LESSON_NOTE",
+            details: `Submitted lesson plan ${planId} for review`
+          }).catch(() => {});
+        }
+        
+        return res.json({ success: true, message: "Lesson plan submitted for approval." });
+      } catch (err) {
+        return res.json({ success: false, message: "Error submitting lesson plan: " + err.message });
       }
     },
 
