@@ -1063,11 +1063,12 @@ Answer: A
       }
       document.getElementById('classAttCard').style.display = 'block';
       callServer('teacherGetAttendanceByDate', [AA.token, cls, dt], function(attRecords) {
+        var recordsList = Array.isArray(attRecords) ? attRecords : (attRecords && Array.isArray(attRecords.data) ? attRecords.data : []);
         var tbody = document.querySelector('#classAttTable tbody');
         tbody.innerHTML = '';
         myClassStudents.forEach(function(st) {
           var sid = st.id || st.iD;
-          var rec = attRecords.find(function(r) { return String(r.studentID || r.studentId) === String(sid); });
+          var rec = recordsList.find(function(r) { return String(r.studentID || r.studentId) === String(sid); });
           var status = rec ? rec.status : 'Present';
           var tr = document.createElement('tr');
           tr.innerHTML = '<td>' + AA.escapeHTML(st.admissionNumber || '') + '</td>' +
