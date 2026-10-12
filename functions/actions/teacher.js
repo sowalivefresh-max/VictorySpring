@@ -11,6 +11,23 @@ module.exports = function(db, notificationsActions) {
     return cls;
   }
 
+  let cachedLogoBase64 = null;
+  function getSchoolLogoBase64() {
+    if (cachedLogoBase64) return cachedLogoBase64;
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const iconPath = path.join(__dirname, "../icon.png");
+      if (fs.existsSync(iconPath)) {
+        cachedLogoBase64 = "data:image/png;base64," + fs.readFileSync(iconPath).toString("base64");
+        return cachedLogoBase64;
+      }
+    } catch (e) {
+      console.error("Error reading icon.png:", e);
+    }
+    return "";
+  }
+
   return {
     teacherGetMySubjects: async (req, res) => {
       const session = req.session;
@@ -491,6 +508,18 @@ module.exports = function(db, notificationsActions) {
         if (session && session.userId) {
           planData.teacherId = planData.teacherId || session.userId;
           planData.teacherName = planData.teacherName || session.fullName || "Teacher";
+          if (!planData.className) {
+            try {
+              planData.className = (await getTeacherClass(session.userId)) || "";
+            } catch(e) {}
+          }
+        }
+
+        if (!planData.subjectName && planData.subjectId) {
+          try {
+            const sDoc = await db.collection("subjects").doc(planData.subjectId).get();
+            if (sDoc.exists) planData.subjectName = sDoc.data().subjectName || sDoc.data().name || "";
+          } catch(e) {}
         }
 
         if (data.id) {
@@ -920,43 +949,491 @@ module.exports = function(db, notificationsActions) {
     teacherGenerateLessonPlanPDF: async (req, res) => {
       try {
         const { planId } = req.body;
+        if (!planId) return res.json({ success: false, message: "Plan ID is required." });
         const planDoc = await db.collection("lessonPlans").doc(planId).get();
         if (!planDoc.exists) return res.json({ success: false, message: "Plan not found." });
-        const p = planDoc.data();
-        
-        let html = `<html><body style="font-family:sans-serif; padding:20px;">
-          <h2 style="text-align:center;">Lesson Plan</h2>
-          <hr/>
-          <p><strong>Topic:</strong> ${p.topic || ''}</p>
-          <p><strong>Subject:</strong> ${p.subjectName || p.subject || ''}</p>
-          <p><strong>Class:</strong> ${p.className || ''}</p>
-          <p><strong>Week:</strong> ${p.week || ''}</p>
-          <p><strong>Teacher:</strong> ${p.teacherName || ''}</p>
-          <p><strong>Reference Book:</strong> ${p.referenceBook || ''}</p>
-          <hr/>
-          <h4>Objectives</h4>
-          <p>${p.objectives || ''}</p>
-          
-          <h4>Entry Behaviour</h4>
-          <p>${p.entryBehaviour || ''}</p>
-          
-          <h4>Teaching Aids</h4>
-          <p>${p.teachingAids || ''}</p>
-          
-          <h4>Lesson Content</h4>
-          <div>${p.content || ''}</div>
-          
-          <h4>Presentation Steps</h4>
-          <p>${p.presentationSteps || ''}</p>
-          
-          <h4>Evaluation</h4>
-          <p>${p.evaluation || ''}</p>
-          
-          <h4>Assignment</h4>
-          <p>${p.assignment || ''}</p>
-          <hr/>
-          <p><strong>Status:</strong> ${p.status || 'Pending'}</p>
-        </body></html>`;
+        const p = planDoc.data() || {};
+
+        // Fetch School Settings
+        const settingsDoc = await db.collection("settings").doc("global").get();
+        const cfg = settingsDoc.exists ? settingsDoc.data() : {};
+
+        // Resolve Fallback for Class, Subject, and Teacher if missing
+        let topic = p.topic || p.title || "Lesson Plan";
+        let subjectName = p.subjectName || p.subject || "";
+        if (!subjectName && p.subjectId) {
+          try {
+            const subDoc = await db.collection("subjects").doc(p.subjectId).get();
+            if (subDoc.exists) subjectName = subDoc.data().subjectName || subDoc.data().name || "";
+          } catch(e) {}
+        }
+
+        let className = p.className || "";
+        if (!className && p.teacherId) {
+          try {
+            className = (await getTeacherClass(p.teacherId)) || "";
+          } catch(e) {}
+        }
+
+        let teacherName = p.teacherName || "";
+        if (!teacherName && p.teacherId) {
+          try {
+            const uDoc = await db.collection("users").doc(p.teacherId).get();
+            if (uDoc.exists) teacherName = uDoc.data().fullName || uDoc.data().name || "";
+          } catch(e) {}
+        }
+
+        const schoolName = cfg.school_name || cfg.schoolName || "VICTORY SPRING NURSERY AND PRIMARY SCHOOL";
+        const schoolMotto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
+        const schoolAddress = cfg.school_address || cfg.schoolAddress || "";
+        const schoolPhone = cfg.school_phone || cfg.schoolPhone || "";
+        const schoolEmail = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || "";
+
+        // Logos:
+        const localLogo = getSchoolLogoBase64();
+        // Top-left logo:
+        const logoUrl = localLogo || cfg.school_logo_url || "https://victoryspring-681e5.web.app/icon.png";
+        // Watermark logo (transparent PNG preferred for clear centered branding):
+        const watermarkUrl = localLogo || (cfg.school_logo_url || "https://victoryspring-681e5.web.app/icon.png");
+
+        const statusRaw = (p.status || "Pending").toLowerCase();
+        let statusClass = "status-draft";
+        let statusLabel = p.status || "Draft";
+        if (statusRaw === "approved") {
+          statusClass = "status-approved";
+          statusLabel = "Approved";
+        } else if (statusRaw === "rejected") {
+          statusClass = "status-rejected";
+          statusLabel = "Rejected";
+        } else if (statusRaw === "submitted" || statusRaw === "pending") {
+          statusClass = "status-submitted";
+          statusLabel = "Pending Approval";
+        }
+
+        function escapeHTML(str) {
+          if (!str) return "";
+          return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        let metaDetails = [];
+        if (schoolAddress) metaDetails.push(escapeHTML(schoolAddress));
+        if (schoolPhone) metaDetails.push(escapeHTML(schoolPhone));
+        if (schoolEmail) metaDetails.push(escapeHTML(schoolEmail));
+        const metaLine = metaDetails.join(" &bull; ");
+
+        let html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lesson Plan - ${escapeHTML(topic)}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 24px 30px;
+      font-size: 13px;
+      line-height: 1.55;
+      position: relative;
+    }
+    
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm 12mm 15mm;
+    }
+    
+    @media print {
+      body {
+        padding: 0;
+        background: transparent;
+      }
+      .watermark-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+      }
+      .watermark-img {
+        width: 360px !important;
+        max-width: 65% !important;
+        opacity: 0.08 !important;
+      }
+      .page-break-avoid {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+    }
+
+    /* Fixed Watermark - Displayed at exact center on each page */
+    .watermark-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .watermark-img {
+      width: 380px;
+      max-width: 65%;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      object-fit: contain;
+    }
+
+    /* Content Wrapper */
+    .doc-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+      background: transparent;
+    }
+
+    /* Top Header Section */
+    .school-header {
+      display: flex;
+      align-items: center;
+      border-bottom: 2.5px solid #0d2137;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      gap: 16px;
+    }
+    
+    .logo-box {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-img {
+      max-width: 80px;
+      max-height: 80px;
+      object-fit: contain;
+    }
+    
+    .header-content {
+      flex: 1;
+      text-align: center;
+      padding-right: 80px; /* Balance top-left logo optically */
+    }
+    
+    .school-name {
+      font-size: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0d2137;
+      margin: 0 0 3px 0;
+      line-height: 1.2;
+    }
+    
+    .school-motto {
+      font-size: 11.5px;
+      font-style: italic;
+      color: #b45309;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+    }
+    
+    .school-meta {
+      font-size: 10.5px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    
+    .doc-title-badge {
+      display: inline-block;
+      background: #0d2137;
+      color: #f59e0b;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 3px 20px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    /* Metadata Card */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 18px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: baseline;
+      font-size: 12.5px;
+    }
+    
+    .meta-label {
+      width: 120px;
+      flex-shrink: 0;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+    }
+    
+    .meta-val {
+      flex: 1;
+      font-weight: 600;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    /* Content Sections */
+    .plan-section {
+      margin-bottom: 14px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #0d2137;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 4px;
+      margin: 0 0 6px 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 14px;
+      background: #f59e0b;
+      margin-right: 8px;
+      border-radius: 2px;
+    }
+    
+    .section-body {
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.6;
+      margin: 0;
+      white-space: pre-wrap;
+      background: transparent;
+    }
+    
+    .section-body-html {
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.6;
+      background: transparent;
+    }
+    
+    .section-body-html p {
+      margin: 0 0 8px 0;
+    }
+    
+    .section-body-html ul, .section-body-html ol {
+      margin: 4px 0 8px 0;
+      padding-left: 20px;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-approved { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .status-submitted { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .status-draft { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    .review-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-left: 4px solid #f59e0b;
+      padding: 10px 14px;
+      border-radius: 6px;
+      color: #92400e;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    /* Sign-off / Approval Section */
+    .sign-off-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px dashed #cbd5e1;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .sign-col {
+      text-align: center;
+    }
+    
+    .sign-line {
+      border-bottom: 1px solid #475569;
+      height: 35px;
+      margin-bottom: 6px;
+    }
+    
+    .sign-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Watermark of School Logo Centered on Each Page -->
+  <div class="watermark-container">
+    <img src="${watermarkUrl}" class="watermark-img" alt="Watermark" />
+  </div>
+
+  <div class="doc-wrap">
+    <!-- Top Header: School Logo at Top Left, Heading of School Name -->
+    <div class="school-header">
+      <div class="logo-box">
+        <img src="${logoUrl}" class="logo-img" alt="School Logo" />
+      </div>
+      <div class="header-content">
+        <h1 class="school-name">${escapeHTML(schoolName)}</h1>
+        ${schoolMotto ? `<div class="school-motto">${escapeHTML(schoolMotto)}</div>` : ''}
+        ${metaLine ? `<div class="school-meta">${metaLine}</div>` : ''}
+        <div class="doc-title-badge">LESSON PLAN</div>
+      </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="meta-grid">
+      <div class="meta-item"><span class="meta-label">Topic:</span><span class="meta-val">${escapeHTML(topic)}</span></div>
+      <div class="meta-item"><span class="meta-label">Teacher:</span><span class="meta-val">${escapeHTML(teacherName || 'Teacher')}</span></div>
+      
+      <div class="meta-item"><span class="meta-label">Subject:</span><span class="meta-val">${escapeHTML(subjectName || 'General')}</span></div>
+      <div class="meta-item"><span class="meta-label">Class:</span><span class="meta-val">${escapeHTML(className || 'N/A')}</span></div>
+      
+      <div class="meta-item"><span class="meta-label">Week:</span><span class="meta-val">${escapeHTML(p.week || 'N/A')}</span></div>
+      <div class="meta-item"><span class="meta-label">Term / Session:</span><span class="meta-val">${escapeHTML(p.term || cfg.current_term || '')} ${p.session ? `(${escapeHTML(p.session)})` : ''}</span></div>
+      
+      <div class="meta-item" style="grid-column: 1 / -1;"><span class="meta-label">Reference Book:</span><span class="meta-val">${escapeHTML(p.referenceBook || 'N/A')}</span></div>
+      <div class="meta-item"><span class="meta-label">Status:</span><span class="meta-val"><span class="status-badge ${statusClass}">${escapeHTML(statusLabel)}</span></span></div>
+    </div>
+
+    <!-- Plan Sections -->
+    ${p.objectives ? `
+    <div class="plan-section">
+      <h4 class="section-title">Objectives</h4>
+      <div class="section-body">${escapeHTML(p.objectives)}</div>
+    </div>` : ''}
+
+    ${p.entryBehaviour ? `
+    <div class="plan-section">
+      <h4 class="section-title">Entry Behaviour</h4>
+      <div class="section-body">${escapeHTML(p.entryBehaviour)}</div>
+    </div>` : ''}
+
+    ${p.teachingAids ? `
+    <div class="plan-section">
+      <h4 class="section-title">Teaching Aids</h4>
+      <div class="section-body">${escapeHTML(p.teachingAids)}</div>
+    </div>` : ''}
+
+    ${p.content ? `
+    <div class="plan-section">
+      <h4 class="section-title">Lesson Content</h4>
+      <div class="section-body-html">${p.content}</div>
+    </div>` : ''}
+
+    ${p.presentationSteps ? `
+    <div class="plan-section">
+      <h4 class="section-title">Presentation Steps</h4>
+      <div class="section-body">${escapeHTML(p.presentationSteps)}</div>
+    </div>` : ''}
+
+    ${p.evaluation ? `
+    <div class="plan-section">
+      <h4 class="section-title">Evaluation</h4>
+      <div class="section-body">${escapeHTML(p.evaluation)}</div>
+    </div>` : ''}
+
+    ${p.assignment ? `
+    <div class="plan-section">
+      <h4 class="section-title">Assignment</h4>
+      <div class="section-body">${escapeHTML(p.assignment)}</div>
+    </div>` : ''}
+
+    ${p.reviewNote ? `
+    <div class="plan-section">
+      <h4 class="section-title">Supervisor / Review Note</h4>
+      <div class="review-box">${escapeHTML(p.reviewNote)}</div>
+    </div>` : ''}
+
+    <!-- Sign-off Block -->
+    <div class="sign-off-grid">
+      <div class="sign-col">
+        <div class="sign-line"></div>
+        <div class="sign-label">Class Teacher's Signature &amp; Date</div>
+      </div>
+      <div class="sign-col">
+        <div class="sign-line"></div>
+        <div class="sign-label">Head Teacher / Principal's Signature &amp; Date</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>`;
         
         const dataUri = "data:text/html;charset=utf-8," + encodeURIComponent(html);
         return res.json({ success: true, previewUrl: dataUri, downloadUrl: dataUri });
