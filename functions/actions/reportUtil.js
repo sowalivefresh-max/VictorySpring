@@ -134,7 +134,7 @@ async function enrichReportData(dbInstance, reportData, cfg) {
       attSnap.forEach(doc => {
         let d = doc.data();
         if (d.date) uniqueDates.add(d.date);
-        if (d.studentId === stId) {
+        if (d.studentId === stId || d.studentID === stId) {
           if (d.status === "Present") present++;
           else if (d.status === "Absent") absent++;
           else if (d.status === "Late") late++;

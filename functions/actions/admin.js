@@ -2972,6 +2972,8 @@ module.exports = function(db, notificationsActions) {
         const studentDoc = await db.collection("students").doc(studentId).get();
         if(!studentDoc.exists) return res.json({ success: false, message: "Student not found" });
         const student = studentDoc.data();
+        // Ensure doc ID is available for attendance matching in reportUtil
+        if (!student.id) student.id = studentDoc.id;
         
         // Fetch scores
         const scoresSnap = await db.collection("assessments").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", session).get();

@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   getReportCSS: function() {
     let html = '<style>';
     html += 'body{font-family: Arial, Helvetica, sans-serif; margin:0; padding:0; color:#000; font-size:10px;}';
@@ -75,9 +75,9 @@ module.exports = {
     </head><body><div class="wrap" style="border:none;">
     
     <div class="hdr">
-      <div class="logo-ph">${cfg.schoolName ? cfg.schoolName.charAt(0) : 'S'}</div>
+      ${cfg.school_logo_url || cfg.schoolLogoUrl ? `<img src="${cfg.school_logo_url || cfg.schoolLogoUrl}" class="logo" alt="School Logo" onerror="this.style.display='none'">`  : `<div class="logo-ph">${(cfg.schoolName || cfg.school_name || 'S').charAt(0)}</div>`}
       <div class="school-info">
-        <div class="school-name">${cfg.schoolName || 'MY SCHOOL PORTAL'}</div>
+        <div class="school-name">${cfg.schoolName || cfg.school_name || 'MY SCHOOL PORTAL'}</div>
         <div class="school-motto">${cfg.schoolAddress || ''}</div>
         <div class="school-motto">${cfg.schoolPhone || ''} | ${cfg.schoolEmail || ''}</div>
         <div class="rpt-title">MONTESSORI PROGRESS REPORT - ${String(term).toUpperCase()} TERM ${session}</div>
@@ -95,7 +95,7 @@ module.exports = {
           <div class="bio-cell"><span class="bio-label">Gender:</span> ${s.gender || 'N/A'}</div>
         </div>
         <div class="bio-row">
-          <div class="bio-cell"><span class="bio-label">Age:</span> ${s.age || ''}</div>
+          <div class="bio-cell"><span class="bio-label">Age:</span> ${(function(){ let a = s.age || ''; if(!a && (s.dateOfBirth||s.dob)){ try{ let d=new Date(s.dateOfBirth||s.dob); if(!isNaN(d)){ let y=new Date().getFullYear()-d.getFullYear(); let m=new Date().getMonth()-d.getMonth(); if(m<0||(m===0&&new Date().getDate()<d.getDate()))y--; a=y+' years'; } }catch(e){} } return a; })()}</div>
           <div class="bio-cell"><span class="bio-label">Attendance:</span> ${att.present||0} out of ${att.total||0} days</div>
         </div>
       </div>
