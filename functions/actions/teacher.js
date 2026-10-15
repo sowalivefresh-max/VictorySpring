@@ -155,10 +155,14 @@ module.exports = function(db, notificationsActions) {
           .where("status", "==", "active")
           .get();
           
+        const target = className.toLowerCase().replace(/[^a-z0-9]/g, "");
         const students = [];
         studentsSnap.forEach(doc => {
           let st = doc.data();
-          if (st.className && st.className.toLowerCase().trim() === classNameLower) {
+          const c1 = (st.className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c2 = (st.class || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c3 = (st.currentClass || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (c1 === target || c2 === target || c3 === target) {
             st.id = doc.id;
             students.push(st);
           }

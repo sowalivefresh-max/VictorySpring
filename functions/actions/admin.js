@@ -151,9 +151,16 @@ module.exports = function(db, notificationsActions) {
           ]);
 
           const matchFilter = (d) => {
-            if (section && section !== "both") {
-              const sec = (d.section || "").toLowerCase();
-              if (sec !== section && sec !== "both") return false;
+            if (section && section !== "both" && section !== "all") {
+              const sec = (d.section || "").toLowerCase().trim();
+              if (sec !== section && sec !== "both") {
+                const isEarlyYearsOrNursery = /nursery|creche|kg|kindergarten|toddler|playgroup|early/i.test(d.className || d.class || d.name || sec);
+                if (section === "primary" && (isEarlyYearsOrNursery || !sec)) {
+                  // allow nursery/kg/unassigned in primary
+                } else {
+                  return false;
+                }
+              }
             }
             if (campusId) {
               if ((d.campusId || null) !== campusId) return false;
@@ -623,9 +630,16 @@ module.exports = function(db, notificationsActions) {
         const students = [];
         snap.forEach(doc => {
           let data = doc.data();
-          if (section && section !== "both") {
-            const sec = (data.section || "").toLowerCase();
-            if (sec !== section && sec !== "both") return;
+          if (section && section !== "both" && section !== "all") {
+            const sec = (data.section || "").toLowerCase().trim();
+            if (sec !== section && sec !== "both") {
+              const isEarlyYearsOrNursery = /nursery|creche|kg|kindergarten|toddler|playgroup|early/i.test(data.className || data.class || sec);
+              if (section === "primary" && (isEarlyYearsOrNursery || !sec)) {
+                // allow nursery/kg/unassigned in primary
+              } else {
+                return;
+              }
+            }
           }
           // Campus filtering
           if (campusId) {
@@ -689,9 +703,16 @@ module.exports = function(db, notificationsActions) {
         const classes = [];
         classesSnap.forEach(doc => {
           let data = doc.data();
-          if (section && section !== "both") {
-            const sec = (data.section || "").toLowerCase();
-            if (sec !== section && sec !== "both") return;
+          if (section && section !== "both" && section !== "all") {
+            const sec = (data.section || "").toLowerCase().trim();
+            if (sec !== section && sec !== "both") {
+              const isEarlyYearsOrNursery = /nursery|creche|kg|kindergarten|toddler|playgroup|early/i.test(data.className || data.name || sec);
+              if (section === "primary" && (isEarlyYearsOrNursery || !sec)) {
+                // allow nursery/kg/unassigned in primary
+              } else {
+                return;
+              }
+            }
           }
           // Campus filtering
           if (campusId) {
@@ -1952,15 +1973,21 @@ module.exports = function(db, notificationsActions) {
         const { className, term, session, rptType } = req.body;
         if (!className || !term || !session) return res.json({ success: false, message: "Class, term, and session required." });
         
-        // Fetch all assessments for this class/term/session
+        // Fetch all assessments for this term/session and filter by normalized className
         const assessmentsSnap = await db.collection("assessments")
-          .where("className", "==", className)
           .where("term", "==", term)
           .where("session", "==", session).get();
           
-        if (assessmentsSnap.empty) return res.json({ success: false, message: "No assessments found for this class and term." });
-        
-        const assessments = assessmentsSnap.docs.map(d => d.data());
+        const targetCls = (className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const assessments = [];
+        assessmentsSnap.forEach(doc => {
+          const ass = doc.data();
+          const assCls = (ass.className || ass.class || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (assCls === targetCls) {
+            assessments.push(ass);
+          }
+        });
+        if (assessments.length === 0) return res.json({ success: false, message: "No assessments found for this class and term." });
         
         // Group by student
         const studentResults = {};
@@ -1996,16 +2023,27 @@ module.exports = function(db, notificationsActions) {
         const { className, term, session } = req.body;
         if (!className || !term || !session) return res.json({ success: false, message: "Class, term, and session required." });
         
-        const studentsSnap = await db.collection("students").where("className", "==", className).get();
-        if (studentsSnap.empty) {
+        const targetCls = (className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const allStudentsSnap = await db.collection("students").get();
+        const matchedDocs = [];
+        allStudentsSnap.forEach(doc => {
+          const s = doc.data();
+          const c1 = (s.className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c2 = (s.class || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c3 = (s.currentClass || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (c1 === targetCls || c2 === targetCls || c3 === targetCls) {
+            matchedDocs.push(doc);
+          }
+        });
+        if (matchedDocs.length === 0) {
           return res.json({ success: true, data: { subjects: [], students: [] } });
         }
         
-        const studentIds = studentsSnap.docs.map(doc => doc.id);
+        const studentIds = matchedDocs.map(doc => doc.id);
         const subjectsSet = new Set();
         const studentMap = {}; 
         
-        studentsSnap.forEach(doc => {
+        matchedDocs.forEach(doc => {
           const s = doc.data();
           studentMap[doc.id] = { id: doc.id, fullName: s.fullName || (s.firstName + ' ' + s.lastName), subjects: {}, totalScore: 0 };
         });

@@ -815,21 +815,49 @@
       }, null, true);
     }
 
+    function normalizeClassStr(str) {
+      if (!str) return '';
+      return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function studentMatchesClass(s, cls) {
+      var target = normalizeClassStr(cls);
+      if (!target) return false;
+      var c1 = normalizeClassStr(s.className);
+      var c2 = normalizeClassStr(s.class);
+      var c3 = normalizeClassStr(s.currentClass);
+      var c4 = normalizeClassStr(s.classAssigned);
+      return c1 === target || c2 === target || c3 === target || c4 === target;
+    }
+
     function loadClassesForReports() {
-      callServer('principalGetClasses', [AA.token, 'primary'], function(data) {
+      callServer('principalGetClasses', [AA.token], function(data) {
         var sel = document.getElementById('rptClassSelect');
+        if (!sel) return;
+        var currentVal = sel.value;
         sel.innerHTML = '<option value="">-- Select Class --</option>';
-        data.forEach(function(c) { 
-          // HT typically only manages primary section, though we show all if permissions allow
-          if(c.section === 'primary') sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>'; 
+        var classesList = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+        var added = new Set();
+        classesList.forEach(function(c) { 
+          var sec = String(c.section || '').toLowerCase().trim();
+          if (sec === 'secondary' || sec === 'high' || sec === 'highschool' || sec === 'high school') return;
+          var cName = (c.className || c.name || '').trim();
+          if (cName && !added.has(cName.toLowerCase())) {
+            added.add(cName.toLowerCase());
+            sel.innerHTML += '<option value="'+cName+'">'+cName+'</option>'; 
+          }
         });
+        if (currentVal) sel.value = currentVal;
       }, null, true);
     }
     
     function loadStudentsForClass(cls) {
       if(!cls) { document.getElementById('rptCard').style.display='none'; return; }
-      callServer('principalGetAllStudents', [AA.token, 'primary'], function(data) {
-        var filtered = data.filter(function(s){ return String(s.class || s.className) === String(cls); });
+      callServer('principalGetAllStudents', [AA.token], function(data) {
+        var students = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+        var filtered = students.filter(function(s) {
+          return studentMatchesClass(s, cls);
+        });
         document.getElementById('rptCard').style.display='block';
         buildTable('rptTable', [
           { key:'admissionNumber' }, { key:'fullName' }, { key:'status', render: function(r){ return formatStatus(r.status); } }
