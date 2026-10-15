@@ -2714,12 +2714,16 @@ module.exports = function(db, notificationsActions) {
           usersSnap.forEach(doc => {
             const d = doc.data();
             const sec = (d.section || "").toLowerCase();
-            if (sec === section || sec === "both") {
+            const role = (d.role || "").toLowerCase();
+            if (sec === section || sec === "both" || role === `${section}_teacher` || (!d.section && section === "primary")) {
               allowedTeacherIds.add(doc.id);
             }
           });
-          plans = plans.filter(p => allowedTeacherIds.has(p.teacherId));
+          plans = plans.filter(p => allowedTeacherIds.has(p.teacherId) || (p.section && p.section.toLowerCase() === section));
         }
+
+        // Sort descending by latest submission/update date
+        plans.sort((a, b) => (b.submittedAt || b.updatedAt || b.createdAt || "").localeCompare(a.submittedAt || a.updatedAt || a.createdAt || ""));
 
         return res.json({ success: true, data: plans });
       } catch (err) {
@@ -2729,8 +2733,17 @@ module.exports = function(db, notificationsActions) {
     
     adminApprovePlan: async (req, res) => {
       try {
-        const { planId, note } = req.body;
-        await db.collection("lessonPlans").doc(planId).update({ status: "Approved", reviewNote: note || "" });
+        const planId = req.body.planId || req.body.id;
+        const note = req.body.note || "";
+        if (!planId) return res.json({ success: false, message: "Plan ID is required." });
+
+        await db.collection("lessonPlans").doc(planId).update({
+          status: "Approved",
+          reviewNote: note,
+          approvedAt: new Date().toISOString(),
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: (req.session && (req.session.fullName || req.session.userId)) || "Head Teacher"
+        });
         return res.json({ success: true, message: "Plan approved." });
       } catch (err) {
         return res.json({ success: false, message: err.message });
@@ -2739,8 +2752,17 @@ module.exports = function(db, notificationsActions) {
 
     adminRejectPlan: async (req, res) => {
       try {
-        const { planId, note } = req.body;
-        await db.collection("lessonPlans").doc(planId).update({ status: "Rejected", reviewNote: note || "" });
+        const planId = req.body.planId || req.body.id;
+        const note = req.body.note || "";
+        if (!planId) return res.json({ success: false, message: "Plan ID is required." });
+
+        await db.collection("lessonPlans").doc(planId).update({
+          status: "Rejected",
+          reviewNote: note,
+          rejectedAt: new Date().toISOString(),
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: (req.session && (req.session.fullName || req.session.userId)) || "Head Teacher"
+        });
         return res.json({ success: true, message: "Plan rejected." });
       } catch (err) {
         return res.json({ success: false, message: err.message });

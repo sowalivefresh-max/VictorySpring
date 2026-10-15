@@ -313,11 +313,11 @@ app.post("/api", async (req, res) => {
           req.body.session = args[2];
           req.body.section = args[3] || null;
         }
-        if (action === "headApprovePlan") {
+        if (action === "headApprovePlan" || action === "adminApprovePlan") {
           req.body.planId = args[1];
           req.body.note = args[2] || "";
         }
-        if (action === "headRejectPlan") {
+        if (action === "headRejectPlan" || action === "adminRejectPlan") {
           req.body.planId = args[1];
           req.body.note = args[2] || "";
         }

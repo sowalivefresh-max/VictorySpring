@@ -174,12 +174,35 @@
 <!-- TAB: Lesson Plans -->
 <div class="aa-tab-content" data-group="ht-tabs" data-id="tab-lessonplans">
 <div class="aa-card">
-<div class="aa-card-header"><h3 class="aa-card-title">Lesson Plans Pending Approval</h3></div>
+<div class="aa-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+  <h3 class="aa-card-title"><i class="fa fa-book-open" style="margin-right:8px; color:var(--aa-gold);"></i>Lesson Plans</h3>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div style="display:inline-flex; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
+      <button type="button" class="aa-btn aa-btn-sm aa-btn-primary" id="btnFilterPendingPlans" onclick="setLessonPlanFilter('pending')" style="border-radius:0;">
+        Pending (<span id="cntPendingPlans">0</span>)
+      </button>
+      <button type="button" class="aa-btn aa-btn-sm aa-btn-outline" id="btnFilterApprovedPlans" onclick="setLessonPlanFilter('approved')" style="border-radius:0; border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+        Approved (<span id="cntApprovedPlans">0</span>)
+      </button>
+      <button type="button" class="aa-btn aa-btn-sm aa-btn-outline" id="btnFilterRejectedPlans" onclick="setLessonPlanFilter('rejected')" style="border-radius:0; border-right:1px solid #e2e8f0;">
+        Rejected (<span id="cntRejectedPlans">0</span>)
+      </button>
+      <button type="button" class="aa-btn aa-btn-sm aa-btn-outline" id="btnFilterAllPlans" onclick="setLessonPlanFilter('all')" style="border-radius:0;">
+        All (<span id="cntAllPlans">0</span>)
+      </button>
+    </div>
+    <button class="aa-btn aa-btn-outline aa-btn-sm" onclick="loadLessonPlans()" title="Refresh List"><i class="fa fa-sync"></i></button>
+  </div>
+</div>
 <div class="aa-card-body" style="padding:0;">
 <table class="aa-table" id="plansTable">
-<thead><tr><th>Teacher</th><th>Subject</th><th>Class</th><th>Topic</th><th>Submitted</th><th>Actions</th></tr></thead>
+<thead><tr><th>Teacher</th><th>Subject</th><th>Class</th><th>Topic</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
 <tbody></tbody>
 </table>
+<div id="noPlansMsg" style="display:none; padding:40px 20px; text-align:center; color:#94a3b8;">
+  <i class="fa fa-check-circle" style="font-size:36px; color:#10b981; margin-bottom:10px; display:block;"></i>
+  <p style="margin:0; font-size:14px; font-weight:600;" id="noPlansText">No lesson plans pending approval.</p>
+</div>
 </div>
 </div>
 </div>
@@ -431,7 +454,7 @@
 </div>
 </div>
 <div class="aa-card-body" style="padding:0;">
-<table class="aa-table" id="plansTable">
+<table class="aa-table" id="installmentPlansTable">
 <thead><tr><th>Student</th><th>Term</th><th>Total</th><th>Milestones</th><th>Status</th><th>Actions</th></tr></thead>
 <tbody></tbody>
 </table>
@@ -765,7 +788,13 @@
         var el = document.getElementById('stat-teachers'); if(el) el.textContent = s.users;
       }, null, true);
       callServer('principalGetLessonPlans', [AA.token, currentTerm, currentSession, 'primary'], function(p) {
-        var el = document.getElementById('stat-plans'); if(el) el.textContent = p.length;
+        var plans = Array.isArray(p) ? p : (p && p.data ? p.data : []);
+        var pending = plans.filter(function(x) {
+          var st = String(x.status || '').toLowerCase();
+          return st === 'submitted' || st === 'pending';
+        });
+        var el = document.getElementById('stat-plans');
+        if (el) el.textContent = pending.length;
       });
       callServer('adminGetSchoolPerformanceAnalytics', [AA.token, currentTerm, currentSession, 'primary'], function(res) {
         var html = '<div class="aa-stat-card"><h6>Overall Performance</h6><div class="mt-2">';
@@ -813,20 +842,111 @@
       }, null, true);
     }
 
+    var currentLessonPlanFilter = 'pending';
+    var allLessonPlansCache = [];
+
+    function setLessonPlanFilter(filter) {
+      currentLessonPlanFilter = filter;
+      ['Pending', 'Approved', 'Rejected', 'All'].forEach(function(name) {
+        var btn = document.getElementById('btnFilter' + name + 'Plans');
+        if (btn) {
+          if (name.toLowerCase() === filter) {
+            btn.className = 'aa-btn aa-btn-sm aa-btn-primary';
+          } else {
+            btn.className = 'aa-btn aa-btn-sm aa-btn-outline';
+          }
+        }
+      });
+      renderFilteredLessonPlans();
+    }
+
+    function renderFilteredLessonPlans() {
+      var data = allLessonPlansCache || [];
+      
+      // Update badge counts
+      var cPending = 0, cApproved = 0, cRejected = 0;
+      data.forEach(function(r) {
+        var s = String(r.status || '').toLowerCase();
+        if (s === 'approved') cApproved++;
+        else if (s === 'rejected') cRejected++;
+        else if (s === 'submitted' || s === 'pending') cPending++;
+      });
+      
+      var elP = document.getElementById('cntPendingPlans'); if (elP) elP.textContent = cPending;
+      var elA = document.getElementById('cntApprovedPlans'); if (elA) elA.textContent = cApproved;
+      var elR = document.getElementById('cntRejectedPlans'); if (elR) elR.textContent = cRejected;
+      var elAll = document.getElementById('cntAllPlans'); if (elAll) elAll.textContent = data.length;
+
+      // Filter rows
+      var filtered = data;
+      if (currentLessonPlanFilter === 'pending') {
+        filtered = data.filter(function(r) {
+          var s = String(r.status || '').toLowerCase();
+          return s === 'submitted' || s === 'pending';
+        });
+      } else if (currentLessonPlanFilter === 'approved') {
+        filtered = data.filter(function(r) {
+          return String(r.status || '').toLowerCase() === 'approved';
+        });
+      } else if (currentLessonPlanFilter === 'rejected') {
+        filtered = data.filter(function(r) {
+          return String(r.status || '').toLowerCase() === 'rejected';
+        });
+      }
+
+      var noMsg = document.getElementById('noPlansMsg');
+      var table = document.getElementById('plansTable');
+      if (filtered.length === 0) {
+        if (table) table.style.display = 'none';
+        if (noMsg) {
+          noMsg.style.display = 'block';
+          var textEl = document.getElementById('noPlansText');
+          if (textEl) {
+            if (currentLessonPlanFilter === 'pending') textEl.textContent = 'No lesson plans pending approval.';
+            else if (currentLessonPlanFilter === 'approved') textEl.textContent = 'No approved lesson plans found.';
+            else if (currentLessonPlanFilter === 'rejected') textEl.textContent = 'No rejected lesson plans found.';
+            else textEl.textContent = 'No lesson plans found.';
+          }
+        }
+      } else {
+        if (table) table.style.display = '';
+        if (noMsg) noMsg.style.display = 'none';
+
+        buildTable('plansTable', [
+          { key:'teacherName', render: function(r){ return r.teacherName || 'Teacher'; } },
+          { key:'subjectName', render: function(r){ return r.subjectName || r.subject || 'General'; } },
+          { key:'className', render: function(r){ return r.className || r.class || 'N/A'; } },
+          { key:'topic', render: function(r){ return r.topic || r.title || 'N/A'; } },
+          { key:'submittedAt', render: function(r){ return formatDate(r.submittedAt || r.updatedAt || r.createdAt); } },
+          { key:'status', render: function(r){ return formatStatus(r.status || 'Pending'); } }
+        ], filtered, function(r) {
+          var id = r.id || r.iD;
+          var s = String(r.status || '').toLowerCase();
+          var isApproved = (s === 'approved');
+          var html = '<button class="aa-btn aa-btn-info aa-btn-xs" onclick="viewPlanPDF(\''+id+'\')" title="View PDF"><i class="fa fa-eye"></i> View</button> ';
+          if (isApproved) {
+            html += '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Edit Review / Note"><i class="fa fa-edit"></i> Review</button>';
+          } else {
+            html += '<button class="aa-btn aa-btn-success aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Approve or Reject"><i class="fa fa-clipboard-check"></i> Review</button>';
+          }
+          return html;
+        });
+      }
+    }
+
     function loadLessonPlans() {
       callServer('principalGetLessonPlans', [AA.token, currentTerm, currentSession, 'primary'], function(data) {
-        buildTable('plansTable', [
-          { key:'teacherName' }, { key:'subjectName' }, { key:'class' }, { key:'topic' },
-          { key:'createdAt', render: function(r){ return formatDate(r.createdAt); } }
-        ], data, function(r) {
-          var id = r.id || r.iD;
-          return '<button class="aa-btn aa-btn-info aa-btn-xs" onclick="viewPlanPDF(\''+id+'\')" title="View PDF"><i class="fa fa-eye"></i> View</button> ' +
-                 '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Approve or Reject"><i class="fa fa-clipboard-check"></i> Review</button>';
-        });
+        allLessonPlansCache = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+        renderFilteredLessonPlans();
       }, null, true);
     }
 
-    function reviewPlan(id) { document.getElementById('reviewPlanId').value = id; document.getElementById('reviewNote').value = ''; openModal('reviewModal'); }
+    function reviewPlan(id) {
+      document.getElementById('reviewPlanId').value = id;
+      var p = (allLessonPlansCache || []).find(function(x) { return String(x.id || x.iD) === String(id); });
+      document.getElementById('reviewNote').value = (p && p.reviewNote) ? p.reviewNote : '';
+      openModal('reviewModal');
+    }
 
     function viewPlanPDF(id) {
       showToast('Generating PDF, please wait...', 'info');
@@ -1731,7 +1851,7 @@
           });
         }
 
-        var tbody = document.querySelector('#plansTable tbody');
+        var tbody = document.querySelector('#installmentPlansTable tbody') || document.querySelector('#plansTable tbody');
         if (!tbody) return;
         if (plans.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No installment plans found.</td></tr>';
