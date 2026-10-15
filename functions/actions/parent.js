@@ -325,7 +325,34 @@ module.exports = function(db) {
         if (lowerClass.includes("nursery") || lowerClass.includes("kg")) {
           isMontessori = true;
           const monSnap = await db.collection("montessoriRecords").where("studentId", "==", studentId).where("term", "==", term).where("session", "==", academicSession).limit(1).get();
-          if (!monSnap.empty) montessori = monSnap.docs[0].data();
+          if (!monSnap.empty) {
+            montessori = monSnap.docs[0].data();
+          } else {
+            const idList = [studentId, student.id, student.studentId, student.studentID, student.admissionNumber, student.regNo].filter(Boolean);
+            const matchTerm = (t1, t2) => {
+              if (!t1 || !t2) return true;
+              const n1 = String(t1).toLowerCase().replace(/[^a-z0-9]/g, '');
+              const n2 = String(t2).toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (n1 === n2) return true;
+              const toNum = s => s.replace(/first|1st/g, '1').replace(/second|2nd/g, '2').replace(/third|3rd/g, '3').replace(/term/g, '');
+              return toNum(n1) === toNum(n2);
+            };
+            const matchSession = (s1, s2) => {
+              if (!s1 || !s2) return true;
+              return String(s1).replace(/[^0-9]/g, '') === String(s2).replace(/[^0-9]/g, '');
+            };
+            for (const id of Array.from(new Set(idList))) {
+              const snap = await db.collection("montessoriRecords").where("studentId", "==", id).get();
+              for (const doc of snap.docs) {
+                const d = doc.data();
+                if (matchTerm(d.term, term) && matchSession(d.session, academicSession)) {
+                  montessori = d;
+                  break;
+                }
+              }
+              if (Object.keys(montessori).length > 0) break;
+            }
+          }
         }
 
         const report = {

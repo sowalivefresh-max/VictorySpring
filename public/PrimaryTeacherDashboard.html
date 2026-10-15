@@ -865,6 +865,16 @@
         document.getElementById('montessoriForm').reset();
         if (res && Object.keys(res).length > 0) {
           setFormData('montessoriForm', res);
+          var form = document.getElementById('montessoriForm');
+          if (form) {
+            Object.keys(res).forEach(function(k) {
+              if (k.indexOf('sk_') === 0) {
+                var v = res[k] || '';
+                var radio = form.querySelector('input[type="radio"][name="' + k + '"][value="' + v + '"]');
+                if (radio) radio.checked = true;
+              }
+            });
+          }
         }
         document.getElementById('montessoriFormContainer').style.display = 'block';
         document.getElementById('btnSaveMontessori').style.display = 'inline-block';
@@ -875,7 +885,14 @@
       var sid = document.getElementById('montessoriStudentSelect').value;
       if (!sid) return showToast('Select student', 'error');
       
+      var form = document.getElementById('montessoriForm');
       var data = getFormData('montessoriForm');
+      if (form) {
+        var checkedRadios = form.querySelectorAll('input[type="radio"]:checked');
+        checkedRadios.forEach(function(r) {
+          if (r.name) data[r.name] = r.value;
+        });
+      }
       data.studentId = sid;
       data.className = myClass;
       data.term = currentTerm;

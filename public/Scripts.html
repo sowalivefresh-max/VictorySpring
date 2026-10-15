@@ -321,8 +321,21 @@ function getFormData(formId) {
   if (!form) return {};
   var data = {};
   form.querySelectorAll('[name]').forEach(function(el) {
-    var k = el.name; var v = el.value;
-    if (el.type === 'checkbox') v = el.checked;
+    var k = el.name;
+    if (!k) return;
+    if (el.type === 'radio') {
+      if (el.checked) {
+        data[k] = el.value;
+      } else if (!data.hasOwnProperty(k)) {
+        data[k] = '';
+      }
+      return;
+    }
+    if (el.type === 'checkbox') {
+      data[k] = el.checked;
+      return;
+    }
+    var v = el.value;
     if (el.type === 'number') v = parseFloat(v) || 0;
     if (el.multiple) {
       var arr = [];
@@ -341,17 +354,28 @@ function resetForm(formId) {
 
 function setFormData(formId, data) {
   var form = document.getElementById(formId);
-  if (!form) return;
+  if (!form || !data) return;
   Object.keys(data).forEach(function(k) {
+    var val = data[k];
+    var radios = form.querySelectorAll('input[type="radio"][name="' + k + '"]');
+    if (radios.length > 0) {
+      var targetVal = String(val !== null && val !== undefined ? val : '');
+      radios.forEach(function(r) {
+        r.checked = (r.value === targetVal);
+      });
+      return;
+    }
     var el = form.querySelector('[name="' + k + '"]');
     if (el) {
-      if (el.multiple && typeof data[k] === 'string') {
-        var vals = data[k].split(',');
-        for(var i = 0; i < el.options.length; i++) {
+      if (el.multiple && (typeof val === 'string' || Array.isArray(val))) {
+        var vals = Array.isArray(val) ? val : String(val).split(',').map(function(s){return s.trim();});
+        for (var i = 0; i < el.options.length; i++) {
           el.options[i].selected = vals.indexOf(el.options[i].value) !== -1;
         }
+      } else if (el.type === 'checkbox') {
+        el.checked = !!val;
       } else {
-        el.value = data[k] !== null && data[k] !== undefined ? data[k] : '';
+        el.value = val !== null && val !== undefined ? val : '';
       }
     }
   });
