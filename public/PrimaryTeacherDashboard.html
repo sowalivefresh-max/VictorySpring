@@ -553,8 +553,8 @@
                 <select id="planSubject" name="subjectId" class="aa-select" required></select>
               </div>
               <div class="aa-form-group mb-0">
-                <label class="aa-label">Class</label>
-                <input type="text" id="planClass" name="className" class="aa-input" readonly>
+                <label class="aa-label">Class <span style="color:#e74c3c;">*</span></label>
+                <input type="text" id="planClass" name="className" class="aa-input" placeholder="e.g. Primary 4" required>
               </div>
             </div>
             <div class="aa-grid-2 mb-3">
@@ -755,16 +755,27 @@
       }, null, true);
 
       callServer('teacherGetMySubjects', [AA.token], function(data) {
-        // For primary, teacher gets all primary subjects. Let's filter to just 'primary' subjects from their assignment.
         mySubjects = data;
-        document.getElementById('stat-subjects').textContent = data.length;
+        document.getElementById('stat-subjects').textContent = (data && data.length) || 0;
         var sSel = document.getElementById('scoreSubjectSelect'); sSel.innerHTML='<option value="">-- Select Subject --</option>';
-        var pSel = document.getElementById('planSubject'); pSel.innerHTML='';
-        data.forEach(function(s) {
-          var id = s.id||s.iD;
-          var opt = '<option value="'+id+'">'+AA.escapeHTML(s.subjectName)+'</option>';
-          sSel.innerHTML += opt; pSel.innerHTML += opt;
-        });
+        var pSel = document.getElementById('planSubject'); pSel.innerHTML='<option value="">-- Select Subject --</option>';
+        if (data && data.length > 0) {
+          data.forEach(function(s) {
+            var id = s.id||s.iD;
+            var opt = '<option value="'+id+'">'+AA.escapeHTML(s.subjectName || s.name || '')+'</option>';
+            sSel.innerHTML += opt; pSel.innerHTML += opt;
+          });
+        } else {
+          var defaultSubjects = [
+            "Mathematics", "English Language", "Basic Science", "Social Studies",
+            "Civic Education", "Agricultural Science", "ICT / Computer Studies",
+            "CRK", "IRK", "Physical and Health Education", "Cultural and Creative Arts",
+            "Quantitative Reasoning", "Verbal Reasoning", "Handwriting", "French"
+          ];
+          defaultSubjects.forEach(function(sub) {
+            pSel.innerHTML += '<option value="' + sub + '">' + sub + '</option>';
+          });
+        }
       });
       callServer('teacherGetMyLessonPlans', [AA.token, currentTerm, currentSession], function(data) {
         document.getElementById('stat-plans').textContent = data.filter(function(d){return d.status==='draft'||d.status==='rejected'}).length;
@@ -1255,12 +1266,22 @@
         }
 
         if (subjectName) {
-          var sn = subjectName[1].trim().toLowerCase();
+          var sn = subjectName[1].trim();
           var opts = form.subjectId.options;
+          var found = false;
           for (var i=0; i<opts.length; i++) {
-            if (opts[i].text.toLowerCase() === sn) {
-              form.subjectId.selectedIndex = i; break;
+            if (opts[i].text.toLowerCase() === sn.toLowerCase() || opts[i].text.toLowerCase().includes(sn.toLowerCase()) || sn.toLowerCase().includes(opts[i].text.toLowerCase())) {
+              form.subjectId.selectedIndex = i;
+              found = true;
+              break;
             }
+          }
+          if (!found) {
+            var newOpt = document.createElement('option');
+            newOpt.value = sn;
+            newOpt.text = sn;
+            newOpt.selected = true;
+            form.subjectId.appendChild(newOpt);
           }
         }
 
@@ -1279,7 +1300,8 @@
       if (window.quillPlanEditor) {
         window.quillPlanEditor.root.innerHTML = '';
       }
-      document.getElementById('planClass').value = myClass || (AA.user ? AA.user.classAssigned : '');
+      var clsVal = myClass || (AA.user ? (AA.user.classAssigned || AA.user.className) : '') || '';
+      document.getElementById('planClass').value = clsVal;
       openModal('planModal');
     }
 
@@ -1288,10 +1310,28 @@
         document.getElementById('planContent').value = window.quillPlanEditor.root.innerHTML;
       }
       var data = getFormData('planForm'); data.term = currentTerm; data.session = currentSession;
-      if (myClass && !data.className) data.className = myClass;
+      var clsEl = document.getElementById('planClass');
+      if (clsEl && clsEl.value) {
+        data.className = clsEl.value.trim();
+        data.class = data.className;
+      } else if (myClass) {
+        data.className = myClass;
+        data.class = myClass;
+      }
       var subEl = document.getElementById('planSubject');
       if (subEl && subEl.selectedIndex >= 0) {
-        data.subjectName = subEl.options[subEl.selectedIndex].text;
+        var opt = subEl.options[subEl.selectedIndex];
+        if (opt && opt.value && opt.value !== '') {
+          data.subjectName = opt.text.trim();
+          data.subject = opt.text.trim();
+          data.subjectId = opt.value;
+        }
+      }
+      if (!data.className) {
+        return showToast('Please enter or select a Class for this lesson plan.', 'error');
+      }
+      if (!data.subjectName && !data.subjectId) {
+        return showToast('Please select a Subject for this lesson plan.', 'error');
       }
       data.status = data.status || 'draft';
       var id = data.id; var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
@@ -1304,10 +1344,28 @@
         document.getElementById('planContent').value = window.quillPlanEditor.root.innerHTML;
       }
       var data = getFormData('planForm'); data.term = currentTerm; data.session = currentSession;
-      if (myClass && !data.className) data.className = myClass;
+      var clsEl = document.getElementById('planClass');
+      if (clsEl && clsEl.value) {
+        data.className = clsEl.value.trim();
+        data.class = data.className;
+      } else if (myClass) {
+        data.className = myClass;
+        data.class = myClass;
+      }
       var subEl = document.getElementById('planSubject');
       if (subEl && subEl.selectedIndex >= 0) {
-        data.subjectName = subEl.options[subEl.selectedIndex].text;
+        var opt = subEl.options[subEl.selectedIndex];
+        if (opt && opt.value && opt.value !== '') {
+          data.subjectName = opt.text.trim();
+          data.subject = opt.text.trim();
+          data.subjectId = opt.value;
+        }
+      }
+      if (!data.className) {
+        return showToast('Please enter or select a Class for this lesson plan.', 'error');
+      }
+      if (!data.subjectName && !data.subjectId) {
+        return showToast('Please select a Subject for this lesson plan.', 'error');
       }
       var id = data.id; var fn = id ? 'teacherUpdateLessonPlan' : 'teacherCreateLessonPlan';
       var btn = document.getElementById('btnSaveSubmit');
@@ -1334,6 +1392,28 @@
         if(p) {
           document.getElementById('planId').value=id;
           setFormData('planForm', p);
+          if (p.className || p.class) {
+            document.getElementById('planClass').value = p.className || p.class;
+          }
+          if (p.subjectName || p.subject) {
+            var sName = p.subjectName || p.subject;
+            var subEl = document.getElementById('planSubject');
+            var matched = false;
+            for (var i = 0; i < subEl.options.length; i++) {
+              if (subEl.options[i].value === p.subjectId || subEl.options[i].text.toLowerCase() === sName.toLowerCase()) {
+                subEl.selectedIndex = i;
+                matched = true;
+                break;
+              }
+            }
+            if (!matched && sName) {
+              var newOpt = document.createElement('option');
+              newOpt.value = p.subjectId || sName;
+              newOpt.text = sName;
+              newOpt.selected = true;
+              subEl.appendChild(newOpt);
+            }
+          }
           if (window.quillPlanEditor) {
             window.quillPlanEditor.root.innerHTML = p.content || '';
           }

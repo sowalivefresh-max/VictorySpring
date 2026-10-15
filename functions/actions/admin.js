@@ -2722,6 +2722,93 @@ module.exports = function(db, notificationsActions) {
           plans = plans.filter(p => allowedTeacherIds.has(p.teacherId) || (p.section && p.section.toLowerCase() === section));
         }
 
+        // Dynamically resolve and heal missing subjectName or className
+        for (let p of plans) {
+          let needsUpdate = false;
+          let patch = {};
+
+          if (!p.subjectName && !p.subject) {
+            if (p.subjectId) {
+              try {
+                const subDoc = await db.collection("subjects").doc(p.subjectId).get();
+                if (subDoc.exists) {
+                  p.subjectName = subDoc.data().subjectName || subDoc.data().name || "";
+                  p.subject = p.subjectName;
+                  patch.subjectName = p.subjectName;
+                  patch.subject = p.subjectName;
+                  needsUpdate = true;
+                }
+              } catch(e) {}
+            }
+            if (!p.subjectName) {
+              const hint = ((p.referenceBook || "") + " " + (p.topic || "")).toLowerCase();
+              if (hint.includes("math") || hint.includes("place value") || hint.includes("number") || hint.includes("addition") || hint.includes("fraction")) {
+                p.subjectName = "Mathematics";
+                p.subject = "Mathematics";
+                patch.subjectName = "Mathematics";
+                patch.subject = "Mathematics";
+                needsUpdate = true;
+              } else if (hint.includes("english") || hint.includes("grammar") || hint.includes("phonics") || hint.includes("comprehension")) {
+                p.subjectName = "English Language";
+                p.subject = "English Language";
+                patch.subjectName = "English Language";
+                patch.subject = "English Language";
+                needsUpdate = true;
+              } else if (hint.includes("science")) {
+                p.subjectName = "Basic Science";
+                p.subject = "Basic Science";
+                patch.subjectName = "Basic Science";
+                patch.subject = "Basic Science";
+                needsUpdate = true;
+              }
+            }
+          }
+
+          if (!p.className && !p.class) {
+            if (p.teacherId) {
+              try {
+                const uDoc = await db.collection("users").doc(p.teacherId).get();
+                if (uDoc.exists && uDoc.data().classAssigned) {
+                  p.className = uDoc.data().classAssigned;
+                  p.class = p.className;
+                  patch.className = p.className;
+                  patch.class = p.className;
+                  needsUpdate = true;
+                } else {
+                  const cSnap = await db.collection("classes").where("classTeacherId", "==", p.teacherId).get();
+                  if (!cSnap.empty) {
+                    p.className = cSnap.docs[0].data().className;
+                    p.class = p.className;
+                    patch.className = p.className;
+                    patch.class = p.className;
+                    needsUpdate = true;
+                  }
+                }
+              } catch(e) {}
+            }
+            if (!p.className && p.referenceBook) {
+              const match = p.referenceBook.match(/Primary\s*([0-9]|one|two|three|four|five|six)/i);
+              if (match) {
+                p.className = "Primary " + match[1];
+                p.class = p.className;
+                patch.className = p.className;
+                patch.class = p.className;
+                needsUpdate = true;
+              } else if (/primary/i.test(p.referenceBook)) {
+                p.className = "Primary";
+                p.class = "Primary";
+                patch.className = "Primary";
+                patch.class = "Primary";
+                needsUpdate = true;
+              }
+            }
+          }
+
+          if (needsUpdate && p.id) {
+            db.collection("lessonPlans").doc(p.id).update(patch).catch(() => {});
+          }
+        }
+
         // Sort descending by latest submission/update date
         plans.sort((a, b) => (b.submittedAt || b.updatedAt || b.createdAt || "").localeCompare(a.submittedAt || a.updatedAt || a.createdAt || ""));
 
@@ -2735,15 +2822,27 @@ module.exports = function(db, notificationsActions) {
       try {
         const planId = req.body.planId || req.body.id;
         const note = req.body.note || "";
+        const subjectName = req.body.subjectName;
+        const className = req.body.className;
         if (!planId) return res.json({ success: false, message: "Plan ID is required." });
 
-        await db.collection("lessonPlans").doc(planId).update({
+        const updates = {
           status: "Approved",
           reviewNote: note,
           approvedAt: new Date().toISOString(),
           reviewedAt: new Date().toISOString(),
           reviewedBy: (req.session && (req.session.fullName || req.session.userId)) || "Head Teacher"
-        });
+        };
+        if (subjectName) {
+          updates.subjectName = subjectName.trim();
+          updates.subject = subjectName.trim();
+        }
+        if (className) {
+          updates.className = className.trim();
+          updates.class = className.trim();
+        }
+
+        await db.collection("lessonPlans").doc(planId).update(updates);
         return res.json({ success: true, message: "Plan approved." });
       } catch (err) {
         return res.json({ success: false, message: err.message });
@@ -2754,18 +2853,58 @@ module.exports = function(db, notificationsActions) {
       try {
         const planId = req.body.planId || req.body.id;
         const note = req.body.note || "";
+        const subjectName = req.body.subjectName;
+        const className = req.body.className;
         if (!planId) return res.json({ success: false, message: "Plan ID is required." });
 
-        await db.collection("lessonPlans").doc(planId).update({
+        const updates = {
           status: "Rejected",
           reviewNote: note,
           rejectedAt: new Date().toISOString(),
           reviewedAt: new Date().toISOString(),
           reviewedBy: (req.session && (req.session.fullName || req.session.userId)) || "Head Teacher"
-        });
+        };
+        if (subjectName) {
+          updates.subjectName = subjectName.trim();
+          updates.subject = subjectName.trim();
+        }
+        if (className) {
+          updates.className = className.trim();
+          updates.class = className.trim();
+        }
+
+        await db.collection("lessonPlans").doc(planId).update(updates);
         return res.json({ success: true, message: "Plan rejected." });
       } catch (err) {
         return res.json({ success: false, message: err.message });
+      }
+    },
+
+    adminDeleteLessonPlan: async (req, res) => {
+      try {
+        const planId = req.body.planId || req.body.id;
+        if (!planId) return res.json({ success: false, message: "Plan ID is required." });
+
+        const planRef = db.collection("lessonPlans").doc(planId);
+        const planDoc = await planRef.get();
+        if (!planDoc.exists) return res.json({ success: false, message: "Lesson plan not found." });
+
+        const pData = planDoc.data() || {};
+        await planRef.delete();
+
+        if (req.session) {
+          db.collection("audit_logs").add({
+            timestamp: new Date().toISOString(),
+            userId: req.session.userId,
+            userName: req.session.fullName || "User",
+            action: "DELETE_LESSON_PLAN",
+            details: `Deleted lesson plan "${pData.topic || planId}"`
+          }).catch(() => {});
+        }
+
+        return res.json({ success: true, message: "Lesson plan deleted successfully." });
+      } catch (err) {
+        return res.json({ success: false, message: "Error deleting lesson plan: " + err.message });
       }
     },
     

@@ -314,12 +314,31 @@ app.post("/api", async (req, res) => {
           req.body.section = args[3] || null;
         }
         if (action === "headApprovePlan" || action === "adminApprovePlan") {
-          req.body.planId = args[1];
-          req.body.note = args[2] || "";
+          if (typeof args[1] === "object" && args[1] !== null) {
+            Object.assign(req.body, args[1]);
+          } else {
+            req.body.planId = args[1];
+            req.body.note = args[2] || "";
+            req.body.subjectName = args[3] || "";
+            req.body.className = args[4] || "";
+          }
         }
         if (action === "headRejectPlan" || action === "adminRejectPlan") {
-          req.body.planId = args[1];
-          req.body.note = args[2] || "";
+          if (typeof args[1] === "object" && args[1] !== null) {
+            Object.assign(req.body, args[1]);
+          } else {
+            req.body.planId = args[1];
+            req.body.note = args[2] || "";
+            req.body.subjectName = args[3] || "";
+            req.body.className = args[4] || "";
+          }
+        }
+        if (action === "adminDeleteLessonPlan" || action === "headDeleteLessonPlan") {
+          if (typeof args[1] === "object" && args[1] !== null) {
+            Object.assign(req.body, args[1]);
+          } else {
+            req.body.planId = args[1];
+          }
         }
         if (action === "principalGetAllStudents") { /* no args needed for adminGetStudents */ }
         if (action === "teacherGetAttendanceByDate" || action === "teacherGetAttendance") { req.body.className = args[1]; req.body.date = args[2]; }
@@ -577,6 +596,9 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminApprovePlan(req, res));
       case "adminRejectPlan":
         return requireRole(req, res, () => adminActions.adminRejectPlan(req, res));
+      case "adminDeleteLessonPlan":
+      case "headDeleteLessonPlan":
+        return requireRole(req, res, () => adminActions.adminDeleteLessonPlan(req, res));
       case "adminGetAllStudents":
         return requireRole(req, res, () => adminActions.adminGetStudents(req, res)); // Alias to existing
       case "adminGetStudentResultPDF":
@@ -618,6 +640,8 @@ app.post("/api", async (req, res) => {
         return requireRole(req, res, () => adminActions.adminApprovePlan(req, res));
       case "headRejectPlan":
         return requireRole(req, res, () => adminActions.adminRejectPlan(req, res));
+      case "headDeleteLessonPlan":
+        return requireRole(req, res, () => adminActions.adminDeleteLessonPlan(req, res));
       case "teacherGetAttendance":
         return requireRole(req, res, () => teacherActions.teacherGetAttendance(req, res));
       case "teacherSaveAttendance":

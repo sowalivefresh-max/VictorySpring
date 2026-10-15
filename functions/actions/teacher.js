@@ -508,18 +508,53 @@ module.exports = function(db, notificationsActions) {
         if (session && session.userId) {
           planData.teacherId = planData.teacherId || session.userId;
           planData.teacherName = planData.teacherName || session.fullName || "Teacher";
-          if (!planData.className) {
+          if (!planData.className && !planData.class) {
             try {
               planData.className = (await getTeacherClass(session.userId)) || "";
+              planData.class = planData.className;
             } catch(e) {}
           }
         }
 
+        if (planData.className && !planData.class) planData.class = planData.className;
+        if (planData.class && !planData.className) planData.className = planData.class;
+
         if (!planData.subjectName && planData.subjectId) {
           try {
             const sDoc = await db.collection("subjects").doc(planData.subjectId).get();
-            if (sDoc.exists) planData.subjectName = sDoc.data().subjectName || sDoc.data().name || "";
+            if (sDoc.exists) {
+              planData.subjectName = sDoc.data().subjectName || sDoc.data().name || "";
+            }
           } catch(e) {}
+        }
+        if (planData.subjectName && !planData.subject) planData.subject = planData.subjectName;
+        if (planData.subject && !planData.subjectName) planData.subjectName = planData.subject;
+
+        // If subjectName is still missing, infer from reference book or topic
+        if (!planData.subjectName) {
+          const hint = ((planData.referenceBook || "") + " " + (planData.topic || "")).toLowerCase();
+          if (hint.includes("math") || hint.includes("place value") || hint.includes("number") || hint.includes("addition") || hint.includes("fraction")) {
+            planData.subjectName = "Mathematics";
+            planData.subject = "Mathematics";
+          } else if (hint.includes("english") || hint.includes("grammar") || hint.includes("phonics") || hint.includes("comprehension")) {
+            planData.subjectName = "English Language";
+            planData.subject = "English Language";
+          } else if (hint.includes("science")) {
+            planData.subjectName = "Basic Science";
+            planData.subject = "Basic Science";
+          }
+        }
+
+        // If className is still missing, infer from reference book
+        if (!planData.className && planData.referenceBook) {
+          const match = planData.referenceBook.match(/Primary\s*([0-9]|one|two|three|four|five|six)/i);
+          if (match) {
+            planData.className = "Primary " + match[1];
+            planData.class = planData.className;
+          } else if (/primary/i.test(planData.referenceBook)) {
+            planData.className = "Primary";
+            planData.class = "Primary";
+          }
         }
 
         if (data.id) {

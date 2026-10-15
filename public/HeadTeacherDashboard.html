@@ -623,6 +623,16 @@
 <div class="aa-modal-header"><h5 class="aa-modal-title">Review Lesson Plan</h5><button class="aa-modal-close" onclick="closeModal('reviewModal')">×</button></div>
 <div class="aa-modal-body">
 <input id="reviewPlanId" type="hidden"/>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+  <div class="aa-form-group" style="margin-bottom:0;">
+    <label class="aa-label">Subject</label>
+    <input type="text" class="aa-input" id="reviewPlanSubject" placeholder="e.g. Mathematics" />
+  </div>
+  <div class="aa-form-group" style="margin-bottom:0;">
+    <label class="aa-label">Class</label>
+    <input type="text" class="aa-input" id="reviewPlanClass" placeholder="e.g. Primary 4" />
+  </div>
+</div>
 <div class="aa-form-group">
 <label class="aa-label">Approval/Rejection Note</label>
 <textarea class="aa-textarea" id="reviewNote" placeholder="Enter comments for the teacher..."></textarea>
@@ -925,10 +935,11 @@
           var isApproved = (s === 'approved');
           var html = '<button class="aa-btn aa-btn-info aa-btn-xs" onclick="viewPlanPDF(\''+id+'\')" title="View PDF"><i class="fa fa-eye"></i> View</button> ';
           if (isApproved) {
-            html += '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Edit Review / Note"><i class="fa fa-edit"></i> Review</button>';
+            html += '<button class="aa-btn aa-btn-outline aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Edit Review / Note"><i class="fa fa-edit"></i> Review</button> ';
           } else {
-            html += '<button class="aa-btn aa-btn-success aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Approve or Reject"><i class="fa fa-clipboard-check"></i> Review</button>';
+            html += '<button class="aa-btn aa-btn-success aa-btn-xs" onclick="reviewPlan(\''+id+'\')" title="Approve or Reject"><i class="fa fa-clipboard-check"></i> Review</button> ';
           }
+          html += '<button class="aa-btn aa-btn-danger aa-btn-xs" onclick="deleteLessonPlan(\''+id+'\')" title="Delete Lesson Plan"><i class="fa fa-trash"></i> Delete</button>';
           return html;
         });
       }
@@ -944,6 +955,10 @@
     function reviewPlan(id) {
       document.getElementById('reviewPlanId').value = id;
       var p = (allLessonPlansCache || []).find(function(x) { return String(x.id || x.iD) === String(id); });
+      var sInput = document.getElementById('reviewPlanSubject');
+      var cInput = document.getElementById('reviewPlanClass');
+      if (sInput) sInput.value = (p && (p.subjectName || p.subject)) || '';
+      if (cInput) cInput.value = (p && (p.className || p.class)) || '';
       document.getElementById('reviewNote').value = (p && p.reviewNote) ? p.reviewNote : '';
       openModal('reviewModal');
     }
@@ -955,14 +970,36 @@
         else showToast(res.message, 'error');
       }, null, true);
     }
+
     function processPlan(action) {
       var id = document.getElementById('reviewPlanId').value;
       var note = document.getElementById('reviewNote').value;
+      var sInput = document.getElementById('reviewPlanSubject');
+      var cInput = document.getElementById('reviewPlanClass');
+      var subjectName = sInput ? sInput.value.trim() : '';
+      var className = cInput ? cInput.value.trim() : '';
       var fn = action === 'approve' ? 'headApprovePlan' : 'headRejectPlan';
-      callServer(fn, [AA.token, id, note], function(res) {
+      callServer(fn, [AA.token, id, note, subjectName, className], function(res) {
         showToast(res.message, res.success ? 'success' : 'error');
         if(res.success) { closeModal('reviewModal'); loadLessonPlans(); loadDashboard(); }
       }, null, true);
+    }
+
+    function deleteLessonPlan(id) {
+      var p = (allLessonPlansCache || []).find(function(x) { return String(x.id || x.iD) === String(id); });
+      var topicName = (p && (p.topic || p.title)) ? ('"' + (p.topic || p.title) + '"') : 'this lesson plan';
+      aaConfirm('Are you sure you want to permanently delete ' + topicName + '?<br><span style="color:#ef4444; font-size:12px;">This will remove the plan from the list and database permanently.</span>', function() {
+        showToast('Deleting lesson plan...', 'info');
+        callServer('adminDeleteLessonPlan', [AA.token, id], function(res) {
+          if (res && res.success) {
+            showToast(res.message || 'Lesson plan deleted successfully.', 'success');
+            loadLessonPlans();
+            loadDashboard();
+          } else {
+            showToast((res && res.message) || 'Failed to delete lesson plan.', 'error');
+          }
+        }, null, true);
+      });
     }
 
     function generateBulkClassResult() {
