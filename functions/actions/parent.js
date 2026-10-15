@@ -275,7 +275,9 @@ module.exports = function(db) {
       const session = req.session;
       
       try {
-        await verifyParentChild(session.userId, studentId);
+        if (!session || session.role === "parent") {
+          await verifyParentChild(session.userId, studentId);
+        }
         
         const studentDoc = await db.collection("students").doc(studentId).get();
         if (!studentDoc.exists) return res.json({ success: false, message: "Student not found." });
@@ -284,7 +286,7 @@ module.exports = function(db) {
         
         const settingsSnap = await db.collection("settings").doc("global").get();
         const cfg = settingsSnap.exists ? settingsSnap.data() : {};
-        if (term === cfg.current_term && academicSession === cfg.current_session && !cfg.results_published) {
+        if ((!session || session.role === "parent") && term === cfg.current_term && academicSession === cfg.current_session && !cfg.results_published) {
           return res.json({ success: false, message: "Results for the current term have not been published yet." });
         }
         

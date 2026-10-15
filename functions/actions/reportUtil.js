@@ -118,38 +118,149 @@ async function enrichReportData(dbInstance, reportData, cfg) {
       }
     }
 
-    // --- Resolve Student ID ---
+    // --- Resolve Student ID & Age ---
     let stId = student.id || student.studentId || student.studentID || reportData.studentId;
+
+    if (!student.age && !student.dateOfBirth && !student.dob && stId) {
+      try {
+        const uDoc = await dbInstance.collection("users").doc(String(stId)).get();
+        if (uDoc.exists) {
+          const uData = uDoc.data();
+          if (uData.dateOfBirth) student.dateOfBirth = uData.dateOfBirth;
+          if (uData.dob) student.dob = uData.dob;
+          if (uData.age) student.age = uData.age;
+        }
+      } catch (e) {}
+    }
 
     // --- Class Attendance ---
     let present = 0, absent = 0, late = 0;
-    if (student.className && reportData.term && reportData.session && stId) {
-      const attSnap = await dbInstance.collection("attendance")
-        .where("className", "==", student.className)
-        .where("term", "==", reportData.term)
-        .where("session", "==", reportData.session)
-        .get();
-      
-      let uniqueDates = new Set();
-      attSnap.forEach(doc => {
-        let d = doc.data();
-        if (d.date) uniqueDates.add(d.date);
-        if (d.studentId === stId || d.studentID === stId) {
-          if (d.status === "Present") present++;
-          else if (d.status === "Absent") absent++;
-          else if (d.status === "Late") late++;
+    let totalDays = 0;
+
+    const matchTerm = (t1, t2) => {
+      if (!t1 || !t2) return true;
+      const n1 = String(t1).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const n2 = String(t2).toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (n1 === n2) return true;
+      const toNum = s => s.replace(/first|1st/g, '1').replace(/second|2nd/g, '2').replace(/third|3rd/g, '3').replace(/term/g, '');
+      return toNum(n1) === toNum(n2);
+    };
+
+    const matchSession = (s1, s2) => {
+      if (!s1 || !s2) return true;
+      const n1 = String(s1).toLowerCase().replace(/[^0-9]/g, '');
+      const n2 = String(s2).toLowerCase().replace(/[^0-9]/g, '');
+      return n1 === n2;
+    };
+
+    if (stId) {
+      const studentIdList = [
+        stId,
+        student.id,
+        student.studentId,
+        student.studentID,
+        student.admissionNumber,
+        student.regNo,
+        reportData.studentId
+      ].filter(Boolean).map(String);
+      const uniqueStudentIds = Array.from(new Set(studentIdList));
+
+      const allAttendanceDocs = new Map();
+
+      // 1. Fetch attendance records matching this student's ID(s)
+      for (const id of uniqueStudentIds) {
+        try {
+          const snap = await dbInstance.collection("attendance").where("studentId", "==", id).get();
+          snap.forEach(doc => allAttendanceDocs.set(doc.id, doc.data()));
+        } catch (e) {}
+        try {
+          const snap2 = await dbInstance.collection("attendance").where("studentID", "==", id).get();
+          snap2.forEach(doc => allAttendanceDocs.set(doc.id, doc.data()));
+        } catch (e) {}
+      }
+
+      // 2. Fetch attendance records matching this class (casing variants)
+      if (student.className) {
+        const classVariants = Array.from(new Set([
+          student.className,
+          student.className.toLowerCase(),
+          student.className.toUpperCase(),
+          student.className.replace(/\b\w/g, l => l.toUpperCase())
+        ])).filter(Boolean);
+
+        for (const cls of classVariants) {
+          try {
+            const snap = await dbInstance.collection("attendance").where("className", "==", cls).get();
+            snap.forEach(doc => allAttendanceDocs.set(doc.id, doc.data()));
+          } catch (e) {}
+        }
+      }
+
+      // 3. Also query by term & session if available
+      if (reportData.term && reportData.session) {
+        try {
+          const snap = await dbInstance.collection("attendance")
+            .where("term", "==", reportData.term)
+            .where("session", "==", reportData.session)
+            .get();
+          snap.forEach(doc => allAttendanceDocs.set(doc.id, doc.data()));
+        } catch (e) {}
+      }
+
+      const normClass = (student.className || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const studentDates = new Set();
+      const classDates = new Set();
+      const lowerIds = new Set(uniqueStudentIds.map(s => s.toLowerCase()));
+
+      allAttendanceDocs.forEach((d, docId) => {
+        if (!matchTerm(d.term, reportData.term) || !matchSession(d.session, reportData.session)) {
+          return;
+        }
+
+        const recClass = (d.className || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (recClass === normClass && d.date) {
+          classDates.add(d.date);
+        }
+
+        const recSid = String(d.studentId || d.studentID || '').toLowerCase();
+        const recAdm = String(d.admissionNumber || d.admissionNo || '').toLowerCase();
+        const isThisStudent = lowerIds.has(recSid) || (recAdm && lowerIds.has(recAdm)) || Array.from(lowerIds).some(id => docId.toLowerCase().startsWith(id + '_'));
+
+        if (isThisStudent) {
+          const status = String(d.status || '').toLowerCase();
+          if (status === 'present' || status === 'p') present++;
+          else if (status === 'absent' || status === 'a') absent++;
+          else if (status === 'late' || status === 'l') late++;
+          else if (status) present++;
+
+          if (d.date) studentDates.add(d.date);
         }
       });
-      
-      let totalDays = uniqueDates.size;
-      
-      const cSetSnap = await dbInstance.collection("classSettings")
-          .where("className", "==", student.className)
-          .where("term", "==", reportData.term)
-          .where("session", "==", reportData.session)
-          .limit(1).get();
-      if (!cSetSnap.empty && cSetSnap.docs[0].data().timesSchoolOpened) {
-          totalDays = parseInt(cSetSnap.docs[0].data().timesSchoolOpened, 10);
+
+      // Try classSettings with exact name first, then normalized fallback
+      try {
+        const cSetSnaps = await Promise.all([
+          dbInstance.collection("classSettings").where("className", "==", student.className).get(),
+          dbInstance.collection("classSettings").where("className", "==", student.className.toLowerCase()).get(),
+          dbInstance.collection("classSettings").where("className", "==", student.className.toUpperCase()).get()
+        ]);
+        for (const snap of cSetSnaps) {
+          for (const doc of snap.docs) {
+            const data = doc.data();
+            if (matchTerm(data.term, reportData.term) && matchSession(data.session, reportData.session)) {
+              if (data.timesSchoolOpened) {
+                totalDays = parseInt(data.timesSchoolOpened, 10);
+                break;
+              }
+            }
+          }
+          if (totalDays > 0) break;
+        }
+      } catch (e) {}
+
+      // Fallback to class dates, student dates, or marked attendance count
+      if (!totalDays || totalDays < (present + absent + late)) {
+        totalDays = Math.max(totalDays || 0, classDates.size, studentDates.size, present + absent + late);
       }
 
       let percentage = totalDays > 0 ? Math.round(((present + late) / totalDays) * 100) : 0;

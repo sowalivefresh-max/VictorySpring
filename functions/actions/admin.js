@@ -3002,6 +3002,7 @@ module.exports = function(db, notificationsActions) {
         
         let reportData = {
           student: student,
+          studentId: studentId,
           scores: scores,
           summary: { average: average, overallGrade: average >= 50 ? 'P' : 'F' },
           term: term,

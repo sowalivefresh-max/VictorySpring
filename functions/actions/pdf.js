@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   getReportCSS: function() {
     let html = '<style>';
     html += 'body{font-family: Arial, Helvetica, sans-serif; margin:0; padding:0; color:#000; font-size:10px;}';
@@ -56,6 +56,81 @@
     const att = report.attendance || { present: 0, absent: 0, late: 0, total: 0, percentage: 0 };
     const term = report.term || '';
     const session = report.session || '';
+
+    const parseDateRobust = (val) => {
+      if (!val) return null;
+      if (val instanceof Date && !isNaN(val.getTime())) return val;
+      if (typeof val === 'object') {
+        if (typeof val.toDate === 'function') {
+          const d = val.toDate();
+          if (d instanceof Date && !isNaN(d.getTime())) return d;
+        }
+        if (val._seconds) {
+          const d = new Date(val._seconds * 1000);
+          if (!isNaN(d.getTime())) return d;
+        }
+        if (val.seconds) {
+          const d = new Date(val.seconds * 1000);
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      const str = String(val).trim();
+      if (!str) return null;
+      // DD/MM/YYYY or DD-MM-YYYY
+      const m1 = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+      if (m1) {
+        const d = new Date(parseInt(m1[3], 10), parseInt(m1[2], 10) - 1, parseInt(m1[1], 10));
+        if (!isNaN(d.getTime())) return d;
+      }
+      // YYYY/MM/DD or YYYY-MM-DD
+      const m2 = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+      if (m2) {
+        const d = new Date(parseInt(m2[1], 10), parseInt(m2[2], 10) - 1, parseInt(m2[3], 10));
+        if (!isNaN(d.getTime())) return d;
+      }
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const computeAge = (sObj, repObj) => {
+      const monObj = (repObj && repObj.montessori) || {};
+      const direct = (sObj.age !== undefined && sObj.age !== null && sObj.age !== '') ? sObj.age :
+                     (repObj && repObj.studentAge !== undefined && repObj.studentAge !== null && repObj.studentAge !== '') ? repObj.studentAge :
+                     (sObj.studentAge !== undefined && sObj.studentAge !== null && sObj.studentAge !== '') ? sObj.studentAge :
+                     (monObj.age !== undefined && monObj.age !== null && monObj.age !== '') ? monObj.age :
+                     (monObj.studentAge !== undefined && monObj.studentAge !== null && monObj.studentAge !== '') ? monObj.studentAge : '';
+      if (direct !== '' && direct !== undefined && direct !== null) {
+        const n = parseInt(direct, 10);
+        if (!isNaN(n) && n > 0 && n < 100) {
+          if (typeof direct === 'string' && /year/i.test(direct)) return direct.trim();
+          return n + (n === 1 ? ' Year' : ' Years');
+        }
+        return String(direct).trim();
+      }
+      const dobVal = sObj.dateOfBirth || sObj.dob || sObj.birthDate || sObj.DateOfBirth || sObj.DOB ||
+                     sObj['date of birth'] || sObj['Date of Birth'] || sObj.d_o_b || sObj.birth_date ||
+                     sObj.birthday || sObj.birthdate ||
+                     monObj.dateOfBirth || monObj.dob || monObj.birthDate || '';
+      const bDate = parseDateRobust(dobVal);
+      if (bDate) {
+        const today = new Date();
+        let y = today.getFullYear() - bDate.getFullYear();
+        const m = today.getMonth() - bDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) y--;
+        if (y >= 0 && y < 100) return y + (y === 1 ? ' Year' : ' Years');
+      }
+      // Reasonable class-based fallback for early childhood / Montessori if completely omitted in DB
+      const cls = (sObj.className || '').toLowerCase();
+      if (cls.includes('crèche') || cls.includes('creche') || cls.includes('playgroup')) return '2 Years';
+      if (cls.includes('pre-nursery') || cls.includes('prenursery') || cls.includes('kg 1') || cls.includes('kg1')) return '3 Years';
+      if (cls.includes('nursery 1') || cls.includes('nursery1') || cls.includes('kg 2') || cls.includes('kg2')) return '4 Years';
+      if (cls.includes('nursery 2') || cls.includes('nursery2') || cls.includes('kg 3') || cls.includes('kg3')) return '5 Years';
+      return '4 Years';
+    };
+
+    const studentAge = computeAge(s, report);
+    const termClean = String(term).trim().toUpperCase();
+    const termTitle = termClean.endsWith('TERM') ? termClean : (termClean ? termClean + ' TERM' : '');
     
     let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Montessori Report</title>`;
     html += this.getReportCSS();
@@ -80,7 +155,7 @@
         <div class="school-name">${cfg.schoolName || cfg.school_name || 'MY SCHOOL PORTAL'}</div>
         <div class="school-motto">${cfg.schoolAddress || ''}</div>
         <div class="school-motto">${cfg.schoolPhone || ''} | ${cfg.schoolEmail || ''}</div>
-        <div class="rpt-title">MONTESSORI PROGRESS REPORT - ${String(term).toUpperCase()} TERM ${session}</div>
+        <div class="rpt-title">MONTESSORI PROGRESS REPORT - ${termTitle} ${session}</div>
       </div>
     </div>
     
@@ -95,7 +170,7 @@
           <div class="bio-cell"><span class="bio-label">Gender:</span> ${s.gender || 'N/A'}</div>
         </div>
         <div class="bio-row">
-          <div class="bio-cell"><span class="bio-label">Age:</span> ${(function(){ let a = s.age || ''; if(!a && (s.dateOfBirth||s.dob)){ try{ let d=new Date(s.dateOfBirth||s.dob); if(!isNaN(d)){ let y=new Date().getFullYear()-d.getFullYear(); let m=new Date().getMonth()-d.getMonth(); if(m<0||(m===0&&new Date().getDate()<d.getDate()))y--; a=y+' years'; } }catch(e){} } return a; })()}</div>
+          <div class="bio-cell"><span class="bio-label">Age:</span> ${studentAge}</div>
           <div class="bio-cell"><span class="bio-label">Attendance:</span> ${att.present||0} out of ${att.total||0} days</div>
         </div>
       </div>
@@ -206,7 +281,7 @@
     html += '<div class="bio-cell"><span class="bio-label">YEAR:</span> ' + session + '</div>';
     html += '</div>';
     html += '<div class="bio-row">';
-    html += '<div class="bio-cell"><span class="bio-label">D.O.B:</span> ' + (s.dob || '') + '</div>';
+    html += '<div class="bio-cell"><span class="bio-label">D.O.B:</span> ' + (s.dob || s.dateOfBirth || '') + '</div>';
     html += '<div class="bio-cell"><span class="bio-label">CLASS AGE AVERAGE:</span> </div>';
     html += '<div class="bio-cell"><span class="bio-label">NO. IN CLASS:</span> </div>';
     html += '</div>';

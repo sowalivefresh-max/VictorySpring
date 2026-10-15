@@ -1600,6 +1600,8 @@
       // but the form field is named "className". Copy the value so setFormData can find it.
       var formData = Object.assign({}, s);
       if (formData.class && !formData.className) formData.className = formData.class;
+      if (formData.dob && !formData.dateOfBirth) formData.dateOfBirth = formData.dob;
+      if (formData.dateOfBirth && !formData.dob) formData.dob = formData.dateOfBirth;
       
       // Normalize section to match dropdown option values ('high' or 'primary')
       if (formData.section) formData.section = normalizeSection(formData.section);
@@ -1635,6 +1637,8 @@
     }
     function saveStudent() {
       var data = getFormData('studentForm');
+      if (data.dateOfBirth && !data.dob) data.dob = data.dateOfBirth;
+      if (data.dob && !data.dateOfBirth) data.dateOfBirth = data.dob;
       
       // For single-section schools, the section dropdown is disabled and may not submit its value.
       // Force the correct section value based on institution type.
