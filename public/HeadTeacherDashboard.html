@@ -858,6 +858,7 @@
         var filtered = students.filter(function(s) {
           return studentMatchesClass(s, cls);
         });
+        window._currentReportStudents = filtered;
         document.getElementById('rptCard').style.display='block';
         buildTable('rptTable', [
           { key:'admissionNumber' }, { key:'fullName' }, { key:'status', render: function(r){ return formatStatus(r.status); } }
@@ -874,8 +875,9 @@
 
     function viewReport(sid) {
       var rptType = confirm('Generate a Half-Term report instead of Full-Term?\n\nOK = Half-Term\nCancel = Full-Term') ? 'Half Term' : 'Full Term';
+      var studentObj = (window._currentReportStudents || []).find(function(s){ return String(s.id||s.iD) === String(sid); });
       callServer('principalGetStudentResultPDF', [AA.token, sid, currentTerm, currentSession, rptType], function(res) {
-        if(res.success) openPDFViewer(res.previewUrl, res.downloadUrl, 'Report Card');
+        if(res.success) openPDFViewer(res.previewUrl, res.downloadUrl, 'Report Card', { student: studentObj, term: currentTerm, session: currentSession });
         else showToast(res.message, 'error');
       }, null, true);
     }

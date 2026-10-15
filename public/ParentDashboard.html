@@ -376,8 +376,9 @@
       var sess = document.getElementById('rptSessionSelect').value;
       var rptType = document.getElementById('rptTypeSelect').value;
       if(!sid) return showToast('Please select a child', 'warning');
+      var child = (myChildren || []).find(function(c){ return String(c.id||c.iD) === String(sid); });
       callServer('parentDownloadReport', [AA.token, sid, term, sess, rptType], function(res) {
-        if(res.success) openPDFViewer(res.previewUrl, res.downloadUrl, 'Report Card');
+        if(res.success) openPDFViewer(res.previewUrl, res.downloadUrl, 'Report Card', { student: child, term: term, session: sess });
         else if(res.financeLocked) {
           showToast('Report access restricted. Outstanding balance: ' + formatNaira(res.outstandingAmount || 0) + '. Please contact accounts.', 'error');
         }
