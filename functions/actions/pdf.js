@@ -263,15 +263,22 @@ module.exports = {
     });
     html += '</div>';
     
+    let monCtName = report.classTeacherName || cfg.class_teacher_name || '';
+    let monCtSigUrl = report.classTeacherSignature || cfg.class_teacher_signature || '';
+    let monCtSig = monCtSigUrl ? `<img src="${monCtSigUrl}" style="max-height:22px; object-fit:contain; margin-left:8px;">` : '';
+
+    let monHeadSigUrl = cfg.head_teacher_signature || cfg.principal_signature || '';
+    let monHeadSig = monHeadSigUrl ? `<img src="${monHeadSigUrl}" style="max-height:22px; object-fit:contain;">` : '';
+
     html += `
     <div class="sig-block" style="margin-top:20px;">
       <div style="flex:1;">
         <div style="font-weight:bold; font-size:10px;">Class Teacher's Signature:</div>
-        <div class="sig-line" style="margin-top:15px; width:80%;"></div>
+        <div class="sig-line" style="margin-top:15px; width:80%; display:flex; align-items:center; justify-content:center; font-style:italic; font-size:10px; font-weight:bold; min-height:16px;">${monCtName ? monCtName + monCtSig : ''}</div>
       </div>
       <div style="flex:1;">
         <div style="font-weight:bold; font-size:10px;">Head Teacher's Signature:</div>
-        <div class="sig-line" style="margin-top:15px; width:80%;"></div>
+        <div class="sig-line" style="margin-top:15px; width:80%; display:flex; align-items:center; justify-content:center; min-height:16px;">${monHeadSig}</div>
       </div>
     </div>
     `;
@@ -454,9 +461,10 @@ module.exports = {
     html += '<div class="col">';
     html += '<div class="comment-box"><div class="comment-title">TEACHER\'S COMMENT:</div><div class="comment-text">' + (report.classTeacherComment || '') + '</div></div>';
     
-    let ctName = cfg.class_teacher_name || report.classTeacherName || '';
-    let ctSig = cfg.class_teacher_signature ? '<img src="' + cfg.class_teacher_signature + '" style="max-height:20px; object-fit:contain;">' : '';
-    html += '<div class="sig-block" style="margin-top: 15px;"><div style="font-weight:bold; font-size:9px;">TEACHER\'S NAME:</div><div class="sig-line" style="display:flex; justify-content:center; font-style:italic;">' + ctName + ' ' + ctSig + '</div></div>';
+    let ctName = report.classTeacherName || cfg.class_teacher_name || '';
+    let ctSigUrl = report.classTeacherSignature || cfg.class_teacher_signature || '';
+    let ctSig = ctSigUrl ? '<img src="' + ctSigUrl + '" style="max-height:22px; object-fit:contain; margin-left:8px;">' : '';
+    html += '<div class="sig-block" style="margin-top: 15px;"><div style="font-weight:bold; font-size:9px;">TEACHER\'S NAME:</div><div class="sig-line" style="display:flex; align-items:center; justify-content:center; font-style:italic; font-size:10px; font-weight:bold; min-height:16px;">' + (ctName ? ctName + ctSig : '') + '</div></div>';
     
     html += '<table class="trait-table" style="margin-top:15px; margin-bottom:15px;">';
     html += '<tr><th colspan="4">GRADES</th></tr>';

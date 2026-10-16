@@ -81,42 +81,139 @@ async function enrichReportData(dbInstance, reportData, cfg) {
     reportData.principalComment = getCommentFromBank(avg, principalBanks, hash);
     reportData.headTeacherComment = reportData.principalComment; // Head teacher uses the same bank as principal
 
-    // Fetch class teacher signature
-    if (student.className) {
-      const classSnap = await dbInstance.collection("classes").where("className", "==", student.className).limit(1).get();
-      if (!classSnap.empty) {
-        let classData = classSnap.docs[0].data();
-        let tIds = classData.classTeacherIds || (classData.classTeacherId ? [classData.classTeacherId] : []);
-        if (tIds.length > 0) {
-          let signatures = [];
-          let names = [];
-          for (let tId of tIds) {
-            const ctSnap = await dbInstance.collection("users").doc(tId).get();
-            if (ctSnap.exists) {
-              let ctData = ctSnap.data();
-              if (ctData.signature) signatures.push(ctData.signature);
-              if (ctData.fullName) names.push(ctData.fullName);
+    // --- Class Teacher Resolution (Name & Signature) ---
+    let teacherNames = [];
+    let teacherSignatures = [];
+
+    if (reportData.classTeacherName) teacherNames.push(reportData.classTeacherName);
+    if (cfg.class_teacher_name) teacherNames.push(cfg.class_teacher_name);
+    if (cfg.class_teacher_signature) teacherSignatures.push(cfg.class_teacher_signature);
+
+    if (student.className && teacherNames.length === 0) {
+      const studentClassNorm = (student.className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      // Source 1: Check `classes` collection by matching normalized className
+      try {
+        const classesSnap = await dbInstance.collection("classes").get();
+        let matchedClassDoc = null;
+        classesSnap.forEach(doc => {
+          const d = doc.data();
+          const cnNorm = (d.className || d.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (cnNorm === studentClassNorm) {
+            matchedClassDoc = d;
+          }
+        });
+
+        if (matchedClassDoc) {
+          if (matchedClassDoc.classTeacherName) teacherNames.push(matchedClassDoc.classTeacherName);
+          if (matchedClassDoc.teacherName) teacherNames.push(matchedClassDoc.teacherName);
+          if (matchedClassDoc.classTeacher) teacherNames.push(matchedClassDoc.classTeacher);
+
+          let tIds = matchedClassDoc.classTeacherIds ||
+                     (matchedClassDoc.classTeacherId ? [matchedClassDoc.classTeacherId] :
+                     (matchedClassDoc.classTeacherID ? [matchedClassDoc.classTeacherID] :
+                     (matchedClassDoc.teacherIds || (matchedClassDoc.teacherId ? [matchedClassDoc.teacherId] : []))));
+          if (typeof tIds === "string") tIds = tIds.split(",").map(s => s.trim()).filter(Boolean);
+
+          if (Array.isArray(tIds) && tIds.length > 0) {
+            for (let tId of tIds) {
+              try {
+                const uDoc = await dbInstance.collection("users").doc(String(tId)).get();
+                if (uDoc.exists) {
+                  const uData = uDoc.data();
+                  const n = uData.fullName || uData.name || uData.displayName;
+                  if (n && !teacherNames.includes(n)) teacherNames.push(n);
+                  if (uData.signature && !teacherSignatures.includes(uData.signature)) teacherSignatures.push(uData.signature);
+                }
+              } catch (e) {}
             }
           }
-          if (signatures.length > 0) cfg.class_teacher_signature = signatures[0];
-          if (names.length > 0) cfg.class_teacher_name = names.join(" & ");
+        }
+      } catch (err) {
+        console.error("Error fetching class teacher from classes collection:", err);
+      }
+
+      // Source 2: Check `users` collection for teachers assigned to this class
+      if (teacherNames.length === 0) {
+        try {
+          const usersSnap = await dbInstance.collection("users").get();
+          usersSnap.forEach(doc => {
+            const uData = doc.data();
+            const role = (uData.role || "").toLowerCase();
+            const isTeacherRole = role.includes("teacher") || role === "staff";
+            if (!isTeacherRole) return;
+
+            const assigned1 = (uData.classAssigned || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            let matches = (assigned1 && (assigned1 === studentClassNorm || studentClassNorm.includes(assigned1) || assigned1.includes(studentClassNorm)));
+
+            if (!matches && Array.isArray(uData.classesAssigned)) {
+              matches = uData.classesAssigned.some(ca => {
+                const caNorm = (ca || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                return caNorm === studentClassNorm || studentClassNorm.includes(caNorm) || caNorm.includes(studentClassNorm);
+              });
+            }
+
+            if (matches) {
+              const n = uData.fullName || uData.name || uData.displayName;
+              if (n && !teacherNames.includes(n)) teacherNames.push(n);
+              if (uData.signature && !teacherSignatures.includes(uData.signature)) teacherSignatures.push(uData.signature);
+            }
+          });
+        } catch (err) {
+          console.error("Error finding teacher in users collection:", err);
         }
       }
+
+      // Source 3: Check psychomotor / affective records
+      if (teacherNames.length === 0) {
+        try {
+          const psy = reportData.psychomotor || {};
+          const aff = reportData.affective || {};
+          const candidateName = psy.teacherName || psy.classTeacherName || psy.submittedByName ||
+                                aff.teacherName || aff.classTeacherName || aff.submittedByName;
+          if (candidateName) teacherNames.push(candidateName);
+          const candidateSig = psy.teacherSignature || psy.signature;
+          if (candidateSig) teacherSignatures.push(candidateSig);
+        } catch (e) {}
+      }
+
+      // Source 4: Check student document fields
+      if (teacherNames.length === 0) {
+        if (student.classTeacherName) teacherNames.push(student.classTeacherName);
+        else if (student.classTeacher) teacherNames.push(student.classTeacher);
+      }
+    }
+
+    if (teacherNames.length > 0) {
+      const finalTeacherName = teacherNames.join(" & ");
+      reportData.classTeacherName = finalTeacherName;
+      cfg.class_teacher_name = finalTeacherName;
+    }
+    if (teacherSignatures.length > 0) {
+      reportData.classTeacherSignature = teacherSignatures[0];
+      cfg.class_teacher_signature = teacherSignatures[0];
     }
 
     // Fetch principal or headteacher signature based on section
     let sec = (student.section || '').toLowerCase();
-    let isPrimary = (sec === 'primary' || sec === 'primary school' || sec === 'preprimary' || sec === 'nursery');
+    let isPrimary = (!sec || sec === 'primary' || sec === 'primary school' || sec === 'preprimary' || sec === 'nursery' || (student.className && /grade|basic|primary|nursery|kg/i.test(student.className)));
     let roleTarget = isPrimary ? "headteacher" : "principal";
 
-    const pSnap = await dbInstance.collection("users").where("role", "==", roleTarget).limit(1).get();
-    if (!pSnap.empty && pSnap.docs[0].data().signature) {
-      if (isPrimary) {
-        cfg.head_teacher_signature = pSnap.docs[0].data().signature;
-      } else {
-        cfg.principal_signature = pSnap.docs[0].data().signature;
-      }
-    }
+    try {
+      const pSnap = await dbInstance.collection("users").get();
+      pSnap.forEach(doc => {
+        const u = doc.data();
+        const r = (u.role || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const targetNorm = roleTarget.replace(/[^a-z0-9]/g, "");
+        if ((r === targetNorm || r.includes(targetNorm)) && u.signature) {
+          if (isPrimary && !cfg.head_teacher_signature) {
+            cfg.head_teacher_signature = u.signature;
+          } else if (!isPrimary && !cfg.principal_signature) {
+            cfg.principal_signature = u.signature;
+          }
+        }
+      });
+    } catch (e) {}
 
     // --- Resolve Student ID & Age ---
     let stId = student.id || student.studentId || student.studentID || reportData.studentId;

@@ -683,6 +683,52 @@ function sanitizeReportHTML(html, meta) {
     }
   }
 
+  // 8. Check and fill Teacher's Name if blank
+  var isTeacherBlank = /TEACHER'S\s+NAME:<\/div>\s*<div\s+class="sig-line"[^>]*>\s*(?:&nbsp;|\s)*<\/div>/i.test(html);
+  if (isTeacherBlank) {
+    var tName = (meta && (meta.classTeacherName || meta.teacherName)) || '';
+    if (!tName && typeof AA !== 'undefined' && AA.user) {
+      if (AA.user.isClassTeacher && AA.user.fullName) {
+        var uCls = (AA.user.classAssigned || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        var rCls = (className || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!rCls || !uCls || uCls === rCls) tName = AA.user.fullName;
+      }
+    }
+    if (!tName && typeof globalClasses !== 'undefined' && Array.isArray(globalClasses) && typeof globalUsers !== 'undefined' && Array.isArray(globalUsers) && className) {
+      var normCls = className.toLowerCase().replace(/[^a-z0-9]/g, '');
+      var matchedCls = globalClasses.find(function(c) {
+        return (c.className || '').toLowerCase().replace(/[^a-z0-9]/g, '') === normCls;
+      });
+      if (matchedCls) {
+        var tIds = matchedCls.classTeacherIds || (matchedCls.classTeacherId ? [matchedCls.classTeacherId] : (matchedCls.classTeacherID ? [matchedCls.classTeacherID] : []));
+        if (typeof tIds === 'string') tIds = tIds.split(',').map(function(s){return s.trim();}).filter(Boolean);
+        var foundNames = [];
+        (tIds || []).forEach(function(tId) {
+          var u = globalUsers.find(function(usr){ return String(usr.id || usr.iD) === String(tId); });
+          if (u && u.fullName) foundNames.push(u.fullName);
+        });
+        if (foundNames.length > 0) tName = foundNames.join(' & ');
+        if (!tName && (matchedCls.classTeacherName || matchedCls.teacherName)) {
+          tName = matchedCls.classTeacherName || matchedCls.teacherName;
+        }
+      }
+      if (!tName) {
+        var assignedTeacher = globalUsers.find(function(u) {
+          if (!u || !u.fullName) return false;
+          var role = (u.role || '').toLowerCase();
+          if (role.indexOf('teacher') === -1 && role !== 'staff') return false;
+          var uCls = (u.classAssigned || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return uCls === normCls;
+        });
+        if (assignedTeacher) tName = assignedTeacher.fullName;
+      }
+    }
+    if (tName) {
+      html = html.replace(/(TEACHER'S\s+NAME:<\/div>\s*<div\s+class="sig-line"[^>]*>)\s*(?:&nbsp;|\s)*<\/div>/gi,
+        '$1' + tName + '</div>');
+    }
+  }
+
   return html;
 }
 
