@@ -269,6 +269,211 @@ async function enrichReportData(dbInstance, reportData, cfg) {
       reportData.attendance = { present: 0, absent: 0, late: 0, total: 0, percentage: 0 };
     }
 
+    // --- School Branding & Settings Defaults on cfg ---
+    cfg = cfg || {};
+    cfg.school_name = cfg.school_name || cfg.schoolName || "VICTORY SPRING SCHOOL";
+    cfg.school_motto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
+    cfg.school_address = cfg.school_address || cfg.schoolAddress || "";
+    cfg.school_email = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || "victoryspringschool@gmail.com";
+    cfg.school_phone = cfg.school_phone || cfg.schoolPhone || "";
+    if (cfg.next_term_begins || cfg.nextTermBegins) {
+      reportData.nextTermBegins = cfg.next_term_begins || cfg.nextTermBegins;
+    }
+
+    // --- Number in Class & Class Age Average ---
+    if (student.className) {
+      try {
+        const targetCls = (student.className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const allStudentsSnap = await dbInstance.collection("students").get();
+        let classCount = 0;
+        let totalStudentAge = 0;
+        let countWithAge = 0;
+
+        allStudentsSnap.forEach(doc => {
+          const sData = doc.data();
+          if (sData.status && sData.status !== "active") return;
+          const c1 = (sData.className || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c2 = (sData.class || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const c3 = (sData.currentClass || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (c1 === targetCls || c2 === targetCls || c3 === targetCls) {
+            classCount++;
+            let age = parseInt(sData.age, 10);
+            if (!age && (sData.dob || sData.dateOfBirth)) {
+              const d = new Date(sData.dob || sData.dateOfBirth);
+              if (!isNaN(d.getTime())) {
+                const diff = new Date().getFullYear() - d.getFullYear();
+                if (diff > 0 && diff < 100) age = diff;
+              }
+            }
+            if (age && age > 0 && age < 100) {
+              totalStudentAge += age;
+              countWithAge++;
+            }
+          }
+        });
+        if (classCount > 0) reportData.numberInClass = classCount;
+        if (countWithAge > 0) reportData.classAgeAverage = (totalStudentAge / countWithAge).toFixed(1) + " Yrs";
+      } catch (err) {
+        console.error("Error computing class size/age in reportUtil:", err);
+      }
+    }
+
+    // --- Enrolled Subjects & Assessments Resolution ---
+    try {
+      const studentIdList = [
+        stId,
+        student.id,
+        student.studentId,
+        student.studentID,
+        student.admissionNumber,
+        student.regNo,
+        reportData.studentId
+      ].filter(Boolean).map(String);
+      const uniqueStudentIds = Array.from(new Set(studentIdList));
+
+      // 1. Fetch all subjects
+      const subjectsSnap = await dbInstance.collection("subjects").get();
+      const allSubjectsMap = new Map();
+      const allSubjectsList = [];
+      subjectsSnap.forEach(doc => {
+        const subData = doc.data();
+        subData.id = doc.id;
+        allSubjectsMap.set(doc.id, subData);
+        allSubjectsList.push(subData);
+      });
+
+      // 2. Fetch enrolled subject IDs for this student from student_subjects
+      const enrolledSubjectIds = new Set();
+      for (const id of uniqueStudentIds) {
+        try {
+          const enrollSnap = await dbInstance.collection("student_subjects").where("studentId", "==", id).get();
+          enrollSnap.forEach(doc => {
+            const d = doc.data();
+            if (d.subjectId) enrolledSubjectIds.add(String(d.subjectId));
+          });
+        } catch (e) {}
+      }
+
+      if (Array.isArray(student.enrolledSubjects)) {
+        student.enrolledSubjects.forEach(s => enrolledSubjectIds.add(String(typeof s === 'object' ? (s.id || s.subjectId) : s)));
+      }
+      if (Array.isArray(student.subjects)) {
+        student.subjects.forEach(s => enrolledSubjectIds.add(String(typeof s === 'object' ? (s.id || s.subjectId) : s)));
+      }
+
+      // 3. Resolve target subjects for this student
+      let targetSubjects = [];
+      if (enrolledSubjectIds.size > 0) {
+        enrolledSubjectIds.forEach(subId => {
+          if (allSubjectsMap.has(subId)) {
+            targetSubjects.push(allSubjectsMap.get(subId));
+          }
+        });
+      }
+
+      // If student has no specific individual enrollment records in student_subjects,
+      // fallback to all subjects configured for their class/section
+      if (targetSubjects.length === 0 && student.className) {
+        const studentClassNorm = student.className.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const studentSecNorm = (student.section || "primary").toLowerCase().trim();
+
+        allSubjectsList.forEach(sub => {
+          let classList = sub.className || sub.class || sub.targetClasses || "";
+          if (Array.isArray(classList)) classList = classList.join(",");
+          const classListNorm = classList.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const subSec = (sub.section || "").toLowerCase().trim();
+
+          let match = false;
+          if (classListNorm && classListNorm.includes(studentClassNorm)) {
+            match = true;
+          } else if (!classListNorm && (subSec === studentSecNorm || subSec === "both" || subSec === "")) {
+            match = true;
+          } else if (classListNorm === "all" || classListNorm === "both") {
+            match = true;
+          }
+          if (match) targetSubjects.push(sub);
+        });
+      }
+
+      // 4. Gather all existing assessments (scores)
+      let combinedScores = Array.isArray(reportData.scores) ? [...reportData.scores] : [];
+      const scoreSubjIds = new Set();
+      const scoreSubjNames = new Set();
+
+      combinedScores.forEach(s => {
+        if (s.subjectId) scoreSubjIds.add(String(s.subjectId));
+        if (s.subjectName) scoreSubjNames.add(String(s.subjectName).toLowerCase().trim());
+      });
+
+      // Search assessments across all ID aliases for this term and session if needed
+      for (const id of uniqueStudentIds) {
+        try {
+          const assSnap = await dbInstance.collection("assessments").where("studentId", "==", id).get();
+          assSnap.forEach(doc => {
+            const data = doc.data();
+            data.id = doc.id;
+            if (matchTerm(data.term, reportData.term) && matchSession(data.session, reportData.session)) {
+              const sId = String(data.subjectId || '');
+              const sName = String(data.subjectName || '').toLowerCase().trim();
+              if ((!sId || !scoreSubjIds.has(sId)) && (!sName || !scoreSubjNames.has(sName))) {
+                combinedScores.push(data);
+                if (sId) scoreSubjIds.add(sId);
+                if (sName) scoreSubjNames.add(sName);
+              }
+            }
+          });
+        } catch (e) {}
+      }
+
+      // 5. Merge enrolled subjects that do not have scores yet
+      targetSubjects.forEach(sub => {
+        const sId = String(sub.id || '');
+        const sName = String(sub.subjectName || sub.name || '').toLowerCase().trim();
+        const hasScore = (sId && scoreSubjIds.has(sId)) || (sName && scoreSubjNames.has(sName));
+
+        if (!hasScore) {
+          combinedScores.push({
+            subjectId: sub.id,
+            subjectName: sub.subjectName || sub.name || "Subject",
+            ca1: "-",
+            ca2: "-",
+            ca3: "-",
+            exam: "-",
+            total: "-",
+            grade: "-",
+            termGrade: "-",
+            isEnrolledOnly: true
+          });
+          if (sId) scoreSubjIds.add(sId);
+          if (sName) scoreSubjNames.add(sName);
+        }
+      });
+
+      // Sort subjects alphabetically for neat presentation
+      combinedScores.sort((a, b) => (a.subjectName || "").localeCompare(b.subjectName || ""));
+
+      reportData.scores = combinedScores;
+
+      // Recalculate summary averages based on scored subjects
+      let totalMarks = 0;
+      let scoredCount = 0;
+      combinedScores.forEach(s => {
+        let t = Number(s.total || s.termTotal);
+        if (!isNaN(t) && s.total !== '-' && s.total !== '' && s.total !== null && s.total !== undefined) {
+          totalMarks += t;
+          scoredCount++;
+        }
+      });
+
+      reportData.summary = reportData.summary || {};
+      if (scoredCount > 0) {
+        reportData.summary.average = Math.round((totalMarks / scoredCount) * 10) / 10;
+        reportData.summary.totalMarks = totalMarks;
+      }
+    } catch (err) {
+      console.error("Error resolving enrolled subjects in reportUtil:", err);
+    }
+
     // --- Subject Attendance ---
     if (student.className && reportData.term && reportData.session && reportData.scores && reportData.scores.length > 0 && stId) {
       const subjAttSnap = await dbInstance.collection("subject_attendance")

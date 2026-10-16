@@ -3036,7 +3036,8 @@ module.exports = function(db, notificationsActions) {
           session: session,
           psychomotor: psychomotor,
           montessori: montessori,
-          isMontessori: isMontessori
+          isMontessori: isMontessori,
+          reportType: rptType
         };
         
         const pdfGenerator = require("./pdf");

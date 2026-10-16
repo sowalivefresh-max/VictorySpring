@@ -1,15 +1,41 @@
+const fs = require("fs");
+const path = require("path");
+
+let cachedReportLogoBase64 = null;
+function getReportSchoolLogoBase64() {
+  if (cachedReportLogoBase64) return cachedReportLogoBase64;
+  try {
+    const iconPath = path.join(__dirname, "../icon.png");
+    if (fs.existsSync(iconPath)) {
+      cachedReportLogoBase64 = "data:image/png;base64," + fs.readFileSync(iconPath).toString("base64");
+      return cachedReportLogoBase64;
+    }
+    const pubIconPath = path.join(__dirname, "../../public/icon.png");
+    if (fs.existsSync(pubIconPath)) {
+      cachedReportLogoBase64 = "data:image/png;base64," + fs.readFileSync(pubIconPath).toString("base64");
+      return cachedReportLogoBase64;
+    }
+  } catch(e) {
+    console.error("Error reading icon.png in pdf.js:", e);
+  }
+  return "";
+}
+
 module.exports = {
   getReportCSS: function() {
     let html = '<style>';
     html += 'body{font-family: Arial, Helvetica, sans-serif; margin:0; padding:0; color:#000; font-size:10px;}';
     html += '.wrap{max-width:800px; margin:0 auto; padding:15px; box-sizing:border-box; border: 4px double #000;}';
-    html += '.hdr{display:flex; align-items:center; margin-bottom:10px;}';
-    html += '.logo{width:80px; height:80px; object-fit:contain; margin-right:15px;}';
-    html += '.logo-ph{width:80px; height:80px; background:#0d1b2a; display:flex; align-items:center; justify-content:center; color:#f0a500; font-weight:bold; font-size:14px; margin-right:15px;}';
-    html += '.school-info{flex:1; text-align:center;}';
-    html += '.school-name{font-size:24px; font-weight:bold; text-transform:uppercase; color:#000; font-family:"Times New Roman", Times, serif;}';
-    html += '.school-motto{font-size:12px; font-style:italic; margin:2px 0;}';
-    html += '.rpt-title{font-size:14px; font-weight:bold; text-transform:uppercase; margin-top:8px; text-decoration: underline;}';
+    html += '.hdr{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}';
+    html += '.hdr-logo{width:80px; height:80px; display:flex; align-items:center; justify-content:flex-start; flex-shrink:0;}';
+    html += '.hdr-spacer{width:80px; height:80px; flex-shrink:0;}';
+    html += '.logo{width:80px; height:80px; object-fit:contain;}';
+    html += '.logo-ph{width:80px; height:80px; background:#0d1b2a; display:flex; align-items:center; justify-content:center; color:#f0a500; font-weight:bold; font-size:14px;}';
+    html += '.school-info{flex:1; text-align:center; padding:0 10px;}';
+    html += '.school-name{font-size:22px; font-weight:bold; text-transform:uppercase; color:#000; font-family:"Times New Roman", Times, serif;}';
+    html += '.school-motto{font-size:11px; font-style:italic; margin:2px 0;}';
+    html += '.school-contact{font-size:10px; margin-top:2px; color:#222;}';
+    html += '.rpt-title{font-size:13px; font-weight:bold; text-transform:uppercase; margin-top:6px; text-decoration: underline;}';
     
     html += '.bio-box{display:flex; border: 2px solid #000; margin-bottom:10px; border-radius: 4px; overflow:hidden;}';
     html += '.bio-data{flex:1; padding:0;}';
@@ -132,6 +158,16 @@ module.exports = {
     const termClean = String(term).trim().toUpperCase();
     const termTitle = termClean.endsWith('TERM') ? termClean : (termClean ? termClean + ' TERM' : '');
     
+    const schoolName = cfg.school_name || cfg.schoolName || 'VICTORY SPRING SCHOOL';
+    const schoolAddress = cfg.school_address || cfg.schoolAddress || '';
+    const schoolEmail = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || 'victoryspringschool@gmail.com';
+    const schoolPhone = cfg.school_phone || cfg.schoolPhone || '';
+    const logoSrc = cfg.school_logo_url || cfg.schoolLogoUrl || getReportSchoolLogoBase64() || 'https://victoryspring-681e5.web.app/icon.png';
+
+    let contactLine = '';
+    if (schoolEmail) contactLine += 'Email: ' + schoolEmail;
+    if (schoolPhone) contactLine += (contactLine ? ' | ' : '') + 'Tel: ' + schoolPhone;
+
     let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Montessori Report</title>`;
     html += this.getReportCSS();
     html += `
@@ -150,13 +186,16 @@ module.exports = {
     </head><body><div class="wrap" style="border:none;">
     
     <div class="hdr">
-      ${cfg.school_logo_url || cfg.schoolLogoUrl ? `<img src="${cfg.school_logo_url || cfg.schoolLogoUrl}" class="logo" alt="School Logo" onerror="this.style.display='none'">`  : `<div class="logo-ph">${(cfg.schoolName || cfg.school_name || 'S').charAt(0)}</div>`}
+      <div class="hdr-logo">
+        <img src="${logoSrc}" class="logo" alt="School Logo" onerror="this.onerror=null; this.src='https://victoryspring-681e5.web.app/icon.png';">
+      </div>
       <div class="school-info">
-        <div class="school-name">${cfg.schoolName || cfg.school_name || 'MY SCHOOL PORTAL'}</div>
-        <div class="school-motto">${cfg.schoolAddress || ''}</div>
-        <div class="school-motto">${cfg.schoolPhone || ''} | ${cfg.schoolEmail || ''}</div>
+        <div class="school-name">${schoolName}</div>
+        ${schoolAddress ? `<div style="font-size:10px; margin-top:2px;">${schoolAddress}</div>` : ''}
+        ${contactLine ? `<div class="school-contact">${contactLine}</div>` : ''}
         <div class="rpt-title">MONTESSORI PROGRESS REPORT - ${termTitle} ${session}</div>
       </div>
+      <div class="hdr-spacer"></div>
     </div>
     
     <div class="bio-box">
@@ -242,6 +281,7 @@ module.exports = {
   },
 
   generateStudentReportHTML: function(report, cfg) {
+    cfg = cfg || {};
     const s = report.student || {};
     const scores = report.scores || [];
     const summary = report.summary || {};
@@ -250,23 +290,44 @@ module.exports = {
     const term = report.term || '';
     const session = report.session || '';
 
+    const schoolName = cfg.school_name || cfg.schoolName || "VICTORY SPRING SCHOOL";
+    const schoolMotto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
+    const schoolAddress = cfg.school_address || cfg.schoolAddress || "";
+    const schoolEmail = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || "victoryspringschool@gmail.com";
+    const schoolPhone = cfg.school_phone || cfg.schoolPhone || "";
+    const logoSrc = cfg.school_logo_url || cfg.schoolLogoUrl || getReportSchoolLogoBase64() || "https://victoryspring-681e5.web.app/icon.png";
+
     let html = '<!DOCTYPE html><html><head><meta charset="utf-8">';
     html += this.getReportCSS();
     html += '</head><body><div class="wrap">';
 
-    // Header
+    // Header: Top-Left Logo, Top-Center School Details, Top-Right Balancing Spacer
     html += '<div class="hdr">';
-    html += '<div class="logo-ph">Logo</div>'; // Client handles logo
+    html += '<div class="hdr-logo">';
+    html += '<img src="' + logoSrc + '" class="logo" alt="School Logo" onerror="this.onerror=null; this.src=\'https://victoryspring-681e5.web.app/icon.png\';">';
+    html += '</div>';
+    
     html += '<div class="school-info">';
-    html += '<div class="school-name">' + (cfg.schoolName || "VICTORY SPRING SCHOOL") + '</div>';
-    if (cfg.schoolMotto) html += '<div class="school-motto">' + cfg.schoolMotto + '</div>';
-    html += '<div style="font-size:10px; margin-top:2px;">' + (cfg.schoolAddress || 'School Address') + '</div>';
+    html += '<div class="school-name">' + schoolName + '</div>';
+    if (schoolMotto) html += '<div class="school-motto">' + schoolMotto + '</div>';
+    if (schoolAddress) html += '<div style="font-size:10px; margin-top:2px;">' + schoolAddress + '</div>';
+    
+    let contactLine = '';
+    if (schoolEmail) contactLine += 'Email: ' + schoolEmail;
+    if (schoolPhone) contactLine += (contactLine ? ' | ' : '') + 'Tel: ' + schoolPhone;
+    if (contactLine) html += '<div class="school-contact">' + contactLine + '</div>';
+    
     html += '<div class="rpt-title">STUDENT REPORT SHEET</div>';
     html += '</div>';
+    
+    html += '<div class="hdr-spacer"></div>';
     html += '</div>';
 
     // Biodata Grid
     let photoUrl = s.photoUrl || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(s.fullName || 'S') + '&background=f0a500&color=fff&size=300');
+    let classAgeAvg = report.classAgeAverage || '';
+    let numInClass = (report.numberInClass !== undefined && report.numberInClass !== null) ? report.numberInClass : '';
+    let nextTermStarts = report.nextTermBegins || cfg.next_term_begins || cfg.nextTermBegins || '';
     
     html += '<div class="bio-box">';
     html += '<div class="bio-data">';
@@ -282,13 +343,13 @@ module.exports = {
     html += '</div>';
     html += '<div class="bio-row">';
     html += '<div class="bio-cell"><span class="bio-label">D.O.B:</span> ' + (s.dob || s.dateOfBirth || '') + '</div>';
-    html += '<div class="bio-cell"><span class="bio-label">CLASS AGE AVERAGE:</span> </div>';
-    html += '<div class="bio-cell"><span class="bio-label">NO. IN CLASS:</span> </div>';
+    html += '<div class="bio-cell"><span class="bio-label">CLASS AGE AVERAGE:</span> ' + classAgeAvg + '</div>';
+    html += '<div class="bio-cell"><span class="bio-label">NO. IN CLASS:</span> ' + numInClass + '</div>';
     html += '</div>';
     html += '<div class="bio-row">';
     html += '<div class="bio-cell"><span class="bio-label">TIMES SCHOOL OPENED:</span> ' + (att.total || '') + '</div>';
     html += '<div class="bio-cell" style="flex:1.5;"><span class="bio-label">ATTENDANCE:</span> <span style="font-weight:bold;">' + (att.percentage || 0) + '%</span> <span style="font-size:9px; color:#555; margin-left:10px;">[Pre: ' + (att.present || 0) + ' | Abs: ' + (att.absent || 0) + ' | Late: ' + (att.late || 0) + ']</span></div>';
-    html += '<div class="bio-cell"><span class="bio-label">NEW TERM STARTS:</span> </div>';
+    html += '<div class="bio-cell"><span class="bio-label">NEW TERM STARTS:</span> ' + nextTermStarts + '</div>';
     html += '</div>';
     html += '</div>';
     html += '<div class="passport"><img src="' + photoUrl + '" style="width:100%; height:100%; object-fit:cover;"></div>';
@@ -307,33 +368,41 @@ module.exports = {
     html += '</tr>';
 
     let totalMarks = 0;
+    let scoredCount = 0;
     for (let i = 0; i < scores.length; i++) {
       let sc = scores[i];
-      let tTotal = Number(sc.total || sc.termTotal || 0);
-      totalMarks += tTotal;
+      let tTotal = (sc.total !== undefined && sc.total !== null && sc.total !== '') ? sc.total : (sc.termTotal !== undefined ? sc.termTotal : '-');
+      let numTotal = Number(tTotal);
+      let isScored = !isNaN(numTotal) && tTotal !== '-';
+      if (isScored) {
+        totalMarks += numTotal;
+        scoredCount++;
+      }
+      
       html += '<tr><td class="text-left">' + (sc.subjectName || '') + '</td>';
       
       if (isHalfTerm) {
-        let ca1 = sc.ca1 !== undefined ? sc.ca1 : (sc.CA1 || '');
-        let ca2 = sc.ca2 !== undefined ? sc.ca2 : (sc.CA2 || '');
+        let ca1 = sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' ? sc.ca1 : (sc.CA1 !== undefined ? sc.CA1 : '-');
+        let ca2 = sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' ? sc.ca2 : (sc.CA2 !== undefined ? sc.CA2 : '-');
         html += '<td>' + ca1 + '</td><td>' + ca2 + '</td>';
       } else {
-        // Full term expects CA to be sum of CA1, CA2, CA3
-        let ca1 = Number(sc.ca1 || sc.CA1 || 0);
-        let ca2 = Number(sc.ca2 || sc.CA2 || 0);
-        let ca3 = Number(sc.ca3 || sc.CA3 || 0);
-        let sumCA = ca1 + ca2 + ca3;
-        let exam = sc.exam !== undefined ? sc.exam : (sc.EXAM || '');
-        let g = sc.termGrade || sc.grade || '';
-        html += '<td>' + sumCA + '</td><td>' + exam + '</td><td><strong>' + tTotal + '</strong></td><td>' + g + '</td>';
+        let ca1 = (sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' && sc.ca1 !== '-') ? Number(sc.ca1 || sc.CA1 || 0) : null;
+        let ca2 = (sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' && sc.ca2 !== '-') ? Number(sc.ca2 || sc.CA2 || 0) : null;
+        let ca3 = (sc.ca3 !== undefined && sc.ca3 !== null && sc.ca3 !== '' && sc.ca3 !== '-') ? Number(sc.ca3 || sc.CA3 || 0) : null;
+        let sumCA = (ca1 !== null || ca2 !== null || ca3 !== null) ? ((ca1 || 0) + (ca2 || 0) + (ca3 || 0)) : '-';
+        let exam = (sc.exam !== undefined && sc.exam !== null && sc.exam !== '' && sc.exam !== '-') ? sc.exam : (sc.EXAM !== undefined ? sc.EXAM : '-');
+        let g = sc.termGrade || sc.grade || (isScored ? '' : '-');
+        html += '<td>' + sumCA + '</td><td>' + exam + '</td><td><strong>' + (isScored ? numTotal : '-') + '</strong></td><td>' + g + '</td>';
       }
       html += '</tr>';
     }
 
     html += '<tr class="summary-row"><td class="text-left">CORE SUBJECTS OFFERED</td><td colspan="' + (isHalfTerm ? 2 : 4) + '" style="text-align:left; padding-left:10px;">' + scores.length + '</td></tr>';
     if (!isHalfTerm) {
-      html += '<tr class="summary-row"><td class="text-left">TOTAL MARKS OBTAINED</td><td colspan="4" style="text-align:left; padding-left:10px;">' + totalMarks + '</td></tr>';
-      html += '<tr class="summary-row"><td class="text-left">PUPIL AVERAGE OF CORE SUBJECTS</td><td colspan="4" style="text-align:left; padding-left:10px;">' + (summary.average || 0) + '%</td></tr>';
+      let avgDisplay = scoredCount > 0 ? (summary.average !== undefined ? summary.average + '%' : (totalMarks / scoredCount).toFixed(1) + '%') : (scores.length > 0 ? '-' : '0%');
+      let totalDisplay = scoredCount > 0 ? totalMarks : (scores.length > 0 ? '-' : 0);
+      html += '<tr class="summary-row"><td class="text-left">TOTAL MARKS OBTAINED</td><td colspan="4" style="text-align:left; padding-left:10px;">' + totalDisplay + '</td></tr>';
+      html += '<tr class="summary-row"><td class="text-left">PUPIL AVERAGE OF CORE SUBJECTS</td><td colspan="4" style="text-align:left; padding-left:10px;">' + avgDisplay + '</td></tr>';
     }
     html += '</table>';
 

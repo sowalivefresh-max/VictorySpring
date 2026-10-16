@@ -777,6 +777,52 @@ function sanitizeReportHTML(html, meta) {
     html = html.replace(/(<span\s+class="bio-label">\s*Attendance:\s*<\/span>)\s*0\s+out\s+of\s+0\s+days/gi, '$1 ' + presentDays + ' out of ' + totalDays + ' days');
   }
 
+  // 6. Check and fix Logo and Email in Header if missing
+  var logoUrl = (typeof AA !== 'undefined' && AA.settings && AA.settings.school_logo_url) ||
+                (window.globalSettingsData && window.globalSettingsData.school_logo_url) ||
+                'icon.png';
+  var schoolEmail = (typeof AA !== 'undefined' && AA.settings && (AA.settings.school_email || AA.settings.smtp_email)) ||
+                    (window.globalSettingsData && (window.globalSettingsData.school_email || window.globalSettingsData.smtp_email)) ||
+                    'victoryspringschool@gmail.com';
+  var schoolPhone = (typeof AA !== 'undefined' && AA.settings && AA.settings.school_phone) ||
+                    (window.globalSettingsData && window.globalSettingsData.school_phone) || '';
+
+  // Replace placeholder logo if present
+  if (html.indexOf('class="logo-ph"') !== -1) {
+    html = html.replace(/<div class="logo-ph">\s*Logo\s*<\/div>/gi, 
+      '<div class="hdr-logo"><img src="' + logoUrl + '" class="logo" alt="School Logo" style="width:80px;height:80px;object-fit:contain;"></div>');
+  }
+
+  // Ensure Email is present in school-info if not already there
+  if (html.indexOf('Email:') === -1 && html.indexOf('STUDENT REPORT SHEET') !== -1) {
+    var contactHtml = '<div style="font-size:10px; margin-top:1px;">Email: ' + schoolEmail + (schoolPhone ? ' | Tel: ' + schoolPhone : '') + '</div>';
+    html = html.replace(/(<div\s+class="rpt-title">\s*STUDENT REPORT SHEET\s*<\/div>)/i, contactHtml + '$1');
+  }
+
+  // 7. Check and fill "NO. IN CLASS" if blank
+  var isNoInClassBlank = /(<span\s+class="bio-label">\s*NO\.\s*IN\s*CLASS:\s*<\/span>)\s*(?:&nbsp;|\s)*<\/div>/i.test(html);
+  if (isNoInClassBlank) {
+    var classCount = (meta && meta.numberInClass) || null;
+    if (!classCount && typeof myStudents !== 'undefined' && Array.isArray(myStudents) && myStudents.length > 0) {
+      classCount = myStudents.length;
+    }
+    if (!classCount && typeof globalStudents !== 'undefined' && Array.isArray(globalStudents) && className) {
+      var normCls = className.toLowerCase().replace(/[^a-z0-9]/g, '');
+      var matched = globalStudents.filter(function(st) {
+        if (!st || (st.status && st.status !== 'active')) return false;
+        var c = (st.className || st.class || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return c === normCls;
+      });
+      if (matched.length > 0) classCount = matched.length;
+    }
+    if (!classCount && window._currentReportStudents && Array.isArray(window._currentReportStudents)) {
+      classCount = window._currentReportStudents.length;
+    }
+    if (classCount) {
+      html = html.replace(/(<span\s+class="bio-label">\s*NO\.\s*IN\s*CLASS:\s*<\/span>)\s*(?:&nbsp;|\s)*<\/div>/gi, '$1 ' + classCount + '</div>');
+    }
+  }
+
   return html;
 }
 
