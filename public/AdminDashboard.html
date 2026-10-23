@@ -493,6 +493,7 @@
             <div class="aa-card-body" style="display:flex; gap:15px; flex-wrap:wrap;">
               <button class="aa-btn aa-btn-info" onclick="viewMasterTimetable()"><i class="fa fa-eye"></i> View Master Timetable</button>
               <button class="aa-btn aa-btn-gold" onclick="document.getElementById('master-timetable-upload-ad').click()"><i class="fa fa-upload"></i> Upload Prepared Timetable</button>
+              <button class="aa-btn-camera-capture" onclick="AACamera.open(function(b64){ handleMasterTimetableUpload(null, b64); }, {maxDim:1200, quality:0.85})"><i class="fa fa-camera"></i> Take Photo</button>
               <input type="file" id="master-timetable-upload-ad" style="display:none;" accept="image/*,.pdf" onchange="handleMasterTimetableUpload(this)">
             </div>
           </div>
@@ -607,7 +608,10 @@
                       <i class="fa fa-image text-muted"></i>
                     </div>
                     <div class="flex-1">
-                      <input type="file" id="schoolLogoInput" class="aa-input" accept="image/*" onchange="previewImage(this, 'settingsLogoPreview', 'schoolLogoBase64')">
+                      <div class="aa-image-source-wrap">
+                        <div class="aa-input-file-wrap"><input type="file" id="schoolLogoInput" class="aa-input" accept="image/*" onchange="previewImage(this, 'settingsLogoPreview', 'schoolLogoBase64')"></div>
+                        <button type="button" class="aa-btn-camera-capture" onclick="aaCameraForField('schoolLogoBase64', 'settingsLogoPreview', {maxDim:400, quality:0.8})"><i class="fa fa-camera"></i> Take Photo</button>
+                      </div>
                       <input type="hidden" name="school_logo_url" id="schoolLogoBase64">
                     </div>
                   </div>
@@ -805,7 +809,10 @@
                 <i class="fa fa-signature text-muted"></i>
               </div>
               <div class="flex-1">
-                <input type="file" class="aa-input" accept="image/*" onchange="previewImage(this, 'userSigPreview', 'userSigBase64')">
+                <div class="aa-image-source-wrap">
+                  <div class="aa-input-file-wrap"><input type="file" class="aa-input" accept="image/*" onchange="previewImage(this, 'userSigPreview', 'userSigBase64')"></div>
+                  <button type="button" class="aa-btn-camera-capture" onclick="aaCameraForField('userSigBase64', 'userSigPreview', {maxDim:400, quality:0.8})"><i class="fa fa-camera"></i> Take Photo</button>
+                </div>
                 <input type="hidden" name="signature" id="userSigBase64">
               </div>
             </div>
@@ -892,7 +899,10 @@
                 <i class="fa fa-user" style="color:#aaa;"></i>
               </div>
               <div class="flex-1">
-                <input type="file" id="studentPhotoInput" class="aa-input" accept="image/*" onchange="previewStudentPhoto(this)">
+                <div class="aa-image-source-wrap">
+                  <div class="aa-input-file-wrap"><input type="file" id="studentPhotoInput" class="aa-input" accept="image/*" onchange="previewStudentPhoto(this)"></div>
+                  <button type="button" class="aa-btn-camera-capture" onclick="aaCameraForInput('studentPhotoBase64', '#studentPhotoPreview', {maxDim:200, quality:0.75, shape:'circle'})"><i class="fa fa-camera"></i> Take Photo</button>
+                </div>
                 <input type="hidden" name="photoUrl" id="studentPhotoBase64">
               </div>
             </div>
@@ -1177,9 +1187,12 @@
         <div class="text-center mb-4">
           <div class="position-relative d-inline-block">
             <div class="aa-user-avatar" style="width:100px;height:100px;font-size:40px;margin:0 auto 10px;border:3px solid #f0f4f8;"></div>
-            <label for="profPhotoInput" class="position-absolute" style="bottom:5px;right:5px;background:#f0a500;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;">
-              <i class="fa fa-camera"></i>
+            <label for="profPhotoInput" class="position-absolute" style="bottom:5px;right:5px;background:#f0a500;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;" title="Choose from gallery">
+              <i class="fa fa-image"></i>
             </label>
+            <button type="button" class="aa-profile-camera-btn" onclick="aaCameraForInput('profPhotoBase64', '#profileModal .aa-user-avatar', {maxDim:200, quality:0.75, shape:'circle', facingMode:'user'})" title="Take photo with camera">
+              <i class="fa fa-camera"></i>
+            </button>
             <input type="file" id="profPhotoInput" style="display:none;" accept="image/*" onchange="previewProfilePhoto(this)">
             <input type="hidden" id="profPhotoBase64">
           </div>

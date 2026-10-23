@@ -934,6 +934,337 @@ function scoreColor(score) {
   return '#dc2626';
 }
 
+// --- Camera Capture System -----------------------------------
+// Provides a fullscreen camera modal with live viewfinder,
+// front/back switch, capture, review (retake/accept), and
+// graceful fallback for unsupported browsers.
+
+var AACamera = (function() {
+  var _stream = null;
+  var _facingMode = 'environment'; // 'environment' = back, 'user' = front
+  var _callback = null;
+  var _maxDim = 800;
+  var _quality = 0.8;
+  var _backdrop = null;
+
+  function _supportsCamera() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+
+  function _stopStream() {
+    if (_stream) {
+      _stream.getTracks().forEach(function(t) { t.stop(); });
+      _stream = null;
+    }
+  }
+
+  function _close() {
+    _stopStream();
+    if (_backdrop && _backdrop.parentNode) {
+      _backdrop.style.opacity = '0';
+      setTimeout(function() {
+        if (_backdrop && _backdrop.parentNode) _backdrop.parentNode.removeChild(_backdrop);
+        _backdrop = null;
+      }, 200);
+    }
+  }
+
+  function _buildModal() {
+    var el = document.createElement('div');
+    el.className = 'aa-camera-backdrop';
+    el.id = 'aaCameraModal';
+    el.innerHTML =
+      '<div class="aa-camera-header">' +
+        '<h4><i class="fa fa-camera"></i> Camera</h4>' +
+        '<button class="aa-camera-close" id="aaCamClose" title="Close">&times;</button>' +
+      '</div>' +
+      '<div class="aa-camera-viewfinder" id="aaCamViewfinder">' +
+        '<div class="aa-camera-loading" id="aaCamLoading">' +
+          '<div class="aa-camera-spinner"></div>' +
+          '<span>Starting camera…</span>' +
+        '</div>' +
+        '<video id="aaCamVideo" autoplay playsinline muted></video>' +
+        '<canvas id="aaCamCanvas"></canvas>' +
+        '<div class="aa-camera-controls" id="aaCamControls" style="display:none;">' +
+          '<button class="aa-camera-btn-switch" id="aaCamSwitch" title="Switch Camera"><i class="fa fa-sync-alt"></i></button>' +
+          '<button class="aa-camera-btn-capture" id="aaCamCapture" title="Take Photo"></button>' +
+          '<div style="width:48px;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="aa-camera-review" id="aaCamReview" style="display:none;">' +
+        '<img id="aaCamPreviewImg" src="" alt="Captured photo">' +
+        '<div class="aa-camera-review-actions">' +
+          '<button class="aa-camera-btn-retake" id="aaCamRetake"><i class="fa fa-redo"></i> Retake</button>' +
+          '<button class="aa-camera-btn-accept" id="aaCamAccept"><i class="fa fa-check"></i> Use Photo</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="aa-camera-error" id="aaCamError" style="display:none;">' +
+        '<i class="fa fa-exclamation-triangle"></i>' +
+        '<p id="aaCamErrorMsg">Could not access camera.</p>' +
+        '<button id="aaCamErrorClose">Close</button>' +
+      '</div>';
+    return el;
+  }
+
+  function _startCamera() {
+    var video = document.getElementById('aaCamVideo');
+    var loading = document.getElementById('aaCamLoading');
+    var controls = document.getElementById('aaCamControls');
+    var errorEl = document.getElementById('aaCamError');
+
+    if (loading) loading.style.display = 'flex';
+    if (controls) controls.style.display = 'none';
+    if (video) video.style.display = 'none';
+
+    _stopStream();
+
+    var constraints = {
+      video: {
+        facingMode: _facingMode,
+        width: { ideal: 1280 },
+        height: { ideal: 960 }
+      },
+      audio: false
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        _stream = stream;
+        if (video) {
+          video.srcObject = stream;
+          video.style.display = 'block';
+          video.onloadedmetadata = function() {
+            if (loading) loading.style.display = 'none';
+            if (controls) controls.style.display = 'flex';
+          };
+        }
+      })
+      .catch(function(err) {
+        console.error('Camera error:', err);
+        if (loading) loading.style.display = 'none';
+        if (errorEl) {
+          var msg = 'Could not access camera.';
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            msg = 'Camera permission was denied. Please allow camera access in your browser settings and try again.';
+          } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            msg = 'No camera was found on this device.';
+          } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+            msg = 'Camera is already in use by another application.';
+          } else if (err.name === 'OverconstrainedError') {
+            msg = 'Camera does not meet the requirements. Trying alternate settings…';
+            // Retry with simpler constraints
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+              .then(function(stream) {
+                _stream = stream;
+                if (video) {
+                  video.srcObject = stream;
+                  video.style.display = 'block';
+                  video.onloadedmetadata = function() {
+                    if (errorEl) errorEl.style.display = 'none';
+                    document.getElementById('aaCamViewfinder').style.display = 'flex';
+                    if (controls) controls.style.display = 'flex';
+                  };
+                }
+              })
+              .catch(function() {
+                document.getElementById('aaCamErrorMsg').textContent = 'Could not access camera with any settings.';
+                errorEl.style.display = 'flex';
+              });
+            return;
+          }
+          document.getElementById('aaCamErrorMsg').textContent = msg;
+          errorEl.style.display = 'flex';
+          document.getElementById('aaCamViewfinder').style.display = 'none';
+        }
+      });
+  }
+
+  function _capturePhoto() {
+    var video = document.getElementById('aaCamVideo');
+    var canvas = document.getElementById('aaCamCanvas');
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    var ctx = canvas.getContext('2d');
+
+    // If front camera, mirror the image
+    if (_facingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0);
+
+    // Resize on the canvas
+    var width = canvas.width;
+    var height = canvas.height;
+    if (width > height) {
+      if (width > _maxDim) { height = Math.round((height * _maxDim) / width); width = _maxDim; }
+    } else {
+      if (height > _maxDim) { width = Math.round((width * _maxDim) / height); height = _maxDim; }
+    }
+
+    var resizeCanvas = document.createElement('canvas');
+    resizeCanvas.width = width;
+    resizeCanvas.height = height;
+    var rctx = resizeCanvas.getContext('2d');
+    rctx.fillStyle = '#FFFFFF';
+    rctx.fillRect(0, 0, width, height);
+    rctx.drawImage(canvas, 0, 0, width, height);
+
+    var dataUrl = resizeCanvas.toDataURL('image/jpeg', _quality);
+
+    // Show review
+    _stopStream();
+    document.getElementById('aaCamViewfinder').style.display = 'none';
+    document.getElementById('aaCamReview').style.display = 'flex';
+    document.getElementById('aaCamPreviewImg').src = dataUrl;
+  }
+
+  function _retake() {
+    document.getElementById('aaCamReview').style.display = 'none';
+    document.getElementById('aaCamViewfinder').style.display = 'flex';
+    _startCamera();
+  }
+
+  function _accept() {
+    var imgSrc = document.getElementById('aaCamPreviewImg').src;
+    if (_callback && imgSrc) {
+      _callback(imgSrc);
+    }
+    _close();
+  }
+
+  function _switchCamera() {
+    _facingMode = (_facingMode === 'environment') ? 'user' : 'environment';
+    var video = document.getElementById('aaCamVideo');
+    if (video && _facingMode === 'user') {
+      video.style.transform = 'scaleX(-1)';
+    } else if (video) {
+      video.style.transform = 'scaleX(1)';
+    }
+    _startCamera();
+  }
+
+  function _bindEvents() {
+    document.getElementById('aaCamClose').onclick = _close;
+    document.getElementById('aaCamCapture').onclick = _capturePhoto;
+    document.getElementById('aaCamSwitch').onclick = _switchCamera;
+    document.getElementById('aaCamRetake').onclick = _retake;
+    document.getElementById('aaCamAccept').onclick = _accept;
+    document.getElementById('aaCamErrorClose').onclick = _close;
+
+    // Close on backdrop click
+    _backdrop.addEventListener('click', function(e) {
+      if (e.target === _backdrop) _close();
+    });
+
+    // Close on Escape key
+    var escHandler = function(e) {
+      if (e.key === 'Escape') {
+        _close();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  }
+
+  /**
+   * Open the camera capture modal.
+   * @param {Function} callback - Receives the captured base64 dataURL string
+   * @param {Object} [options] - { maxDim: number, quality: number }
+   */
+  function open(callback, options) {
+    options = options || {};
+    _callback = callback;
+    _maxDim = options.maxDim || 800;
+    _quality = options.quality || 0.8;
+    _facingMode = options.facingMode || 'environment';
+
+    if (!_supportsCamera()) {
+      // Fallback: use a plain file input with capture attribute
+      var fallbackInput = document.createElement('input');
+      fallbackInput.type = 'file';
+      fallbackInput.accept = 'image/*';
+      fallbackInput.setAttribute('capture', 'environment');
+      fallbackInput.style.display = 'none';
+      fallbackInput.onchange = function() {
+        if (fallbackInput.files && fallbackInput.files[0]) {
+          resizeAndCompressImage(fallbackInput.files[0], _maxDim, _quality, function(base64) {
+            if (_callback) _callback(base64);
+          });
+        }
+        document.body.removeChild(fallbackInput);
+      };
+      document.body.appendChild(fallbackInput);
+      fallbackInput.click();
+      return;
+    }
+
+    // Build and show modal
+    _backdrop = _buildModal();
+    document.body.appendChild(_backdrop);
+    _bindEvents();
+    _startCamera();
+  }
+
+  /**
+   * Check if camera API is available
+   */
+  function isAvailable() {
+    return _supportsCamera();
+  }
+
+  return {
+    open: open,
+    isAvailable: isAvailable
+  };
+})();
+
+/**
+ * Helper: Open camera and pipe result to a file input's workflow.
+ * Usage: aaCameraForInput('profPhotoBase64', '#profileModal .aa-user-avatar', { maxDim: 200, quality: 0.75, shape: 'circle' })
+ */
+function aaCameraForInput(base64InputId, previewSelector, options) {
+  options = options || {};
+  AACamera.open(function(base64) {
+    var hiddenInput = document.getElementById(base64InputId);
+    if (hiddenInput) hiddenInput.value = base64;
+
+    if (previewSelector) {
+      var preview = document.querySelector(previewSelector);
+      if (preview) {
+        var borderRadius = options.shape === 'circle' ? 'border-radius:50%;' : 'border-radius:8px;';
+        preview.innerHTML = '<img src="' + base64 + '" style="width:100%;height:100%;object-fit:cover;' + borderRadius + '">';
+        if (preview.style) preview.style.display = 'block';
+      }
+    }
+
+    // Fire custom event so dashboard-specific handlers can react
+    document.dispatchEvent(new CustomEvent('aaCameraCapture', { detail: { base64: base64, inputId: base64InputId } }));
+  }, options);
+}
+
+/**
+ * Generic camera button for any image field.
+ * Opens camera → applies result to a specified hidden input and preview container.
+ */
+function aaCameraForField(base64InputId, previewId, options) {
+  options = options || {};
+  AACamera.open(function(base64) {
+    var hiddenInput = document.getElementById(base64InputId);
+    if (hiddenInput) hiddenInput.value = base64;
+
+    if (previewId) {
+      var preview = document.getElementById(previewId);
+      if (preview) {
+        preview.innerHTML = '<img src="' + base64 + '" style="width:100%;height:auto;max-height:200px;border-radius:8px;">';
+        preview.style.display = 'block';
+      }
+    }
+  }, options);
+}
+
 // --- Image Utilities -----------------------------------------
 
 function resizeAndCompressImage(file, maxDim, quality, callback) {
@@ -1281,15 +1612,27 @@ function generateBroadsheet() {
 
 
 
-function handleMasterTimetableUpload(input) {
-  if (!input.files || input.files.length === 0) return;
+function handleMasterTimetableUpload(input, base64Data) {
+  if (base64Data) {
+    showLoading();
+    callServer('adminUploadMasterTimetable', [AA.token, { fileBase64: base64Data }], function(res) {
+      hideLoading();
+      if(res && res.success) {
+        showToast(res.message || 'Timetable uploaded successfully.', 'success');
+      } else {
+        showToast(res.message || 'Failed to upload timetable.', 'error');
+      }
+    });
+    return;
+  }
+  if (!input || !input.files || input.files.length === 0) return;
   var file = input.files[0];
   var reader = new FileReader();
   reader.onload = function(e) {
     showLoading();
     callServer('adminUploadMasterTimetable', [AA.token, { fileBase64: e.target.result }], function(res) {
       hideLoading();
-      input.value = ''; // Reset input to allow re-uploading the same file
+      if (input) input.value = ''; // Reset input to allow re-uploading the same file
       if(res && res.success) {
         showToast(res.message || 'Timetable uploaded successfully.', 'success');
       } else {

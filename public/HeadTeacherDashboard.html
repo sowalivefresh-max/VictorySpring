@@ -314,6 +314,7 @@
 <div class="aa-card-body" style="display:flex; gap:15px; flex-wrap:wrap;">
 <button class="aa-btn aa-btn-info" onclick="viewMasterTimetable()"><i class="fa fa-eye"></i> View Master Timetable</button>
 <button class="aa-btn aa-btn-gold" onclick="document.getElementById('master-timetable-upload-ht').click()"><i class="fa fa-upload"></i> Upload Prepared Timetable</button>
+<button class="aa-btn-camera-capture" onclick="AACamera.open(function(b64){ handleMasterTimetableUpload(null, b64); }, {maxDim:1200, quality:0.85})"><i class="fa fa-camera"></i> Take Photo</button>
 <input type="file" id="master-timetable-upload-ht" style="display:none;" accept="image/*,.pdf" onchange="handleMasterTimetableUpload(this)">
 </div>
 </div>
