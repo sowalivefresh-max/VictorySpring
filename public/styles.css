@@ -628,16 +628,71 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
 }
 .aa-btn-camera-capture i { font-size: 14px; }
 
-/* Profile photo camera overlay button */
-.aa-profile-camera-btn {
-  position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--aa-navy, #0d1b2a), var(--aa-navy-mid, #1e3a5f));
-  color: var(--aa-gold, #f0a500); border: 2px solid var(--aa-gold, #f0a500);
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 11px; transition: all 0.2s; z-index: 1;
+/* Profile photo container and action buttons */
+.aa-profile-avatar-wrap {
+  position: relative !important;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 12px;
+  display: inline-block;
 }
-.aa-profile-camera-btn:hover { transform: translateX(-50%) scale(1.15); }
+.aa-profile-avatar-wrap .aa-user-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #f0f4f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--aa-navy-mid, #1e3a5f);
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+.aa-profile-actions {
+  position: absolute;
+  bottom: 0;
+  right: -8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 5;
+}
+.aa-avatar-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+.aa-avatar-action-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.aa-avatar-camera-btn {
+  background: linear-gradient(135deg, var(--aa-navy, #0d1b2a), var(--aa-navy-mid, #1e3a5f));
+  color: var(--aa-gold, #f0a500);
+}
+.aa-avatar-gallery-btn {
+  background: linear-gradient(135deg, var(--aa-gold, #f0a500), var(--aa-gold-dark, #c88600));
+  color: #ffffff;
+  margin-bottom: 0;
+}
+
+/* Utility helpers for modal layouts */
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.d-inline-block { display: inline-block !important; }
 
 @media (max-width: 768px) {
   .aa-camera-viewfinder { max-width: 100%; border-radius: 0; }

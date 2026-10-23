@@ -1189,14 +1189,16 @@
       </div>
       <div class="aa-modal-body">
         <div class="text-center mb-4">
-          <div class="position-relative d-inline-block">
-            <div class="aa-user-avatar" style="width:100px;height:100px;font-size:40px;margin:0 auto 10px;border:3px solid #f0f4f8;"></div>
-            <label for="profPhotoInput" class="position-absolute" style="bottom:5px;right:5px;background:#f0a500;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;" title="Choose from gallery">
-              <i class="fa fa-image"></i>
-            </label>
-            <button type="button" class="aa-profile-camera-btn" onclick="aaCameraForInput('profPhotoBase64', '#profileModal .aa-user-avatar', {maxDim:200, quality:0.75, shape:'circle', facingMode:'user'})" title="Take photo with camera">
-              <i class="fa fa-camera"></i>
-            </button>
+          <div class="aa-profile-avatar-wrap">
+            <div class="aa-user-avatar"></div>
+            <div class="aa-profile-actions">
+              <button type="button" class="aa-avatar-action-btn aa-avatar-camera-btn" onclick="aaCameraForInput('profPhotoBase64', '#profileModal .aa-user-avatar', {maxDim:200, quality:0.75, shape:'circle', facingMode:'user'})" title="Take photo with camera">
+                <i class="fa fa-camera"></i>
+              </button>
+              <label for="profPhotoInput" class="aa-avatar-action-btn aa-avatar-gallery-btn" title="Choose from gallery">
+                <i class="fa fa-image"></i>
+              </label>
+            </div>
             <input type="file" id="profPhotoInput" style="display:none;" accept="image/*" onchange="previewProfilePhoto(this)">
             <input type="hidden" id="profPhotoBase64">
           </div>
