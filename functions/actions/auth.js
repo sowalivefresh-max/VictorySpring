@@ -149,6 +149,14 @@ module.exports = function(db) {
       }
 
       try {
+        const userRef = db.collection("users").doc(String(req.session.userId));
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+          return res.json({ success: false, message: "User account not found." });
+        }
+        const currentData = userDoc.data() || {};
+        const currentEmail = (currentData.email || "").trim().toLowerCase();
+
         const allowedFields = ["fullName", "phone", "address", "gender", "profilePicture", "email"]; // Fields allowed to be updated by user
         let safeUpdates = {};
         for (let key in updates) {
@@ -159,14 +167,23 @@ module.exports = function(db) {
 
         if (safeUpdates.email) {
           safeUpdates.email = safeUpdates.email.trim().toLowerCase();
-          const existing = await db.collection("users").where("email", "==", safeUpdates.email).get();
-          let conflict = false;
-          existing.forEach(doc => { if (doc.id !== req.session.userId) conflict = true; });
-          if (conflict) return res.json({ success: false, message: "That email is already in use by another account." });
+          // If the email matches the user's current email, skip conflict validation and unnecessary update
+          if (safeUpdates.email === currentEmail) {
+            delete safeUpdates.email;
+          } else {
+            const existing = await db.collection("users").where("email", "==", safeUpdates.email).get();
+            let conflict = false;
+            existing.forEach(doc => {
+              if (String(doc.id) !== String(req.session.userId)) {
+                conflict = true;
+              }
+            });
+            if (conflict) return res.json({ success: false, message: "That email is already in use by another account." });
+          }
         }
 
         if (Object.keys(safeUpdates).length > 0) {
-          await db.collection("users").doc(req.session.userId).update(safeUpdates);
+          await userRef.update(safeUpdates);
         }
         
         return res.json({ success: true, message: "Profile updated successfully." });

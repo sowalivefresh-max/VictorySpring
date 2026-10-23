@@ -145,21 +145,36 @@ var AA = {
   },
 
   updateProfile: function() {
-    var fullName = document.getElementById('profName').value;
-    var email = document.getElementById('profEmail').value;
-    var phone = document.getElementById('profPhone').value;
-    var photo = document.getElementById('profPhotoBase64').value;
+    var fullName = document.getElementById('profName') ? document.getElementById('profName').value.trim() : '';
+    var emailEl = document.getElementById('profEmail');
+    var email = emailEl ? emailEl.value.trim() : '';
+    var phone = document.getElementById('profPhone') ? document.getElementById('profPhone').value.trim() : '';
+    var photo = document.getElementById('profPhotoBase64') ? document.getElementById('profPhotoBase64').value : '';
 
     if (!fullName) return showToast('Name is required', 'error');
-    if (!email) return showToast('Email is required', 'error');
 
-    var data = { fullName: fullName, email: email, phone: phone };
+    var data = { fullName: fullName, phone: phone };
+    
+    // Only pass email if the field is present, not empty, and different from current user email
+    var currentEmail = (AA.user && AA.user.email) ? AA.user.email.trim().toLowerCase() : '';
+    if (email && email.toLowerCase() !== currentEmail) {
+      data.email = email;
+    }
     if (photo) data.profilePicture = photo;
 
+    showLoading();
+    var self = this;
     callServer('userUpdateProfile', [this.token, data], function(res) {
+      hideLoading();
       showToast(res.message, res.success ? 'success' : 'error');
       if (res.success) {
-        AA.loadCurrentUser();
+        if (photo && AA.user) {
+          AA.user.profilePicture = photo;
+          document.querySelectorAll('.aa-user-avatar').forEach(function(el) {
+            el.innerHTML = '<img src="' + photo + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+          });
+        }
+        self.loadCurrentUser();
         closeModal('profileModal');
       }
     }, null, true);
