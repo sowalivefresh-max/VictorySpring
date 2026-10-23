@@ -9,7 +9,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-<link href="styles.css" rel="stylesheet"/>
+<link href="styles.css?v=1792765000" rel="stylesheet"/>
 
 
 
@@ -703,8 +703,24 @@
 <div class="aa-modal-header"><h5 class="aa-modal-title">My Profile</h5><button class="aa-modal-close" onclick="closeModal('profileModal')">×</button></div>
 <div class="aa-modal-body">
 <div class="text-center mb-4">
-<div class="aa-user-name fs-20 fw-700 mt-2" id="profNameDisplay"></div>
-<div class="aa-user-role text-muted fs-14">Store Keeper</div>
+  <div class="aa-profile-avatar-wrap">
+    <div class="aa-user-avatar"></div>
+    <div class="aa-profile-actions">
+      <button type="button" class="aa-avatar-action-btn aa-avatar-camera-btn" onclick="aaCameraForInput('profPhotoBase64', '#profileModal .aa-user-avatar', {maxDim:200, quality:0.75, shape:'circle', facingMode:'user'})" title="Take photo with camera">
+        <i class="fa fa-camera"></i>
+      </button>
+      <label for="profPhotoInput" class="aa-avatar-action-btn aa-avatar-gallery-btn" title="Choose from gallery">
+        <i class="fa fa-image"></i>
+      </label>
+      <button type="button" id="profPhotoRemoveBtn" class="aa-avatar-action-btn aa-avatar-remove-btn" onclick="AA.removeProfilePhoto()" title="Remove profile picture" style="display:none;">
+        <i class="fa fa-trash"></i>
+      </button>
+    </div>
+    <input type="file" id="profPhotoInput" style="display:none;" accept="image/*" onchange="previewProfilePhoto(this)">
+    <input type="hidden" id="profPhotoBase64">
+  </div>
+  <div class="aa-user-name fs-20 fw-700 mt-2" id="profNameDisplay"></div>
+  <div class="aa-user-role text-muted fs-14">Head Teacher</div>
 </div>
 <div class="aa-form-group">
 <label class="aa-label">Full Name</label>
@@ -766,7 +782,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="api.js?v=4"></script>
-<script src="scripts.js?v=1791060400"></script>
+<script src="scripts.js?v=1792765000"></script>
 <script>
 
     var currentTerm = ''; var currentSession = '';

@@ -94,7 +94,11 @@ var AA = {
     if (email && email.toLowerCase() !== currentEmail) {
       data.email = email;
     }
-    if (photo) data.profilePicture = photo;
+    if (photo === '__REMOVE__') {
+      data.profilePicture = '';
+    } else if (photo) {
+      data.profilePicture = photo;
+    }
 
     showLoading();
     var self = this;
@@ -102,7 +106,16 @@ var AA = {
       hideLoading();
       showToast(res.message, res.success ? 'success' : 'error');
       if (res.success) {
-        if (photo && AA.user) {
+        if (photo === '__REMOVE__') {
+          if (AA.user) AA.user.profilePicture = '';
+          var initials = (fullName || 'User').trim().split(' ').map(function(n){ return n[0]; }).join('').slice(0, 2).toUpperCase();
+          document.querySelectorAll('.aa-user-avatar').forEach(function(el) {
+            el.textContent = initials;
+            el.classList.remove('has-image');
+            el.title = '';
+            el.onclick = null;
+          });
+        } else if (photo && AA.user) {
           AA.user.profilePicture = photo;
           document.querySelectorAll('.aa-user-avatar').forEach(function(el) {
             el.innerHTML = '<img src="' + photo + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
@@ -114,22 +127,61 @@ var AA = {
     }, null, true);
   },
 
+  removeProfilePhoto: function() {
+    if (!confirm('Are you sure you want to remove your profile picture?')) return;
+    document.getElementById('profPhotoBase64').value = '__REMOVE__';
+    var fileInput = document.getElementById('profPhotoInput');
+    if (fileInput) fileInput.value = '';
+
+    var avatarEl = document.querySelector('#profileModal .aa-user-avatar');
+    if (avatarEl) {
+      var u = AA.user || {};
+      var initials = (u.fullName || 'User').trim().split(' ').map(function(n){ return n[0]; }).join('').slice(0, 2).toUpperCase();
+      avatarEl.textContent = initials;
+      avatarEl.classList.remove('has-image');
+      avatarEl.title = '';
+      avatarEl.onclick = null;
+    }
+
+    var removeBtn = document.getElementById('profPhotoRemoveBtn');
+    if (removeBtn) removeBtn.style.display = 'none';
+
+    showToast('Profile picture marked for removal. Click "Save Details" to apply.', 'info');
+  },
+
   populateProfileModal: function() {
     var u = AA.user;
     if (!u) return openModal('profileModal');
-    document.getElementById('profName').value = u.fullName || '';
+    if (document.getElementById('profName')) document.getElementById('profName').value = u.fullName || '';
     if (document.getElementById('profEmail')) document.getElementById('profEmail').value = u.email || '';
-    document.getElementById('profPhone').value = u.phone || '';
-    document.getElementById('profPhotoBase64').value = '';
+    if (document.getElementById('profPhone')) document.getElementById('profPhone').value = u.phone || '';
+    if (document.getElementById('profPhotoBase64')) document.getElementById('profPhotoBase64').value = '';
+    var fileInput = document.getElementById('profPhotoInput');
+    if (fileInput) fileInput.value = '';
     
     var avatarEl = document.querySelector('#profileModal .aa-user-avatar');
+    var removeBtn = document.getElementById('profPhotoRemoveBtn');
     if (avatarEl) {
       if (u.profilePicture && (u.profilePicture.indexOf('data:image') === 0 || u.profilePicture.indexOf('http') === 0)) {
         avatarEl.innerHTML = '<img src="' + u.profilePicture + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+        avatarEl.classList.add('has-image');
+        avatarEl.title = 'Click to preview profile picture';
+        avatarEl.onclick = function() {
+          var base64El = document.getElementById('profPhotoBase64');
+          var pic = (base64El && base64El.value) ? base64El.value : u.profilePicture;
+          if (pic && pic !== '__REMOVE__') {
+            previewImageLightbox(pic, (u.fullName || 'User') + ' - Profile Picture');
+          }
+        };
+        if (removeBtn) removeBtn.style.display = 'flex';
       } else {
         var names = (u.fullName || 'User').trim().split(' ');
         var initials = names.length > 1 ? (names[0][0] + names[names.length-1][0]) : names[0].substring(0, 2);
         avatarEl.textContent = initials.toUpperCase();
+        avatarEl.classList.remove('has-image');
+        avatarEl.title = '';
+        avatarEl.onclick = null;
+        if (removeBtn) removeBtn.style.display = 'none';
       }
     }
     openModal('profileModal');
@@ -874,8 +926,61 @@ function previewProfilePhoto(input) {
       var preview = document.querySelector('#profileModal .aa-user-avatar');
       if (preview) {
         preview.innerHTML = '<img src="' + base64 + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+        preview.classList.add('has-image');
+        preview.title = 'Click to preview profile picture';
+        preview.onclick = function() {
+          var userName = (AA.user && AA.user.fullName) ? AA.user.fullName : 'User';
+          previewImageLightbox(base64, userName + ' - Profile Picture');
+        };
       }
+      var removeBtn = document.getElementById('profPhotoRemoveBtn');
+      if (removeBtn) removeBtn.style.display = 'flex';
     });
+  }
+}
+
+// --- Image Lightbox Modal Viewer -------------------------------
+function previewImageLightbox(src, title) {
+  if (!src) return;
+  var existing = document.getElementById('aa-image-lightbox-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'aa-image-lightbox-modal';
+  modal.className = 'aa-image-lightbox-backdrop';
+  modal.innerHTML = 
+    '<div class="aa-image-lightbox-card">' +
+      '<div class="aa-image-lightbox-header">' +
+        '<h5><i class="fa fa-image"></i> ' + (title || 'Photo Preview') + '</h5>' +
+        '<button type="button" class="aa-image-lightbox-close" onclick="closeImageLightbox()">&times;</button>' +
+      '</div>' +
+      '<div class="aa-image-lightbox-body">' +
+        '<img src="' + src + '" alt="' + (title || 'Preview') + '" class="aa-image-lightbox-img">' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeImageLightbox();
+  });
+
+  var escHandler = function(e) {
+    if (e.key === 'Escape') {
+      closeImageLightbox();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
+
+function closeImageLightbox() {
+  var modal = document.getElementById('aa-image-lightbox-modal');
+  if (modal) {
+    modal.classList.add('closing');
+    setTimeout(function() {
+      if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+    }, 200);
   }
 }
 

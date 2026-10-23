@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>School Management Portal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1792765000">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1073,6 +1073,9 @@
               <label for="profPhotoInput" class="aa-avatar-action-btn aa-avatar-gallery-btn" title="Choose from gallery">
                 <i class="fa fa-image"></i>
               </label>
+              <button type="button" id="profPhotoRemoveBtn" class="aa-avatar-action-btn aa-avatar-remove-btn" onclick="AA.removeProfilePhoto()" title="Remove profile picture" style="display:none;">
+                <i class="fa fa-trash"></i>
+              </button>
             </div>
             <input type="file" id="profPhotoInput" style="display:none;" accept="image/*" onchange="previewProfilePhoto(this)">
             <input type="hidden" id="profPhotoBase64">
@@ -1235,7 +1238,7 @@
   </div>
 
   <script src="api.js?v=2"></script>
-  <script src="scripts.js?v=1791060400"></script>
+  <script src="scripts.js?v=1792765000"></script>
   <script>
     var globalUsers = [];
     var globalStudents = [];

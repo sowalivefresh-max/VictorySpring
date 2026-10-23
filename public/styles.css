@@ -679,6 +679,36 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
   transform: scale(1.15);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
+.aa-profile-avatar-wrap .aa-user-avatar.has-image {
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+.aa-profile-avatar-wrap .aa-user-avatar.has-image:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+}
+.aa-profile-avatar-wrap .aa-user-avatar.has-image::after {
+  content: '\f002';
+  font-family: 'Font Awesome 5 Free', 'FontAwesome';
+  font-weight: 900;
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: 50%;
+  background: rgba(13, 27, 42, 0.5);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.aa-profile-avatar-wrap .aa-user-avatar.has-image:hover::after {
+  opacity: 1;
+}
+
 .aa-avatar-camera-btn {
   background: linear-gradient(135deg, var(--aa-navy, #0d1b2a), var(--aa-navy-mid, #1e3a5f));
   color: var(--aa-gold, #f0a500);
@@ -687,6 +717,106 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
   background: linear-gradient(135deg, var(--aa-gold, #f0a500), var(--aa-gold-dark, #c88600));
   color: #ffffff;
   margin-bottom: 0;
+}
+.aa-avatar-remove-btn {
+  background: linear-gradient(135deg, #e63946, #c1121f);
+  color: #ffffff;
+  border-color: #ffffff;
+}
+.aa-avatar-remove-btn:hover {
+  background: linear-gradient(135deg, #d90429, #780000);
+  border-color: #ffe3e3;
+}
+
+/* ── Image Lightbox Modal ── */
+.aa-image-lightbox-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(13, 27, 42, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  animation: aaLightFadeIn 0.25s ease forwards;
+}
+.aa-image-lightbox-backdrop.closing {
+  animation: aaLightFadeOut 0.2s ease forwards;
+}
+@keyframes aaLightFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aaLightFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.aa-image-lightbox-card {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  animation: aaLightZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes aaLightZoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.aa-image-lightbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.aa-image-lightbox-header h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aa-navy, #0d1b2a);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.aa-image-lightbox-header h5 i {
+  color: var(--aa-gold, #f0a500);
+}
+.aa-image-lightbox-close {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: all 0.15s;
+}
+.aa-image-lightbox-close:hover {
+  color: #e63946;
+  transform: scale(1.15);
+}
+
+.aa-image-lightbox-body {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: #0b1320;
+}
+.aa-image-lightbox-img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 
 /* Utility helpers for modal layouts */
