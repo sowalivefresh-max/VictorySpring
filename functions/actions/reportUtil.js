@@ -370,8 +370,11 @@ async function enrichReportData(dbInstance, reportData, cfg) {
     cfg = cfg || {};
     cfg.school_name = cfg.school_name || cfg.schoolName || "VICTORY SPRING SCHOOL";
     cfg.school_motto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
-    cfg.school_address = cfg.school_address || cfg.schoolAddress || "";
-    cfg.school_email = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || "victoryspringschool@gmail.com";
+    let rptEmail = cfg.school_email || cfg.schoolEmail || "victoryspringschool@gmail.com";
+    if (!rptEmail || rptEmail.toLowerCase().includes("opeyemi") || rptEmail.toLowerCase().includes("headteacher")) {
+      rptEmail = "victoryspringschool@gmail.com";
+    }
+    cfg.school_email = rptEmail;
     cfg.school_phone = cfg.school_phone || cfg.schoolPhone || "";
     if (cfg.next_term_begins || cfg.nextTermBegins) {
       reportData.nextTermBegins = cfg.next_term_begins || cfg.nextTermBegins;

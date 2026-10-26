@@ -170,8 +170,10 @@ module.exports = {
     const termTitle = termClean.endsWith('TERM') ? termClean : (termClean ? termClean + ' TERM' : '');
     
     const schoolName = cfg.school_name || cfg.schoolName || 'VICTORY SPRING SCHOOL';
-    const schoolAddress = cfg.school_address || cfg.schoolAddress || '';
-    const schoolEmail = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || 'victoryspringschool@gmail.com';
+    let schoolEmail = cfg.school_email || cfg.schoolEmail || 'victoryspringschool@gmail.com';
+    if (!schoolEmail || schoolEmail.toLowerCase().includes('opeyemi') || schoolEmail.toLowerCase().includes('headteacher')) {
+      schoolEmail = 'victoryspringschool@gmail.com';
+    }
     const schoolPhone = cfg.school_phone || cfg.schoolPhone || '';
     const logoSrc = cfg.school_logo_url || cfg.schoolLogoUrl || getReportSchoolLogoBase64() || 'https://victoryspring-681e5.web.app/icon.png';
 
@@ -310,8 +312,10 @@ module.exports = {
 
     const schoolName = cfg.school_name || cfg.schoolName || "VICTORY SPRING SCHOOL";
     const schoolMotto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
-    const schoolAddress = cfg.school_address || cfg.schoolAddress || "";
-    const schoolEmail = cfg.school_email || cfg.schoolEmail || cfg.smtp_email || "victoryspringschool@gmail.com";
+    let schoolEmail = cfg.school_email || cfg.schoolEmail || "victoryspringschool@gmail.com";
+    if (!schoolEmail || schoolEmail.toLowerCase().includes("opeyemi") || schoolEmail.toLowerCase().includes("headteacher")) {
+      schoolEmail = "victoryspringschool@gmail.com";
+    }
     const schoolPhone = cfg.school_phone || cfg.schoolPhone || "";
     const logoSrc = cfg.school_logo_url || cfg.schoolLogoUrl || getReportSchoolLogoBase64() || "https://victoryspring-681e5.web.app/icon.png";
 

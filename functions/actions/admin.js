@@ -663,6 +663,10 @@ module.exports = function(db, notificationsActions) {
       try {
         const snap = await db.collection("settings").doc("global").get();
         const settings = snap.exists ? snap.data() : {};
+        if (!settings.school_email || settings.school_email.toLowerCase().includes("opeyemi") || settings.school_email.toLowerCase().includes("headteacher")) {
+          settings.school_email = "victoryspringschool@gmail.com";
+          await db.collection("settings").doc("global").set({ school_email: "victoryspringschool@gmail.com" }, { merge: true });
+        }
         return res.json({ success: true, data: settings });
       } catch (err) {
         return res.json({ success: false, message: "Error fetching settings: " + err.message });

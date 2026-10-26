@@ -868,9 +868,12 @@ function sanitizeReportHTML(html, meta) {
   var logoUrl = (typeof AA !== 'undefined' && AA.settings && AA.settings.school_logo_url) ||
                 (window.globalSettingsData && window.globalSettingsData.school_logo_url) ||
                 'icon.png';
-  var schoolEmail = (typeof AA !== 'undefined' && AA.settings && (AA.settings.school_email || AA.settings.smtp_email)) ||
-                    (window.globalSettingsData && (window.globalSettingsData.school_email || window.globalSettingsData.smtp_email)) ||
+  var schoolEmail = (typeof AA !== 'undefined' && AA.settings && AA.settings.school_email) ||
+                    (window.globalSettingsData && window.globalSettingsData.school_email) ||
                     'victoryspringschool@gmail.com';
+  if (!schoolEmail || schoolEmail.toLowerCase().indexOf('opeyemi') !== -1 || schoolEmail.toLowerCase().indexOf('headteacher') !== -1) {
+    schoolEmail = 'victoryspringschool@gmail.com';
+  }
   var schoolPhone = (typeof AA !== 'undefined' && AA.settings && AA.settings.school_phone) ||
                     (window.globalSettingsData && window.globalSettingsData.school_phone) || '';
 
@@ -880,10 +883,13 @@ function sanitizeReportHTML(html, meta) {
       '<div class="hdr-logo"><img src="' + logoUrl + '" class="logo" alt="School Logo" style="width:80px;height:80px;object-fit:contain;"></div>');
   }
 
+  // Replace head teacher email if present on report sheet with official school email
+  html = html.replace(/Email:\s*[a-zA-Z0-9._%+-]*opeyemi[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi, 'Email: ' + schoolEmail);
+
   // Ensure Email is present in school-info if not already there
-  if (html.indexOf('Email:') === -1 && html.indexOf('STUDENT REPORT SHEET') !== -1) {
+  if (html.indexOf('Email:') === -1 && (html.indexOf('STUDENT REPORT SHEET') !== -1 || html.indexOf('STUDENT HALF-TERM REPORT SHEET') !== -1)) {
     var contactHtml = '<div style="font-size:10px; margin-top:1px;">Email: ' + schoolEmail + (schoolPhone ? ' | Tel: ' + schoolPhone : '') + '</div>';
-    html = html.replace(/(<div\s+class="rpt-title">\s*STUDENT REPORT SHEET\s*<\/div>)/i, contactHtml + '$1');
+    html = html.replace(/(<div\s+class="rpt-title">\s*STUDENT\s+(?:HALF-TERM\s+)?REPORT\s+SHEET\s*<\/div>)/i, contactHtml + '$1');
   }
 
   // 7. Check and fill "NO. IN CLASS" if blank

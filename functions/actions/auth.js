@@ -248,11 +248,23 @@ module.exports = function(db) {
         if (settingsDoc.exists) {
           cfg = settingsDoc.data();
         }
+        let schEmail = cfg.school_email || "victoryspringschool@gmail.com";
+        if (!schEmail || schEmail.toLowerCase().includes("opeyemi") || schEmail.toLowerCase().includes("headteacher")) {
+          schEmail = "victoryspringschool@gmail.com";
+          try {
+            await db.collection("settings").doc("global").set({ school_email: "victoryspringschool@gmail.com" }, { merge: true });
+          } catch (e) {
+            console.error("Error self-healing school_email:", e);
+          }
+        }
         return res.json({
           success: true,
-          school_name: cfg.school_name || "MySchool Cloud",
-          school_motto: cfg.school_motto || "Excellence in Education",
+          school_name: cfg.school_name || "VICTORY SPRING SCHOOL",
+          school_motto: cfg.school_motto || "VICTORIA AD TENACISSIMOS PERTINET",
           school_logo_url: cfg.school_logo_url || "",
+          school_email: schEmail,
+          school_phone: cfg.school_phone || "",
+          school_address: cfg.school_address || "",
           current_term: cfg.current_term || "First Term",
           current_session: cfg.current_session || "2026/2027",
           theme_primary: cfg.theme_primary || "",
