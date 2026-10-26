@@ -170,6 +170,7 @@ module.exports = {
     const termTitle = termClean.endsWith('TERM') ? termClean : (termClean ? termClean + ' TERM' : '');
     
     const schoolName = cfg.school_name || cfg.schoolName || 'VICTORY SPRING SCHOOL';
+    const schoolAddress = cfg.school_address || cfg.schoolAddress || '';
     let schoolEmail = cfg.school_email || cfg.schoolEmail || 'victoryspringschool@gmail.com';
     if (!schoolEmail || schoolEmail.toLowerCase().includes('opeyemi') || schoolEmail.toLowerCase().includes('headteacher')) {
       schoolEmail = 'victoryspringschool@gmail.com';
@@ -312,6 +313,7 @@ module.exports = {
 
     const schoolName = cfg.school_name || cfg.schoolName || "VICTORY SPRING SCHOOL";
     const schoolMotto = cfg.school_motto || cfg.schoolMotto || "VICTORIA AD TENACISSIMOS PERTINET";
+    const schoolAddress = cfg.school_address || cfg.schoolAddress || "";
     let schoolEmail = cfg.school_email || cfg.schoolEmail || "victoryspringschool@gmail.com";
     if (!schoolEmail || schoolEmail.toLowerCase().includes("opeyemi") || schoolEmail.toLowerCase().includes("headteacher")) {
       schoolEmail = "victoryspringschool@gmail.com";
