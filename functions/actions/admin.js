@@ -1461,9 +1461,18 @@ module.exports = function(db, notificationsActions) {
         const oldSettingsDoc = await db.collection("settings").doc("global").get();
         const oldSettings = oldSettingsDoc.exists ? oldSettingsDoc.data() : {};
 
+        if (updates.full_term_published !== undefined) {
+          updates.results_published = updates.full_term_published;
+        } else if (updates.results_published !== undefined && updates.full_term_published === undefined) {
+          updates.full_term_published = updates.results_published;
+        }
+
         await db.collection("settings").doc("global").set(updates, { merge: true });
         
-        if (updates.results_published === true && !oldSettings.results_published) {
+        const justPublishedHalf = updates.half_term_published === true && !oldSettings.half_term_published;
+        const justPublishedFull = (updates.full_term_published === true || updates.results_published === true) && (!oldSettings.full_term_published && !oldSettings.results_published);
+
+        if (justPublishedHalf || justPublishedFull) {
           const settingsDoc = await db.collection("settings").doc("global").get();
           const settings = settingsDoc.data();
           
@@ -1474,6 +1483,7 @@ module.exports = function(db, notificationsActions) {
               auth: { user: settings.smtp_email, pass: settings.smtp_password }
             });
             
+            const rptLabel = justPublishedHalf ? "Half-Term" : "Full-Term";
             const parentsSnap = await db.collection("users").where("role", "==", "parent").get();
             const emailPromises = [];
             
@@ -1483,8 +1493,8 @@ module.exports = function(db, notificationsActions) {
                 const mailOptions = {
                   from: `"${settings.school_name || 'School Administration'}" <${settings.smtp_email}>`,
                   to: p.email,
-                  subject: `Results Published - ${settings.current_term} (${settings.current_session})`,
-                  text: `Dear ${p.fullName || 'Parent'},\n\nPlease be informed that the results for ${settings.current_term} (${settings.current_session}) have been officially published.\n\nYou can now log into the portal to view and download your child's report card.\n\nThank you,\nManagement`
+                  subject: `${rptLabel} Results Published - ${settings.current_term} (${settings.current_session})`,
+                  text: `Dear ${p.fullName || 'Parent'},\n\nPlease be informed that the ${rptLabel.toLowerCase()} results for ${settings.current_term} (${settings.current_session}) have been officially published.\n\nYou can now log into the portal to view and download your child's ${rptLabel.toLowerCase()} report card.\n\nThank you,\nManagement`
                 };
                 emailPromises.push(transporter.sendMail(mailOptions));
               }

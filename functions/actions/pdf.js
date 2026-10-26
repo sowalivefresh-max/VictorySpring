@@ -21,7 +21,18 @@ function getReportSchoolLogoBase64() {
   return "";
 }
 
+function getHalfTermRemark(score) {
+  let s = parseFloat(score);
+  if (isNaN(s)) return '-';
+  if (s >= 35) return 'Excellent Mastery';
+  if (s >= 28) return 'Good Progress';
+  if (s >= 20) return 'Developing Steadily';
+  if (s >= 15) return 'Needs Attention';
+  return 'Needs Urgent Support';
+}
+
 module.exports = {
+  getHalfTermRemark: getHalfTermRemark,
   getReportCSS: function() {
     let html = '<style>';
     html += 'body{font-family: Arial, Helvetica, sans-serif; margin:0; padding:0; color:#000; font-size:10px;}';
@@ -324,7 +335,8 @@ module.exports = {
     if (schoolPhone) contactLine += (contactLine ? ' | ' : '') + 'Tel: ' + schoolPhone;
     if (contactLine) html += '<div class="school-contact">' + contactLine + '</div>';
     
-    html += '<div class="rpt-title">STUDENT REPORT SHEET</div>';
+    let isHalfTerm = report.reportType && report.reportType.toLowerCase().includes('half');
+    html += '<div class="rpt-title">' + (isHalfTerm ? 'STUDENT HALF-TERM REPORT SHEET' : 'STUDENT REPORT SHEET') + '</div>';
     html += '</div>';
     
     html += '<div class="hdr-spacer"></div>';
@@ -362,13 +374,11 @@ module.exports = {
     html += '<div class="passport"><img src="' + photoUrl + '" style="width:100%; height:100%; object-fit:cover;"></div>';
     html += '</div>';
 
-    let isHalfTerm = report.reportType && report.reportType.toLowerCase().includes('half');
-
     // Scores Table (Core Subjects)
     html += '<table>';
     html += '<tr><th>SUBJECTS</th>';
     if (isHalfTerm) {
-      html += '<th>CA1</th><th>CA2</th>';
+      html += '<th>MID-TERM TEST (30)</th><th>PROJECT WORK (10)</th><th>TOTAL (40)</th><th>REMARK</th>';
     } else {
       html += '<th>CA (40%)</th><th>EXAM (60%)</th><th>TOTAL (100%)</th><th>GRADE</th>';
     }
@@ -378,21 +388,33 @@ module.exports = {
     let scoredCount = 0;
     for (let i = 0; i < scores.length; i++) {
       let sc = scores[i];
-      let tTotal = (sc.total !== undefined && sc.total !== null && sc.total !== '') ? sc.total : (sc.termTotal !== undefined ? sc.termTotal : '-');
-      let numTotal = Number(tTotal);
-      let isScored = !isNaN(numTotal) && tTotal !== '-';
-      if (isScored) {
-        totalMarks += numTotal;
-        scoredCount++;
-      }
-      
       html += '<tr><td class="text-left">' + (sc.subjectName || '') + '</td>';
       
       if (isHalfTerm) {
-        let ca1 = sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' ? sc.ca1 : (sc.CA1 !== undefined ? sc.CA1 : '-');
-        let ca2 = sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' ? sc.ca2 : (sc.CA2 !== undefined ? sc.CA2 : '-');
-        html += '<td>' + ca1 + '</td><td>' + ca2 + '</td>';
+        let mid = (sc.midTermTest !== undefined && sc.midTermTest !== null && sc.midTermTest !== '') ? sc.midTermTest : (sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' ? sc.ca1 : (sc.CA1 !== undefined ? sc.CA1 : '-'));
+        let proj = (sc.projectWork !== undefined && sc.projectWork !== null && sc.projectWork !== '') ? sc.projectWork : (sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' ? sc.ca2 : (sc.CA2 !== undefined ? sc.CA2 : '-'));
+        let numMid = (mid !== '-' && !isNaN(Number(mid))) ? Number(mid) : null;
+        let numProj = (proj !== '-' && !isNaN(Number(proj))) ? Number(proj) : null;
+        let tot40 = (numMid !== null || numProj !== null) ? ((numMid || 0) + (numProj || 0)) : (sc.halfTermTotal !== undefined && sc.halfTermTotal !== null && sc.halfTermTotal !== '' ? Number(sc.halfTermTotal) : null);
+        let rem = tot40 !== null && !isNaN(tot40) ? getHalfTermRemark(tot40) : (sc.remark || sc.halfTermRemark || '-');
+        
+        if (tot40 !== null && !isNaN(tot40)) {
+          totalMarks += tot40;
+          scoredCount++;
+        }
+        
+        html += '<td>' + (numMid !== null ? numMid : '-') + '</td>';
+        html += '<td>' + (numProj !== null ? numProj : '-') + '</td>';
+        html += '<td><strong>' + (tot40 !== null ? tot40 : '-') + '</strong></td>';
+        html += '<td>' + rem + '</td>';
       } else {
+        let tTotal = (sc.total !== undefined && sc.total !== null && sc.total !== '') ? sc.total : (sc.termTotal !== undefined ? sc.termTotal : '-');
+        let numTotal = Number(tTotal);
+        let isScored = !isNaN(numTotal) && tTotal !== '-';
+        if (isScored) {
+          totalMarks += numTotal;
+          scoredCount++;
+        }
         let ca1 = (sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' && sc.ca1 !== '-') ? Number(sc.ca1 || sc.CA1 || 0) : null;
         let ca2 = (sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' && sc.ca2 !== '-') ? Number(sc.ca2 || sc.CA2 || 0) : null;
         let ca3 = (sc.ca3 !== undefined && sc.ca3 !== null && sc.ca3 !== '' && sc.ca3 !== '-') ? Number(sc.ca3 || sc.CA3 || 0) : null;
@@ -404,8 +426,14 @@ module.exports = {
       html += '</tr>';
     }
 
-    html += '<tr class="summary-row"><td class="text-left">CORE SUBJECTS OFFERED</td><td colspan="' + (isHalfTerm ? 2 : 4) + '" style="text-align:left; padding-left:10px;">' + scores.length + '</td></tr>';
-    if (!isHalfTerm) {
+    html += '<tr class="summary-row"><td class="text-left">CORE SUBJECTS OFFERED</td><td colspan="4" style="text-align:left; padding-left:10px;">' + scores.length + '</td></tr>';
+    if (isHalfTerm) {
+      let maxPossibleMarks = scoredCount * 40;
+      let avgDisplay = scoredCount > 0 ? (totalMarks / scoredCount).toFixed(1) + ' / 40 (' + ((totalMarks / maxPossibleMarks) * 100).toFixed(1) + '%)' : '-';
+      let totalDisplay = scoredCount > 0 ? totalMarks + ' / ' + maxPossibleMarks : '-';
+      html += '<tr class="summary-row"><td class="text-left">TOTAL MARKS OBTAINED</td><td colspan="4" style="text-align:left; padding-left:10px;">' + totalDisplay + '</td></tr>';
+      html += '<tr class="summary-row"><td class="text-left">PUPIL AVERAGE (OUT OF 40)</td><td colspan="4" style="text-align:left; padding-left:10px;">' + avgDisplay + '</td></tr>';
+    } else {
       let avgDisplay = scoredCount > 0 ? (summary.average !== undefined ? summary.average + '%' : (totalMarks / scoredCount).toFixed(1) + '%') : (scores.length > 0 ? '-' : '0%');
       let totalDisplay = scoredCount > 0 ? totalMarks : (scores.length > 0 ? '-' : 0);
       html += '<tr class="summary-row"><td class="text-left">TOTAL MARKS OBTAINED</td><td colspan="4" style="text-align:left; padding-left:10px;">' + totalDisplay + '</td></tr>';
@@ -466,15 +494,26 @@ module.exports = {
     let ctSig = ctSigUrl ? '<img src="' + ctSigUrl + '" style="max-height:22px; object-fit:contain; margin-left:8px;">' : '';
     html += '<div class="sig-block" style="margin-top: 15px;"><div style="font-weight:bold; font-size:9px;">TEACHER\'S NAME:</div><div class="sig-line" style="display:flex; align-items:center; justify-content:center; font-style:italic; font-size:10px; font-weight:bold; min-height:16px;">' + (ctName ? ctName + ctSig : '') + '</div></div>';
     
-    html += '<table class="trait-table" style="margin-top:15px; margin-bottom:15px;">';
-    html += '<tr><th colspan="4">GRADES</th></tr>';
-    html += '<tr><td class="center">A</td><td>EXCELLENT</td><td class="center">90-100%</td><td>NA: NEEDS ATTENTION</td></tr>';
-    html += '<tr><td class="center">B</td><td>VERY GOOD</td><td class="center">80-89%</td><td>D: DEVELOPING</td></tr>';
-    html += '<tr><td class="center">C</td><td>GOOD</td><td class="center">70-79%</td><td>SD: STEADILY DEVELOPING</td></tr>';
-    html += '<tr><td class="center">D</td><td>FAIR</td><td class="center">60-69%</td><td>M: MASTERED</td></tr>';
-    html += '<tr><td class="center">E</td><td>POOR</td><td class="center">50-59%</td><td></td></tr>';
-    html += '<tr><td class="center">F</td><td>FAIL</td><td class="center">0-49%</td><td></td></tr>';
-    html += '</table>';
+    if (isHalfTerm) {
+      html += '<table class="trait-table" style="margin-top:15px; margin-bottom:15px;">';
+      html += '<tr><th colspan="3">HALF-TERM PERFORMANCE KEY (MAX 40)</th></tr>';
+      html += '<tr><td class="center">35 - 40</td><td>EXCELLENT MASTERY</td><td>NA: NEEDS ATTENTION</td></tr>';
+      html += '<tr><td class="center">28 - 34</td><td>GOOD PROGRESS</td><td>D: DEVELOPING</td></tr>';
+      html += '<tr><td class="center">20 - 27</td><td>DEVELOPING STEADILY</td><td>SD: STEADILY DEVELOPING</td></tr>';
+      html += '<tr><td class="center">15 - 19</td><td>NEEDS ATTENTION</td><td>M: MASTERED</td></tr>';
+      html += '<tr><td class="center">0 - 14</td><td>NEEDS URGENT SUPPORT</td><td></td></tr>';
+      html += '</table>';
+    } else {
+      html += '<table class="trait-table" style="margin-top:15px; margin-bottom:15px;">';
+      html += '<tr><th colspan="4">GRADES</th></tr>';
+      html += '<tr><td class="center">A</td><td>EXCELLENT</td><td class="center">90-100%</td><td>NA: NEEDS ATTENTION</td></tr>';
+      html += '<tr><td class="center">B</td><td>VERY GOOD</td><td class="center">80-89%</td><td>D: DEVELOPING</td></tr>';
+      html += '<tr><td class="center">C</td><td>GOOD</td><td class="center">70-79%</td><td>SD: STEADILY DEVELOPING</td></tr>';
+      html += '<tr><td class="center">D</td><td>FAIR</td><td class="center">60-69%</td><td>M: MASTERED</td></tr>';
+      html += '<tr><td class="center">E</td><td>POOR</td><td class="center">50-59%</td><td></td></tr>';
+      html += '<tr><td class="center">F</td><td>FAIL</td><td class="center">0-49%</td><td></td></tr>';
+      html += '</table>';
+    }
     
     html += '<div class="comment-box"><div class="comment-title">HEAD TEACHER\'S COMMENT:</div><div class="comment-text">' + (report.principalComment || report.headTeacherComment || '') + '</div></div>';
     

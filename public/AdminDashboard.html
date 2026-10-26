@@ -315,7 +315,8 @@
             <div class="aa-card-header">
               <h3 class="aa-card-title">Classes</h3>
               <div class="d-flex gap-2">
-                <button class="aa-btn aa-btn-info" id="btnPublishResults" onclick="togglePublishResults()"><i class="fa fa-bullhorn"></i> Publish Results</button>
+                <button class="aa-btn aa-btn-outline" id="btnPublishHalfTerm" onclick="togglePublishReport('half')"><i class="fa fa-clock"></i> Half-Term: <span id="statusHalfTermBadge" class="aa-badge aa-badge-secondary" style="margin-left:4px;">Unpublished</span></button>
+                <button class="aa-btn aa-btn-outline" id="btnPublishFullTerm" onclick="togglePublishReport('full')"><i class="fa fa-bullhorn"></i> Full-Term: <span id="statusFullTermBadge" class="aa-badge aa-badge-secondary" style="margin-left:4px;">Unpublished</span></button>
                 <button class="aa-btn aa-btn-secondary" onclick="openBroadsheetModal()"><i class="fa fa-file-excel"></i> Broadsheet</button>
                 <button class="aa-btn aa-btn-outline" onclick="openBulkModal('classes')"><i class="fa fa-upload"></i> Bulk Import</button>
                 <button class="aa-btn aa-btn-primary" onclick="openModal('classModal');resetForm('classForm');document.getElementById('classId').value=''"><i class="fa fa-plus"></i> Add Class</button>
@@ -686,6 +687,23 @@
                   <div class="aa-form-group">
                     <label class="aa-label text-danger" style="color:#dc3545;">Custom Lock Message</label>
                     <textarea name="lock_message" class="aa-input" rows="2" style="border-color:#dc3545;" placeholder="Your school portal has been locked due to outstanding subscription payments. Please contact the developer."></textarea>
+                  </div>
+                </div>
+
+                <div class="aa-card mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+                  <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:600;"><i class="fa fa-bullhorn text-primary"></i> Parent Report Publishing Controls</h4>
+                  <p class="text-muted" style="font-size:12px; margin-bottom:14px;">Independently publish or unpublish Half-Term (40 marks) and Full-Term (100 marks) reports for parents to view in their portal.</p>
+                  <div class="d-flex gap-3 flex-wrap">
+                    <div style="flex:1; min-width:220px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:6px;">
+                      <div style="font-weight:600; font-size:13px; margin-bottom:4px;">Half-Term Report (40 Marks)</div>
+                      <div style="margin-bottom:10px; font-size:12px;">Status: <span id="settingsHalfTermStatus" class="aa-badge aa-badge-secondary">Unpublished</span></div>
+                      <button type="button" class="aa-btn aa-btn-sm w-100" id="btnSettingsPublishHalf" onclick="togglePublishReport('half')"><i class="fa fa-bullhorn"></i> Publish Half-Term</button>
+                    </div>
+                    <div style="flex:1; min-width:220px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:6px;">
+                      <div style="font-weight:600; font-size:13px; margin-bottom:4px;">Full-Term Report (100 Marks)</div>
+                      <div style="margin-bottom:10px; font-size:12px;">Status: <span id="settingsFullTermStatus" class="aa-badge aa-badge-secondary">Unpublished</span></div>
+                      <button type="button" class="aa-btn aa-btn-sm w-100" id="btnSettingsPublishFull" onclick="togglePublishReport('full')"><i class="fa fa-bullhorn"></i> Publish Full-Term</button>
+                    </div>
                   </div>
                 </div>
 
@@ -3030,15 +3048,49 @@
         window.globalSettingsData = s;
         setFormData('settingsForm', s);
         
-        var btn = document.getElementById('btnPublishResults');
-        if (btn) {
-          if (s.results_published) {
-            btn.className = 'aa-btn aa-btn-danger';
-            btn.innerHTML = '<i class="fa fa-eye-slash"></i> Unpublish Results';
-          } else {
-            btn.className = 'aa-btn aa-btn-info';
-            btn.innerHTML = '<i class="fa fa-bullhorn"></i> Publish Results';
-          }
+        var halfPub = !!s.half_term_published;
+        var fullPub = !!(s.full_term_published !== undefined ? s.full_term_published : s.results_published);
+
+        var btnHalf = document.getElementById('btnPublishHalfTerm');
+        var badgeHalf = document.getElementById('statusHalfTermBadge');
+        var settHalfStatus = document.getElementById('settingsHalfTermStatus');
+        var btnSettHalf = document.getElementById('btnSettingsPublishHalf');
+
+        if (btnHalf) {
+          btnHalf.className = halfPub ? 'aa-btn aa-btn-success' : 'aa-btn aa-btn-outline';
+        }
+        if (badgeHalf) {
+          badgeHalf.className = halfPub ? 'aa-badge aa-badge-success' : 'aa-badge aa-badge-secondary';
+          badgeHalf.textContent = halfPub ? 'Published' : 'Unpublished';
+        }
+        if (settHalfStatus) {
+          settHalfStatus.className = halfPub ? 'aa-badge aa-badge-success' : 'aa-badge aa-badge-secondary';
+          settHalfStatus.textContent = halfPub ? 'Published' : 'Unpublished';
+        }
+        if (btnSettHalf) {
+          btnSettHalf.className = halfPub ? 'aa-btn aa-btn-sm aa-btn-danger w-100' : 'aa-btn aa-btn-sm aa-btn-primary w-100';
+          btnSettHalf.innerHTML = halfPub ? '<i class="fa fa-eye-slash"></i> Unpublish Half-Term' : '<i class="fa fa-bullhorn"></i> Publish Half-Term';
+        }
+
+        var btnFull = document.getElementById('btnPublishFullTerm');
+        var badgeFull = document.getElementById('statusFullTermBadge');
+        var settFullStatus = document.getElementById('settingsFullTermStatus');
+        var btnSettFull = document.getElementById('btnSettingsPublishFull');
+
+        if (btnFull) {
+          btnFull.className = fullPub ? 'aa-btn aa-btn-success' : 'aa-btn aa-btn-outline';
+        }
+        if (badgeFull) {
+          badgeFull.className = fullPub ? 'aa-badge aa-badge-success' : 'aa-badge aa-badge-secondary';
+          badgeFull.textContent = fullPub ? 'Published' : 'Unpublished';
+        }
+        if (settFullStatus) {
+          settFullStatus.className = fullPub ? 'aa-badge aa-badge-success' : 'aa-badge aa-badge-secondary';
+          settFullStatus.textContent = fullPub ? 'Published' : 'Unpublished';
+        }
+        if (btnSettFull) {
+          btnSettFull.className = fullPub ? 'aa-btn aa-btn-sm aa-btn-danger w-100' : 'aa-btn aa-btn-sm aa-btn-primary w-100';
+          btnSettFull.innerHTML = fullPub ? '<i class="fa fa-eye-slash"></i> Unpublish Full-Term' : '<i class="fa fa-bullhorn"></i> Publish Full-Term';
         }
 
         if (s.school_logo_url) document.getElementById('settingsLogoPreview').innerHTML = '<img src="'+s.school_logo_url+'" style="width:100%;height:100%;object-fit:contain;">';
@@ -3109,8 +3161,10 @@
         data.gradebook_format = format;
       } catch(e) {}
 
-      if (window.globalSettingsData && window.globalSettingsData.results_published !== undefined) {
-        data.results_published = window.globalSettingsData.results_published;
+      if (window.globalSettingsData) {
+        if (window.globalSettingsData.results_published !== undefined) data.results_published = window.globalSettingsData.results_published;
+        if (window.globalSettingsData.full_term_published !== undefined) data.full_term_published = window.globalSettingsData.full_term_published;
+        if (window.globalSettingsData.half_term_published !== undefined) data.half_term_published = window.globalSettingsData.half_term_published;
       }
       callServer('adminUpdateSettings', [AA.token, data], function(res) {
         showToast(res.message, res.success ? 'success' : 'error');
@@ -3118,24 +3172,47 @@
       }, null, true);
     }
 
-    function togglePublishResults() {
+    window.togglePublishReport = function(type) {
       var s = window.globalSettingsData || {};
-      var isCurrentlyPublished = !!s.results_published;
-      var msg = isCurrentlyPublished ? 
-        'Are you sure you want to UNPUBLISH the results? Parents will no longer be able to see them.' : 
-        'Are you sure you want to PUBLISH the results for the current term? Parents will instantly get access.';
-        
-      aaConfirm(msg, function() {
-        var data = { results_published: !isCurrentlyPublished };
-        callServer('adminUpdateSettings', [AA.token, data], function(res) {
-          showToast(res.message, res.success ? 'success' : 'error');
-          if(res.success) { 
-            s.results_published = data.results_published;
-            loadSettings(); 
-          }
-        }, null, true);
-      });
-    }
+      if (type === 'half') {
+        var isCurrentlyPublished = !!s.half_term_published;
+        var msg = isCurrentlyPublished ? 
+          'Are you sure you want to UNPUBLISH Half-Term results? Parents will no longer be able to view Half-Term reports.' : 
+          'Are you sure you want to PUBLISH Half-Term results for the current term? Parents will instantly get access.';
+          
+        aaConfirm(msg, function() {
+          var data = { half_term_published: !isCurrentlyPublished };
+          callServer('adminUpdateSettings', [AA.token, data], function(res) {
+            showToast(res.message, res.success ? 'success' : 'error');
+            if(res.success) { 
+              s.half_term_published = data.half_term_published;
+              loadSettings(); 
+            }
+          }, null, true);
+        });
+      } else {
+        var isCurrentlyPublished = !!(s.full_term_published !== undefined ? s.full_term_published : s.results_published);
+        var msg = isCurrentlyPublished ? 
+          'Are you sure you want to UNPUBLISH Full-Term results? Parents will no longer be able to view Full-Term reports.' : 
+          'Are you sure you want to PUBLISH Full-Term results for the current term? Parents will instantly get access.';
+          
+        aaConfirm(msg, function() {
+          var data = { full_term_published: !isCurrentlyPublished, results_published: !isCurrentlyPublished };
+          callServer('adminUpdateSettings', [AA.token, data], function(res) {
+            showToast(res.message, res.success ? 'success' : 'error');
+            if(res.success) { 
+              s.full_term_published = data.full_term_published;
+              s.results_published = data.results_published;
+              loadSettings(); 
+            }
+          }, null, true);
+        });
+      }
+    };
+
+    window.togglePublishResults = function() {
+      togglePublishReport('full');
+    };
 
     // --- Utilities ---
     function previewImage(input, previewId, base64Id) {

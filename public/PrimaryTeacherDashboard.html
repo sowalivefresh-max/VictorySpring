@@ -158,6 +158,10 @@
                 <select id="scoreSubjectSelect" class="aa-select" style="max-width:250px;" onchange="loadStudentsForScoring(this.value)">
                   <option value="">-- Select Subject --</option>
                 </select>
+                <select id="scoreTermMode" class="aa-select" style="max-width:185px;" onchange="loadStudentsForScoring()">
+                  <option value="full">Full Term (All Scores)</option>
+                  <option value="half">Half Term (Out of 40)</option>
+                </select>
                 <button class="aa-btn aa-btn-primary" onclick="loadStudentsForScoring()"><i class="fa fa-sync-alt"></i> Load</button>
                 <button class="aa-btn aa-btn-primary" style="margin-left:5px;" onclick="openSubjectAttendance()"><i class="fa fa-calendar-check"></i> Take Att.</button>
                 <div class="flex-1 text-end">
@@ -918,12 +922,33 @@
       }, true);
     }
 
+    var currentScoreStudents = [];
+    var currentLoadedScores = [];
+
+    window.recalcPrimaryHalfTermRow = function(sid) {
+      var midInput = document.getElementById('midTermTest_' + sid);
+      var prjInput = document.getElementById('projectWork_' + sid);
+      var mid = parseFloat(midInput ? midInput.value : 0) || 0;
+      var prj = parseFloat(prjInput ? prjInput.value : 0) || 0;
+      if (mid > 30) { mid = 30; if (midInput) midInput.value = 30; }
+      else if (mid < 0) { mid = 0; if (midInput) midInput.value = 0; }
+      if (prj > 10) { prj = 10; if (prjInput) prjInput.value = 10; }
+      else if (prj < 0) { prj = 0; if (prjInput) prjInput.value = 0; }
+      var tot = mid + prj;
+      var totEl = document.getElementById('halfTotal_' + sid);
+      if (totEl) totEl.textContent = tot;
+      var remEl = document.getElementById('halfRemark_' + sid);
+      if (remEl) remEl.innerHTML = typeof getHalfTermRemarkBadge === 'function' ? getHalfTermRemarkBadge(tot) : tot;
+    };
+
     function loadMySubjectsForScores() {}
     function loadStudentsForScoring() {
       var subId = document.getElementById('scoreSubjectSelect').value;
       if(!subId) { document.getElementById('scoresCard').style.display='none'; return; }
+      var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
       callServer('teacherGetScores', [AA.token, {subjectId: subId, className: myClass, term: currentTerm, session: currentSession}], function(scores) {
         document.getElementById('scoresCard').style.display='block';
+        currentLoadedScores = scores || [];
         
         var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
           { id: 'ca1', title: 'CA1', max: 10 },
@@ -934,17 +959,21 @@
 
         var theadTr = document.getElementById('scoreTableHeader');
         var theadHtml = '<th>Name</th>';
-        format.forEach(function(col) {
-          theadHtml += '<th style="width:70px;">' + AA.escapeHTML(col.title) + ' (' + col.max + ')</th>';
-        });
-        theadHtml += '<th>Total</th><th>Grade</th>';
+        if (mode === 'half') {
+          theadHtml += '<th style="width:120px;">Mid-Term Test (30)</th><th style="width:120px;">Project Work (10)</th><th style="width:90px;">Total (40)</th><th style="width:160px;">Remark</th>';
+        } else {
+          format.forEach(function(col) {
+            theadHtml += '<th style="width:70px;">' + AA.escapeHTML(col.title) + ' (' + col.max + ')</th>';
+          });
+          theadHtml += '<th>Total</th><th>Grade</th>';
+        }
         theadTr.innerHTML = '<tr>' + theadHtml + '</tr>';
 
         var tbody = document.querySelector('#scoresTable tbody'); tbody.innerHTML = '';
         var allLocked = myStudents.length>0; var anyScores=false;
 
         myStudents.forEach(function(st) {
-          var sc = scores.find(function(x){ return String(x.studentID||x.studentId) === String(st.id||st.iD); }) || {};
+          var sc = currentLoadedScores.find(function(x){ return String(x.studentID||x.studentId) === String(st.id||st.iD); }) || {};
           var sid = st.id||st.iD;
           var locked = String(sc.locked) === 'true' || String(sc.submitted) === 'true';
           if(!locked) allLocked = false;
@@ -954,19 +983,33 @@
           var shield = st.isFinanciallyCleared ? ' <i class="fa fa-shield-alt text-gold" title="Financially Cleared" style="color:var(--aa-gold);"></i>' : '';
           var trHtml = '<td>'+AA.escapeHTML(st.fullName)+shield+'</td>';
           
-          format.forEach(function(col) {
-            var val = sc[col.id] !== undefined ? sc[col.id] : (sc[col.id.toUpperCase()] || 0);
-            trHtml += '<td><input type="number" id="'+col.id+'_'+sid+'" class="aa-input" style="padding:4px;" value="'+val+'" max="'+col.max+'" '+(locked?'disabled':'')+'></td>';
-          });
-          
-          trHtml += '<td><strong>'+(sc.total||0)+'</strong></td>'+
-            '<td>'+formatGrade(sc.grade||'')+'</td>';
+          if (mode === 'half') {
+            var midVal = sc.midTermTest !== undefined && sc.midTermTest !== null ? sc.midTermTest : (sc.ca1 !== undefined && sc.ca1 !== null ? sc.ca1 : (sc.CA1 || 0));
+            var prjVal = sc.projectWork !== undefined && sc.projectWork !== null ? sc.projectWork : (sc.ca2 !== undefined && sc.ca2 !== null ? sc.ca2 : (sc.CA2 || 0));
+            var numMid = parseFloat(midVal) || 0;
+            var numPrj = parseFloat(prjVal) || 0;
+            var tot40 = numMid + numPrj;
+            var remBadge = typeof getHalfTermRemarkBadge === 'function' ? getHalfTermRemarkBadge(tot40) : '';
+
+            trHtml += '<td><input type="number" id="midTermTest_'+sid+'" class="aa-input" style="padding:4px;" value="'+midVal+'" min="0" max="30" oninput="recalcPrimaryHalfTermRow(\''+sid+'\')" '+(locked?'disabled':'')+'></td>' +
+                      '<td><input type="number" id="projectWork_'+sid+'" class="aa-input" style="padding:4px;" value="'+prjVal+'" min="0" max="10" oninput="recalcPrimaryHalfTermRow(\''+sid+'\')" '+(locked?'disabled':'')+'></td>' +
+                      '<td><strong id="halfTotal_'+sid+'">'+tot40+'</strong></td>' +
+                      '<td><span id="halfRemark_'+sid+'">'+remBadge+'</span></td>';
+          } else {
+            format.forEach(function(col) {
+              var val = sc[col.id] !== undefined ? sc[col.id] : (sc[col.id.toUpperCase()] || 0);
+              trHtml += '<td><input type="number" id="'+col.id+'_'+sid+'" class="aa-input" style="padding:4px;" value="'+val+'" max="'+col.max+'" oninput="if(parseFloat(this.value) > '+col.max+') this.value = '+col.max+'; else if(parseFloat(this.value) < 0) this.value = 0;" '+(locked?'disabled':'')+'></td>';
+            });
+            trHtml += '<td><strong>'+(sc.total||0)+'</strong></td>'+
+              '<td>'+formatGrade(sc.grade||'')+'</td>';
+          }
             
           tr.innerHTML = trHtml;
           tbody.appendChild(tr);
         });
 
-        if(myStudents.length===0) tbody.innerHTML = '<tr><td colspan="'+(format.length+3)+'" class="text-center text-muted">No students in your class.</td></tr>';
+        var colCount = mode === 'half' ? 5 : (format.length + 3);
+        if(myStudents.length===0) tbody.innerHTML = '<tr><td colspan="'+colCount+'" class="text-center text-muted">No students in your class.</td></tr>';
         var canSubmit = myStudents.length > 0 && !allLocked && anyScores;
         var canSave = myStudents.length > 0 && !allLocked;
         document.getElementById('btnSaveAllScores').style.display = canSave ? 'inline-block' : 'none';
@@ -981,6 +1024,7 @@
       var subId = subSel.value;
       if(!subId) return;
       var subName = subSel.options[subSel.selectedIndex].text;
+      var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
       var payload = [];
       var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
         { id: 'ca1', title: 'CA1', max: 10 },
@@ -988,35 +1032,87 @@
         { id: 'ca3', title: 'CA3', max: 10 },
         { id: 'exam', title: 'Exam', max: 70 }
       ];
-      var firstColId = format[0].id;
-      
-      myStudents.forEach(function(st) {
-        var sid = st.id || st.iD;
-        var firstInput = document.getElementById(firstColId+'_'+sid);
-        if(firstInput && !firstInput.disabled) {
-          var tot = 0;
-          var scoreData = {
-            studentId: sid, subjectId: subId, subjectName: subName, className: myClass, term: currentTerm, session: currentSession
-          };
-          
-          format.forEach(function(col) {
-            var inputEl = document.getElementById(col.id+'_'+sid);
-            var val = parseFloat(inputEl ? inputEl.value : 0) || 0;
-            if (val > col.max) val = col.max; // Cap it
-            tot += val;
-            scoreData[col.id] = val;
-          });
-          
-          var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(tot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(tot) : '');
-          
-          scoreData.total = tot;
-          scoreData.termTotal = tot;
-          scoreData.grade = grd;
-          scoreData.termGrade = grd;
-          
-          payload.push(scoreData);
-        }
-      });
+
+      if (mode === 'half') {
+        myStudents.forEach(function(st) {
+          var sid = st.id || st.iD;
+          var midInput = document.getElementById('midTermTest_' + sid);
+          if (midInput && !midInput.disabled) {
+            var prjInput = document.getElementById('projectWork_' + sid);
+            var mid = parseFloat(midInput.value || 0) || 0;
+            var prj = parseFloat(prjInput ? prjInput.value : 0) || 0;
+            if (mid > 30) mid = 30;
+            if (prj > 10) prj = 10;
+            var halfTot = mid + prj;
+            var rem = typeof getHalfTermRemark === 'function' ? getHalfTermRemark(halfTot) : '';
+
+            var sc = currentLoadedScores.find(function(x){ return String(x.studentID || x.studentId) === String(sid); }) || {};
+            var scoreData = {
+              studentId: sid,
+              subjectId: subId,
+              subjectName: subName,
+              className: myClass,
+              term: currentTerm,
+              session: currentSession,
+              midTermTest: mid,
+              projectWork: prj,
+              ca1: mid,
+              ca2: prj,
+              halfTermTotal: halfTot,
+              remark: rem,
+              halfTermRemark: rem
+            };
+            if (sc.id || sc.iD) scoreData.id = sc.id || sc.iD;
+
+            if (sc.exam !== undefined && sc.exam !== null && sc.exam !== '') {
+              var examVal = parseFloat(sc.exam) || 0;
+              var ca3Val = parseFloat(sc.ca3) || 0;
+              var fullTot = mid + prj + ca3Val + examVal;
+              scoreData.exam = examVal;
+              scoreData.ca3 = ca3Val;
+              scoreData.total = fullTot;
+              scoreData.termTotal = fullTot;
+              var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(fullTot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(fullTot) : '');
+              scoreData.grade = grd;
+              scoreData.termGrade = grd;
+            } else {
+              scoreData.total = halfTot;
+              scoreData.termTotal = halfTot;
+            }
+            payload.push(scoreData);
+          }
+        });
+      } else {
+        var firstColId = format[0].id;
+        myStudents.forEach(function(st) {
+          var sid = st.id || st.iD;
+          var firstInput = document.getElementById(firstColId+'_'+sid);
+          if(firstInput && !firstInput.disabled) {
+            var tot = 0;
+            var scoreData = {
+              studentId: sid, subjectId: subId, subjectName: subName, className: myClass, term: currentTerm, session: currentSession
+            };
+            
+            format.forEach(function(col) {
+              var inputEl = document.getElementById(col.id+'_'+sid);
+              var val = parseFloat(inputEl ? inputEl.value : 0) || 0;
+              if (val > col.max) val = col.max; // Cap it
+              tot += val;
+              scoreData[col.id] = val;
+            });
+            
+            var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(tot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(tot) : '');
+            
+            scoreData.total = tot;
+            scoreData.termTotal = tot;
+            scoreData.grade = grd;
+            scoreData.termGrade = grd;
+            
+            payload.push(scoreData);
+          }
+        });
+      }
+
       if(payload.length === 0) return showToast('No editable scores found', 'info');
       
       var btn = document.getElementById('btnSaveAllScores');
@@ -1103,6 +1199,31 @@
     function downloadScoreTemplate() {
       var tbody = document.querySelector('#scoresTable tbody');
       var rows = tbody.querySelectorAll('tr');
+      var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
+
+      if (mode === 'half') {
+        var csv = 'StudentID,StudentName,MidTermTest(30),ProjectWork(10),TeacherComment\n';
+        rows.forEach(function(tr) {
+          if(tr.cells.length < 4) return;
+          var name = tr.cells[0].innerText.replace(/"/g, '""');
+          var input = tr.querySelector('input[id^="midTermTest_"]');
+          if(input) {
+            var sid = input.id.split('_')[1];
+            csv += '"' + sid + '","' + name + '",,,\n';
+          }
+        });
+        var subName = document.getElementById('scoreSubjectSelect').options[document.getElementById('scoreSubjectSelect').selectedIndex].text;
+        var blob = new Blob([csv], {type: 'text/csv'});
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', subName.replace(/[^a-zA-Z0-9]/g, '_') + '_HalfTerm_Scores.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
       var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
         { id: 'ca1', title: 'CA1', max: 10 },
         { id: 'ca2', title: 'CA2', max: 10 },
@@ -1161,6 +1282,8 @@
       reader.onload = function(e) {
         var parsed = parseCSV(e.target.result);
         var payload = [];
+        var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
+
         parsed.forEach(function(row) {
           if(row.StudentID) {
             var scoreData = {
@@ -1172,13 +1295,33 @@
               session: currentSession,
               teacherComment: row.TeacherComment || ''
             };
-            format.forEach(function(col) {
-              // Strip commas and spaces to match object keys from CSV
-              var key = col.title.replace(/,/g, '');
-              var val = parseFloat(row[key]) || 0;
-              if (val > col.max) val = col.max; // Cap it
-              scoreData[col.id] = val;
-            });
+
+            var isHalfRow = row['MidTermTest(30)'] !== undefined || row['MidTermTest'] !== undefined || row['Mid-Term Test (30)'] !== undefined || mode === 'half';
+            if (isHalfRow && (row['MidTermTest(30)'] !== undefined || row['MidTermTest'] !== undefined || row['Mid-Term Test (30)'] !== undefined)) {
+              var mid = parseFloat(row['MidTermTest(30)'] || row['MidTermTest'] || row['Mid-Term Test (30)'] || 0) || 0;
+              var prj = parseFloat(row['ProjectWork(10)'] || row['ProjectWork'] || row['Project Work (10)'] || 0) || 0;
+              if (mid > 30) mid = 30;
+              if (prj > 10) prj = 10;
+              var halfTot = mid + prj;
+              scoreData.midTermTest = mid;
+              scoreData.projectWork = prj;
+              scoreData.ca1 = mid;
+              scoreData.ca2 = prj;
+              scoreData.halfTermTotal = halfTot;
+              var rem = typeof getHalfTermRemark === 'function' ? getHalfTermRemark(halfTot) : '';
+              scoreData.remark = rem;
+              scoreData.halfTermRemark = rem;
+              scoreData.total = halfTot;
+              scoreData.termTotal = halfTot;
+            } else {
+              format.forEach(function(col) {
+                // Strip commas and spaces to match object keys from CSV
+                var key = col.title.replace(/,/g, '');
+                var val = parseFloat(row[key]) || 0;
+                if (val > col.max) val = col.max; // Cap it
+                scoreData[col.id] = val;
+              });
+            }
             payload.push(scoreData);
           }
         });

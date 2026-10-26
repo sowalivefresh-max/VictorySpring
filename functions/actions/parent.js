@@ -99,8 +99,21 @@ module.exports = function(db) {
 
         const settingsSnap = await db.collection("settings").doc("global").get();
         const cfg = settingsSnap.exists ? settingsSnap.data() : {};
-        if (term === cfg.current_term && academicSession === cfg.current_session && !cfg.results_published) {
-          return res.json({ success: false, message: "Results for the current term have not been published yet." });
+        if (term === cfg.current_term && academicSession === cfg.current_session) {
+          const isHalfTermReq = reportType && String(reportType).toLowerCase().includes('half');
+          const isHalfPublished = !!(cfg.half_term_published !== undefined ? cfg.half_term_published : cfg.results_published);
+          const isFullPublished = !!(cfg.full_term_published !== undefined ? cfg.full_term_published : cfg.results_published);
+          if (isHalfTermReq && !isHalfPublished) {
+            return res.json({ success: false, message: "Half-term results for the current term have not been published yet." });
+          }
+          if (!isHalfTermReq && !isFullPublished) {
+            return res.json({ 
+              success: false, 
+              message: isHalfPublished 
+                ? "Full-term results have not been published yet. (Half-term report is available)." 
+                : "Results for the current term have not been published yet." 
+            });
+          }
         }
 
         // === REPORT FINANCE LOCK CHECK ===
@@ -286,8 +299,21 @@ module.exports = function(db) {
         
         const settingsSnap = await db.collection("settings").doc("global").get();
         const cfg = settingsSnap.exists ? settingsSnap.data() : {};
-        if ((!session || session.role === "parent") && term === cfg.current_term && academicSession === cfg.current_session && !cfg.results_published) {
-          return res.json({ success: false, message: "Results for the current term have not been published yet." });
+        if ((!session || session.role === "parent") && term === cfg.current_term && academicSession === cfg.current_session) {
+          const isHalfTermReq = reportType && String(reportType).toLowerCase().includes('half');
+          const isHalfPublished = !!(cfg.half_term_published !== undefined ? cfg.half_term_published : cfg.results_published);
+          const isFullPublished = !!(cfg.full_term_published !== undefined ? cfg.full_term_published : cfg.results_published);
+          if (isHalfTermReq && !isHalfPublished) {
+            return res.json({ success: false, message: "Half-term results for the current term have not been published yet." });
+          }
+          if (!isHalfTermReq && !isFullPublished) {
+            return res.json({ 
+              success: false, 
+              message: isHalfPublished 
+                ? "Full-term results have not been published yet. (Half-term report is available)." 
+                : "Results for the current term have not been published yet." 
+            });
+          }
         }
         
         const scoresSnap = await db.collection("assessments")

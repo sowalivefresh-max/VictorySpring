@@ -536,6 +536,26 @@ function formatGrade(grade) {
   return '<span class="' + (cls[grade] || '') + '">' + (grade || '') + '</span>';
 }
 
+function getHalfTermRemark(score) {
+  var s = parseFloat(score);
+  if (isNaN(s)) return '-';
+  if (s >= 35) return 'Excellent Mastery';
+  if (s >= 28) return 'Good Progress';
+  if (s >= 20) return 'Developing Steadily';
+  if (s >= 15) return 'Needs Attention';
+  return 'Needs Urgent Support';
+}
+
+function getHalfTermRemarkBadge(score) {
+  var s = parseFloat(score);
+  if (isNaN(s)) return '<span class="text-muted">-</span>';
+  if (s >= 35) return '<span class="aa-badge aa-badge-success" style="background:#15803d;color:#fff;font-weight:600;">Excellent Mastery</span>';
+  if (s >= 28) return '<span class="aa-badge aa-badge-info" style="background:#0284c7;color:#fff;font-weight:600;">Good Progress</span>';
+  if (s >= 20) return '<span class="aa-badge aa-badge-warning" style="background:#d97706;color:#fff;font-weight:600;">Developing Steadily</span>';
+  if (s >= 15) return '<span class="aa-badge aa-badge-warning" style="background:#ea580c;color:#fff;font-weight:600;">Needs Attention</span>';
+  return '<span class="aa-badge aa-badge-danger" style="background:#dc2626;color:#fff;font-weight:600;">Needs Urgent Support</span>';
+}
+
 function formatStatus(status) {
   if (!status) return '';
   var s = String(status).toLowerCase();
