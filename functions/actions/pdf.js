@@ -415,10 +415,17 @@ module.exports = {
           totalMarks += numTotal;
           scoredCount++;
         }
-        let ca1 = (sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' && sc.ca1 !== '-') ? Number(sc.ca1 || sc.CA1 || 0) : null;
-        let ca2 = (sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' && sc.ca2 !== '-') ? Number(sc.ca2 || sc.CA2 || 0) : null;
-        let ca3 = (sc.ca3 !== undefined && sc.ca3 !== null && sc.ca3 !== '' && sc.ca3 !== '-') ? Number(sc.ca3 || sc.CA3 || 0) : null;
-        let sumCA = (ca1 !== null || ca2 !== null || ca3 !== null) ? ((ca1 || 0) + (ca2 || 0) + (ca3 || 0)) : '-';
+        let sumCA = '-';
+        if (sc.ca !== undefined && sc.ca !== null && sc.ca !== '' && sc.ca !== '-') {
+          sumCA = Number(sc.ca);
+        } else if (sc.halfTermTotal !== undefined && sc.halfTermTotal !== null && sc.halfTermTotal !== '' && sc.halfTermTotal !== '-') {
+          sumCA = Number(sc.halfTermTotal);
+        } else {
+          let ca1 = (sc.ca1 !== undefined && sc.ca1 !== null && sc.ca1 !== '' && sc.ca1 !== '-') ? Number(sc.ca1 || sc.CA1 || 0) : null;
+          let ca2 = (sc.ca2 !== undefined && sc.ca2 !== null && sc.ca2 !== '' && sc.ca2 !== '-') ? Number(sc.ca2 || sc.CA2 || 0) : null;
+          let ca3 = (sc.ca3 !== undefined && sc.ca3 !== null && sc.ca3 !== '' && sc.ca3 !== '-') ? Number(sc.ca3 || sc.CA3 || 0) : null;
+          sumCA = (ca1 !== null || ca2 !== null || ca3 !== null) ? ((ca1 || 0) + (ca2 || 0) + (ca3 || 0)) : '-';
+        }
         let exam = (sc.exam !== undefined && sc.exam !== null && sc.exam !== '' && sc.exam !== '-') ? sc.exam : (sc.EXAM !== undefined ? sc.EXAM : '-');
         let g = sc.termGrade || sc.grade || (isScored ? '' : '-');
         html += '<td>' + sumCA + '</td><td>' + exam + '</td><td><strong>' + (isScored ? numTotal : '-') + '</strong></td><td>' + g + '</td>';

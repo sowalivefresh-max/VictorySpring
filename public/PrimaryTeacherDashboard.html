@@ -941,6 +941,23 @@
       if (remEl) remEl.innerHTML = typeof getHalfTermRemarkBadge === 'function' ? getHalfTermRemarkBadge(tot) : tot;
     };
 
+    window.recalcPrimaryFullTermRow = function(sid) {
+      var caInput = document.getElementById('ca_' + sid);
+      var examInput = document.getElementById('exam_' + sid);
+      var ca = parseFloat(caInput ? caInput.value : 0) || 0;
+      var exam = parseFloat(examInput ? examInput.value : 0) || 0;
+      if (ca > 40) { ca = 40; if (caInput) caInput.value = 40; }
+      else if (ca < 0) { ca = 0; if (caInput) caInput.value = 0; }
+      if (exam > 60) { exam = 60; if (examInput) examInput.value = 60; }
+      else if (exam < 0) { exam = 0; if (examInput) examInput.value = 0; }
+      var tot = ca + exam;
+      var totEl = document.getElementById('fullTotal_' + sid);
+      if (totEl) totEl.textContent = tot;
+      var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(tot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(tot) : '');
+      var grdEl = document.getElementById('fullGrade_' + sid);
+      if (grdEl) grdEl.innerHTML = formatGrade(grd);
+    };
+
     function loadMySubjectsForScores() {}
     function loadStudentsForScoring() {
       var subId = document.getElementById('scoreSubjectSelect').value;
@@ -949,23 +966,13 @@
       callServer('teacherGetScores', [AA.token, {subjectId: subId, className: myClass, term: currentTerm, session: currentSession}], function(scores) {
         document.getElementById('scoresCard').style.display='block';
         currentLoadedScores = scores || [];
-        
-        var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
-          { id: 'ca1', title: 'CA1', max: 10 },
-          { id: 'ca2', title: 'CA2', max: 10 },
-          { id: 'ca3', title: 'CA3', max: 10 },
-          { id: 'exam', title: 'Exam', max: 70 }
-        ];
 
         var theadTr = document.getElementById('scoreTableHeader');
         var theadHtml = '<th>Name</th>';
         if (mode === 'half') {
           theadHtml += '<th style="width:120px;">Mid-Term Test (30)</th><th style="width:120px;">Project Work (10)</th><th style="width:90px;">Total (40)</th><th style="width:160px;">Remark</th>';
         } else {
-          format.forEach(function(col) {
-            theadHtml += '<th style="width:70px;">' + AA.escapeHTML(col.title) + ' (' + col.max + ')</th>';
-          });
-          theadHtml += '<th>Total</th><th>Grade</th>';
+          theadHtml += '<th style="width:110px;">CA (40)</th><th style="width:110px;">Exam (60)</th><th style="width:90px;">Total (100)</th><th style="width:80px;">Grade</th>';
         }
         theadTr.innerHTML = '<tr>' + theadHtml + '</tr>';
 
@@ -996,19 +1003,37 @@
                       '<td><strong id="halfTotal_'+sid+'">'+tot40+'</strong></td>' +
                       '<td><span id="halfRemark_'+sid+'">'+remBadge+'</span></td>';
           } else {
-            format.forEach(function(col) {
-              var val = sc[col.id] !== undefined ? sc[col.id] : (sc[col.id.toUpperCase()] || 0);
-              trHtml += '<td><input type="number" id="'+col.id+'_'+sid+'" class="aa-input" style="padding:4px;" value="'+val+'" max="'+col.max+'" oninput="if(parseFloat(this.value) > '+col.max+') this.value = '+col.max+'; else if(parseFloat(this.value) < 0) this.value = 0;" '+(locked?'disabled':'')+'></td>';
-            });
-            trHtml += '<td><strong>'+(sc.total||0)+'</strong></td>'+
-              '<td>'+formatGrade(sc.grade||'')+'</td>';
+            var halfSum = (sc.halfTermTotal !== undefined && sc.halfTermTotal !== null && sc.halfTermTotal !== '') 
+              ? parseFloat(sc.halfTermTotal) 
+              : ((parseFloat(sc.midTermTest || sc.ca1 || sc.CA1 || 0) || 0) + (parseFloat(sc.projectWork || sc.ca2 || sc.CA2 || 0) || 0));
+            var caVal = (sc.ca !== undefined && sc.ca !== null && sc.ca !== '') 
+              ? parseFloat(sc.ca) 
+              : (halfSum > 0 ? halfSum : ((parseFloat(sc.ca1 || sc.CA1 || 0) || 0) + (parseFloat(sc.ca2 || sc.CA2 || 0) || 0) + (parseFloat(sc.ca3 || sc.CA3 || 0) || 0)));
+            if (caVal > 40) caVal = 40;
+            if (caVal < 0) caVal = 0;
+
+            var examVal = (sc.exam !== undefined && sc.exam !== null && sc.exam !== '') 
+              ? parseFloat(sc.exam) 
+              : (sc.EXAM !== undefined ? parseFloat(sc.EXAM) : 0);
+            if (examVal > 60) examVal = 60;
+            if (examVal < 0) examVal = 0;
+
+            var totalVal = (sc.total !== undefined && sc.total !== null && sc.total !== '') 
+              ? parseFloat(sc.total) 
+              : (caVal + examVal);
+            var gradeVal = sc.grade || sc.termGrade || (typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(totalVal, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(totalVal) : ''));
+
+            trHtml += '<td><input type="number" id="ca_'+sid+'" class="aa-input" style="padding:4px;" value="'+caVal+'" min="0" max="40" oninput="recalcPrimaryFullTermRow(\''+sid+'\')" '+(locked?'disabled':'')+' title="Continuous Assessment (Max 40, sum of Half-Term scores)"></td>' +
+                      '<td><input type="number" id="exam_'+sid+'" class="aa-input" style="padding:4px;" value="'+examVal+'" min="0" max="60" oninput="recalcPrimaryFullTermRow(\''+sid+'\')" '+(locked?'disabled':'')+'></td>' +
+                      '<td><strong id="fullTotal_'+sid+'">'+totalVal+'</strong></td>' +
+                      '<td><span id="fullGrade_'+sid+'">'+formatGrade(gradeVal)+'</span></td>';
           }
             
           tr.innerHTML = trHtml;
           tbody.appendChild(tr);
         });
 
-        var colCount = mode === 'half' ? 5 : (format.length + 3);
+        var colCount = 5;
         if(myStudents.length===0) tbody.innerHTML = '<tr><td colspan="'+colCount+'" class="text-center text-muted">No students in your class.</td></tr>';
         var canSubmit = myStudents.length > 0 && !allLocked && anyScores;
         var canSave = myStudents.length > 0 && !allLocked;
@@ -1026,12 +1051,6 @@
       var subName = subSel.options[subSel.selectedIndex].text;
       var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
       var payload = [];
-      var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
-        { id: 'ca1', title: 'CA1', max: 10 },
-        { id: 'ca2', title: 'CA2', max: 10 },
-        { id: 'ca3', title: 'CA3', max: 10 },
-        { id: 'exam', title: 'Exam', max: 70 }
-      ];
 
       if (mode === 'half') {
         myStudents.forEach(function(st) {
@@ -1056,6 +1075,7 @@
               session: currentSession,
               midTermTest: mid,
               projectWork: prj,
+              ca: halfTot,
               ca1: mid,
               ca2: prj,
               halfTermTotal: halfTot,
@@ -1066,10 +1086,8 @@
 
             if (sc.exam !== undefined && sc.exam !== null && sc.exam !== '') {
               var examVal = parseFloat(sc.exam) || 0;
-              var ca3Val = parseFloat(sc.ca3) || 0;
-              var fullTot = mid + prj + ca3Val + examVal;
+              var fullTot = halfTot + examVal;
               scoreData.exam = examVal;
-              scoreData.ca3 = ca3Val;
               scoreData.total = fullTot;
               scoreData.termTotal = fullTot;
               var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(fullTot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(fullTot) : '');
@@ -1083,31 +1101,54 @@
           }
         });
       } else {
-        var firstColId = format[0].id;
         myStudents.forEach(function(st) {
           var sid = st.id || st.iD;
-          var firstInput = document.getElementById(firstColId+'_'+sid);
-          if(firstInput && !firstInput.disabled) {
-            var tot = 0;
+          var caInput = document.getElementById('ca_' + sid);
+          var examInput = document.getElementById('exam_' + sid);
+          if (caInput && !caInput.disabled && examInput) {
+            var ca = parseFloat(caInput.value || 0) || 0;
+            var exam = parseFloat(examInput.value || 0) || 0;
+            if (ca > 40) ca = 40;
+            if (ca < 0) ca = 0;
+            if (exam > 60) exam = 60;
+            if (exam < 0) exam = 0;
+            var tot = ca + exam;
+
+            var sc = currentLoadedScores.find(function(x){ return String(x.studentID || x.studentId) === String(sid); }) || {};
             var scoreData = {
-              studentId: sid, subjectId: subId, subjectName: subName, className: myClass, term: currentTerm, session: currentSession
+              studentId: sid,
+              subjectId: subId,
+              subjectName: subName,
+              className: myClass,
+              term: currentTerm,
+              session: currentSession,
+              ca: ca,
+              exam: exam,
+              total: tot,
+              termTotal: tot
             };
-            
-            format.forEach(function(col) {
-              var inputEl = document.getElementById(col.id+'_'+sid);
-              var val = parseFloat(inputEl ? inputEl.value : 0) || 0;
-              if (val > col.max) val = col.max; // Cap it
-              tot += val;
-              scoreData[col.id] = val;
-            });
-            
+            if (sc.id || sc.iD) scoreData.id = sc.id || sc.iD;
+
+            // Preserve half-term breakdown if already recorded
+            if (sc.midTermTest !== undefined && sc.projectWork !== undefined) {
+              scoreData.midTermTest = sc.midTermTest;
+              scoreData.projectWork = sc.projectWork;
+              scoreData.halfTermTotal = sc.halfTermTotal !== undefined ? sc.halfTermTotal : (parseFloat(sc.midTermTest) + parseFloat(sc.projectWork));
+              scoreData.remark = sc.remark || sc.halfTermRemark || getHalfTermRemark(scoreData.halfTermTotal);
+              scoreData.halfTermRemark = scoreData.remark;
+              scoreData.ca1 = sc.midTermTest;
+              scoreData.ca2 = sc.projectWork;
+            } else {
+              scoreData.halfTermTotal = ca;
+              scoreData.halfTermRemark = getHalfTermRemark(ca);
+              scoreData.ca1 = ca;
+              scoreData.ca2 = 0;
+            }
+
             var grd = typeof calculateDynamicGrade === 'function' ? calculateDynamicGrade(tot, myClass, 'Primary School') : (typeof calculateGrade === 'function' ? calculateGrade(tot) : '');
-            
-            scoreData.total = tot;
-            scoreData.termTotal = tot;
             scoreData.grade = grd;
             scoreData.termGrade = grd;
-            
+
             payload.push(scoreData);
           }
         });
@@ -1224,27 +1265,15 @@
         return;
       }
 
-      var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
-        { id: 'ca1', title: 'CA1', max: 10 },
-        { id: 'ca2', title: 'CA2', max: 10 },
-        { id: 'ca3', title: 'CA3', max: 10 },
-        { id: 'exam', title: 'Exam', max: 70 }
-      ];
-      
-      var csv = 'StudentID,StudentName';
-      format.forEach(function(col) { csv += ',' + col.title.replace(/,/g, ''); });
-      csv += ',TeacherComment\n';
-      
-      var firstColId = format[0].id;
+      var csv = 'StudentID,StudentName,CA(40),Exam(60),TeacherComment\n';
       rows.forEach(function(tr) {
-        if(tr.cells.length < format.length + 1) return;
+        if(tr.cells.length < 5) return;
         var name = tr.cells[0].innerText.replace(/"/g, '""');
-        var input = tr.querySelector('input[id^="'+firstColId+'_"]');
-        if(input) {
-          var sid = input.id.split('_')[1];
-          csv += '"' + sid + '","' + name + '"';
-          format.forEach(function() { csv += ','; });
-          csv += ',\n';
+        var caInput = tr.querySelector('input[id^="ca_"]');
+        if(caInput) {
+          var sid = caInput.id.split('_')[1];
+          var caVal = caInput.value || '';
+          csv += '"' + sid + '","' + name + '",' + caVal + ',,\n';
         }
       });
       var subName = document.getElementById('scoreSubjectSelect').options[document.getElementById('scoreSubjectSelect').selectedIndex].text;
@@ -1252,7 +1281,7 @@
       var url = window.URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.setAttribute('href', url);
-      a.setAttribute('download', subName.replace(/[^a-zA-Z0-9]/g, '_') + '_Scores.csv');
+      a.setAttribute('download', subName.replace(/[^a-zA-Z0-9]/g, '_') + '_FullTerm_Scores.csv');
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1270,19 +1299,12 @@
       var subjectId = subSel.value;
       if(!subjectId) return showToast('Please select a subject first', 'error');
       var subjectName = subSel.options[subSel.selectedIndex].text;
-      
-      var format = (AA.settings && AA.settings.gradebook_format) ? AA.settings.gradebook_format : [
-        { id: 'ca1', title: 'CA1', max: 10 },
-        { id: 'ca2', title: 'CA2', max: 10 },
-        { id: 'ca3', title: 'CA3', max: 10 },
-        { id: 'exam', title: 'Exam', max: 70 }
-      ];
+      var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
 
       var reader = new FileReader();
       reader.onload = function(e) {
         var parsed = parseCSV(e.target.result);
         var payload = [];
-        var mode = document.getElementById('scoreTermMode') ? document.getElementById('scoreTermMode').value : 'full';
 
         parsed.forEach(function(row) {
           if(row.StudentID) {
@@ -1296,8 +1318,8 @@
               teacherComment: row.TeacherComment || ''
             };
 
-            var isHalfRow = row['MidTermTest(30)'] !== undefined || row['MidTermTest'] !== undefined || row['Mid-Term Test (30)'] !== undefined || mode === 'half';
-            if (isHalfRow && (row['MidTermTest(30)'] !== undefined || row['MidTermTest'] !== undefined || row['Mid-Term Test (30)'] !== undefined)) {
+            var isHalfRow = row['MidTermTest(30)'] !== undefined || row['MidTermTest'] !== undefined || row['Mid-Term Test (30)'] !== undefined;
+            if (isHalfRow || mode === 'half') {
               var mid = parseFloat(row['MidTermTest(30)'] || row['MidTermTest'] || row['Mid-Term Test (30)'] || 0) || 0;
               var prj = parseFloat(row['ProjectWork(10)'] || row['ProjectWork'] || row['Project Work (10)'] || 0) || 0;
               if (mid > 30) mid = 30;
@@ -1305,6 +1327,7 @@
               var halfTot = mid + prj;
               scoreData.midTermTest = mid;
               scoreData.projectWork = prj;
+              scoreData.ca = halfTot;
               scoreData.ca1 = mid;
               scoreData.ca2 = prj;
               scoreData.halfTermTotal = halfTot;
@@ -1314,13 +1337,16 @@
               scoreData.total = halfTot;
               scoreData.termTotal = halfTot;
             } else {
-              format.forEach(function(col) {
-                // Strip commas and spaces to match object keys from CSV
-                var key = col.title.replace(/,/g, '');
-                var val = parseFloat(row[key]) || 0;
-                if (val > col.max) val = col.max; // Cap it
-                scoreData[col.id] = val;
-              });
+              var ca = parseFloat(row['CA(40)'] || row['CA'] || row['ca'] || 0) || 0;
+              var exam = parseFloat(row['Exam(60)'] || row['Exam'] || row['exam'] || 0) || 0;
+              if (ca > 40) ca = 40;
+              if (exam > 60) exam = 60;
+              var tot = ca + exam;
+              scoreData.ca = ca;
+              scoreData.exam = exam;
+              scoreData.total = tot;
+              scoreData.termTotal = tot;
+              scoreData.ca1 = ca;
             }
             payload.push(scoreData);
           }
