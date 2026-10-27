@@ -69,17 +69,13 @@ const getCommentFromBank = (avg, banks, hash) => {
 async function enrichReportData(dbInstance, reportData, cfg) {
   try {
     let student = reportData.student || {};
-    let avg = reportData.summary && reportData.summary.average ? parseFloat(reportData.summary.average) : 0;
-    
+
     // Create a simple deterministic hash based on student info
     const hashStr = (student.fullName || "Student") + (reportData.term || "") + (reportData.session || "");
     let hash = 0;
     for (let i = 0; i < hashStr.length; i++) hash += hashStr.charCodeAt(i);
-    
-    // Auto-generate comments
-    reportData.classTeacherComment = getCommentFromBank(avg, classTeacherBanks, hash);
-    reportData.principalComment = getCommentFromBank(avg, principalBanks, hash);
-    reportData.headTeacherComment = reportData.principalComment; // Head teacher uses the same bank as principal
+
+    // NOTE: Comments are generated AFTER scores/summary are fully resolved (see below).
 
     // --- Class Teacher Resolution (Name & Signature) ---
     let teacherNames = [];
@@ -573,6 +569,20 @@ async function enrichReportData(dbInstance, reportData, cfg) {
     } catch (err) {
       console.error("Error resolving enrolled subjects in reportUtil:", err);
     }
+
+    // Auto-generate comments based on the FINAL computed average.
+    // Half-term scores are out of 40; convert to a 0-100 percentage so the
+    // comment thresholds (≥85 excellent, ≥70 veryGood …) work correctly.
+    const isHalfTerm = reportData.reportType && String(reportData.reportType).toLowerCase().includes('half');
+    let rawAvg = reportData.summary && reportData.summary.average ? parseFloat(reportData.summary.average) : 0;
+    let commentAvg = isHalfTerm ? Math.round((rawAvg / 40) * 100 * 10) / 10 : rawAvg;
+    // Store the normalised percentage on summary for any other consumers
+    if (isHalfTerm && reportData.summary) {
+      reportData.summary.percentage = commentAvg;
+    }
+    reportData.classTeacherComment = getCommentFromBank(commentAvg, classTeacherBanks, hash);
+    reportData.principalComment = getCommentFromBank(commentAvg, principalBanks, hash);
+    reportData.headTeacherComment = reportData.principalComment; // Head teacher uses the same bank as principal
 
     // --- Subject Attendance ---
     if (student.className && reportData.term && reportData.session && reportData.scores && reportData.scores.length > 0 && stId) {
