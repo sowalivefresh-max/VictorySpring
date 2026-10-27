@@ -405,6 +405,12 @@ module.exports = function(db, notificationsActions) {
       try {
         const { term, session, section } = req.body;
         if (!term || !session) return res.json({ success: true, overallAverage: 0, bestClass: "N/A", bestSubject: "N/A" });
+
+        // Normalize class names to Title Case so "GRADE 1" and "Grade 1" merge as one
+        const toTitleCase = (str) => {
+          if (!str) return str;
+          return str.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        };
         
         // 1. Get all students to map studentId -> className and section
         const studentsSnap = await db.collection("students").get();
@@ -412,7 +418,7 @@ module.exports = function(db, notificationsActions) {
         const studentSectionMap = {};
         studentsSnap.forEach(doc => {
           const data = doc.data();
-          studentClassMap[doc.id] = data.className;
+          studentClassMap[doc.id] = toTitleCase(data.className);
           studentSectionMap[doc.id] = (data.section || "").toLowerCase();
         });
         
@@ -445,7 +451,7 @@ module.exports = function(db, notificationsActions) {
           totalScoreSum += total;
           totalScoreCount++;
           
-          const className = studentClassMap[data.studentId] || data.className || "Unknown";
+          const className = studentClassMap[data.studentId] || toTitleCase(data.className) || "Unknown";
           
           // Grade
           const gradeObj = computeDynamicGrade(total, className, studentSection, gradingSystems);
