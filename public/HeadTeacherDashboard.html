@@ -257,16 +257,6 @@
 <div class="d-flex align-items-center mb-3" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1rem;">
 <select class="aa-input" id="analytics-year-group" style="max-width:250px;">
 <option value="">Select Year Group...</option>
-<option value="Creche">Creche</option>
-<option value="Pre-Nursery">Pre-Nursery</option>
-<option value="Nursery 1">Nursery 1</option>
-<option value="Nursery 2">Nursery 2</option>
-<option value="Primary 1">Primary 1</option>
-<option value="Primary 2">Primary 2</option>
-<option value="Primary 3">Primary 3</option>
-<option value="Primary 4">Primary 4</option>
-<option value="Primary 5">Primary 5</option>
-<option value="Primary 6">Primary 6</option>
 </select>
 <button class="aa-btn aa-btn-primary" onclick="loadYearGroupRanking()">Load Ranking</button>
 </div>
@@ -1070,7 +1060,84 @@
     }
     // --- ANALYTICS MODULE ---
     var chartInstances = {};
+    var globalClasses = [];
+
+    function getClassSortWeight(className) {
+      if (!className) return 999;
+      var n = className.toLowerCase().trim();
+      var order = {
+        "creche": 10, "playgroup": 20, "pre-nursery": 30, "prenursery": 30,
+        "nursery 1": 40, "nursery 2": 42, "nursery 3": 44, "nursery": 40,
+        "kg 1": 50, "kg 2": 52, "kg 3": 54, "kg": 50, "kindergarten": 50, "reception": 55,
+        "primary 1": 70, "primary 2": 80, "primary 3": 90, "primary 4": 100, "primary 5": 110, "primary 6": 120, "primary": 70,
+        "basic 1": 70, "basic 2": 80, "basic 3": 90, "basic 4": 100, "basic 5": 110, "basic 6": 120, "basic": 70,
+        "grade 1": 70, "grade 2": 80, "grade 3": 90, "grade 4": 100, "grade 5": 110, "grade 6": 120, "grade": 70,
+        "year 1": 70, "year 2": 80, "year 3": 90, "year 4": 100, "year 5": 110, "year 6": 120, "year": 70,
+        "jss 1": 130, "jss 2": 140, "jss 3": 150, "jss": 130,
+        "ss 1": 160, "ss 2": 170, "ss 3": 180, "ss": 160, "sss 1": 160, "sss 2": 170, "sss 3": 180, "sss": 160
+      };
+      for (var k in order) {
+        if (n.startsWith(k)) return order[k];
+      }
+      return 999;
+    }
+
+    function buildYearGroupOptions(classes) {
+      if (!classes || !Array.isArray(classes) || classes.length === 0) return '';
+      var seen = {};
+      var uniqueNames = [];
+      classes.forEach(function(c) {
+        var raw = (c.className || c.name || '').trim();
+        if (!raw) return;
+        var title = raw.toLowerCase().replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+        if (!seen[title.toLowerCase()]) {
+          seen[title.toLowerCase()] = true;
+          uniqueNames.push(title);
+        }
+      });
+
+      uniqueNames.sort(function(a, b) {
+        var wa = getClassSortWeight(a);
+        var wb = getClassSortWeight(b);
+        if (wa !== wb) return wa - wb;
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      var opts = '';
+      uniqueNames.forEach(function(name) {
+        opts += '<option value="' + name + '">' + name + '</option>';
+      });
+      return opts;
+    }
+
+    function populateYearGroupDropdown(classes) {
+      var sel = document.getElementById('analytics-year-group');
+      if (!sel) return;
+
+      var updateSelect = function(clsList) {
+        var opts = buildYearGroupOptions(clsList);
+        var curVal = sel.value;
+        sel.innerHTML = '<option value="">Select Year Group...</option>' + opts;
+        if (curVal) sel.value = curVal;
+      };
+
+      if (classes && Array.isArray(classes) && classes.length > 0) {
+        globalClasses = classes;
+        updateSelect(classes);
+      } else if (globalClasses && globalClasses.length > 0) {
+        updateSelect(globalClasses);
+      } else {
+        callServer('adminGetClasses', [AA.token], function(data) {
+          if (Array.isArray(data)) {
+            globalClasses = data;
+            updateSelect(data);
+          }
+        });
+      }
+    }
+
     function loadAnalytics() {
+      populateYearGroupDropdown();
       callServer('adminGetSchoolPerformanceAnalytics', [AA.token, currentTerm, currentSession, 'primary'], function(res) {
         var el = document.getElementById('analytics-overall'); if(el) el.textContent = (res.overallAverage || 0) + '%';
         var el = document.getElementById('analytics-best-class'); if(el) el.textContent = res.bestClass || 'N/A';
@@ -1126,7 +1193,7 @@
     function loadYearGroupRanking() {
       var yearGroup = document.getElementById('analytics-year-group').value;
       if (!yearGroup || yearGroup.trim() === "") {
-        AA.showToast("Please enter a year group (e.g. Primary 1)", "error");
+        AA.showToast("Please select a year group", "error");
         return;
       }
       var tbody = document.getElementById('analytics-ranking-tbody');
@@ -1283,6 +1350,7 @@
           }
           data.forEach(function(c){ sel.innerHTML += '<option value="'+c.className+'">'+c.className+'</option>'; });
         }
+        populateYearGroupDropdown(data);
       });
     }
 

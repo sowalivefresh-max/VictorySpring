@@ -548,29 +548,51 @@ module.exports = function(db, notificationsActions) {
         const { term, session, yearGroup } = req.body;
         if (!term || !session || !yearGroup) return res.json({ success: false, message: "Missing required fields" });
         
-        const yearGroupLower = yearGroup.toLowerCase().trim();
+        const toTitleCase = (str) => {
+          if (!str) return str;
+          return str.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        };
+
+        const yearGroupTrimmed = yearGroup.trim();
+        const yearGroupLower = yearGroupTrimmed.toLowerCase();
         
-        // Handle interchangeable "Primary" and "Basic" prefixes
-        let alternateYearGroupLower = yearGroupLower;
+        // Handle interchangeable "Primary", "Basic", and "Grade" prefixes
+        const matchTargets = [yearGroupLower];
         if (yearGroupLower.startsWith("primary ")) {
-          alternateYearGroupLower = yearGroupLower.replace("primary ", "basic ");
+          matchTargets.push(yearGroupLower.replace("primary ", "basic "));
+          matchTargets.push(yearGroupLower.replace("primary ", "grade "));
         } else if (yearGroupLower.startsWith("basic ")) {
-          alternateYearGroupLower = yearGroupLower.replace("basic ", "primary ");
+          matchTargets.push(yearGroupLower.replace("basic ", "primary "));
+          matchTargets.push(yearGroupLower.replace("basic ", "grade "));
+        } else if (yearGroupLower.startsWith("grade ")) {
+          matchTargets.push(yearGroupLower.replace("grade ", "primary "));
+          matchTargets.push(yearGroupLower.replace("grade ", "basic "));
         }
 
-        // 1. Get all students and filter by year group prefix
+        const clean = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const cleanTargets = matchTargets.map(clean);
+
+        // 1. Get all students and filter by year group prefix or exact match
         const studentsSnap = await db.collection("students").get();
         const studentMap = {}; // id -> { name, className }
         studentsSnap.forEach(doc => {
           const data = doc.data();
-          const cName = data.className || "";
-          const cNameLower = cName.toLowerCase();
+          const cName = data.className || data.class || "";
+          const cNameLower = cName.toLowerCase().trim();
+          const cNameClean = clean(cName);
           
-          if (cNameLower.startsWith(yearGroupLower) || cNameLower.startsWith(alternateYearGroupLower)) {
-            studentMap[doc.id] = {
+          const matches = matchTargets.some(target => cNameLower.startsWith(target) || cNameLower === target) ||
+                          cleanTargets.some(target => cNameClean.startsWith(target) || cNameClean === target);
+          
+          if (matches) {
+            const studentInfo = {
               name: data.fullName || data.name || "Unknown Student",
-              className: cName
+              className: toTitleCase(cName)
             };
+            studentMap[doc.id] = studentInfo;
+            if (data.id && data.id !== doc.id) {
+              studentMap[data.id] = studentInfo;
+            }
           }
         });
 
@@ -588,19 +610,26 @@ module.exports = function(db, notificationsActions) {
         
         assSnap.forEach(doc => {
           const data = doc.data();
-          if (studentMap[data.studentId]) {
-            if (!studentScores[data.studentId]) {
-              studentScores[data.studentId] = { sum: 0, count: 0 };
+          const sId = data.studentId || data.studentID;
+          if (sId && studentMap[sId]) {
+            if (!studentScores[sId]) {
+              studentScores[sId] = { sum: 0, count: 0 };
             }
             const total = Number(data.total) || 0;
-            studentScores[data.studentId].sum += total;
-            studentScores[data.studentId].count++;
+            studentScores[sId].sum += total;
+            studentScores[sId].count++;
           }
         });
         
         const ranking = [];
+        const seenStudents = new Set();
         
         for (const sId in studentMap) {
+          const sObj = studentMap[sId];
+          const dedupeKey = (sObj.name + "_" + sObj.className).toLowerCase();
+          if (seenStudents.has(dedupeKey)) continue;
+          seenStudents.add(dedupeKey);
+
           const stats = studentScores[sId];
           const sum = stats ? stats.sum : 0;
           const count = stats ? stats.count : 0;
@@ -608,8 +637,8 @@ module.exports = function(db, notificationsActions) {
           
           ranking.push({
             studentId: sId,
-            name: studentMap[sId].name,
-            className: studentMap[sId].className,
+            name: sObj.name,
+            className: sObj.className,
             totalScore: sum,
             averageScore: Math.round(avg * 10) / 10 // 1 decimal place
           });
@@ -731,6 +760,23 @@ module.exports = function(db, notificationsActions) {
           data.id = doc.id;
           classes.push(data);
         });
+
+        // Also ensure any classes already assigned to students are included
+        const existingClassNames = new Set(classes.map(c => (c.className || "").toLowerCase().trim()));
+        const studentsSnap = await db.collection("students").get();
+        studentsSnap.forEach(doc => {
+          const s = doc.data();
+          const scName = (s.className || s.class || "").trim();
+          if (scName && !existingClassNames.has(scName.toLowerCase())) {
+            existingClassNames.add(scName.toLowerCase());
+            classes.push({
+              id: "auto_" + scName.replace(/[^a-zA-Z0-9]/g, "_"),
+              className: scName,
+              section: s.section || "primary"
+            });
+          }
+        });
+
         classes.sort((a, b) => {
           let diff = getClassSortWeight(a.className) - getClassSortWeight(b.className);
           if (diff !== 0) return diff;
