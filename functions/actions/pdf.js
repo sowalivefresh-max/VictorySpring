@@ -240,27 +240,48 @@ module.exports = {
     `;
 
     const schema = require("./montessoriSchema");
+    let totalGradedSkills = 0;
     schema.forEach((cat, cIdx) => {
-      html += '<div class="mon-cat">' + cat.category + '</div>';
-      html += '<table class="mon-table"><tbody>';
+      let catSkillsHtml = '';
       cat.subcategories.forEach((sub, sIdx) => {
-        if(sub.name) {
-          html += '<tr><td colspan="2" class="mon-subcat">' + sub.name + '</td></tr>';
-        }
+        let subSkillsHtml = '';
         sub.skills.forEach((skill, kIdx) => {
           const fName = 'sk_'+cIdx+'_'+sIdx+'_'+kIdx;
           const legacyFName = (cIdx === 0)
             ? (sIdx <= 3 ? fName : (sIdx === 4 ? 'sk_1_0_'+kIdx : 'sk_2_0_'+kIdx))
             : 'sk_' + (cIdx + 2) + '_' + sIdx + '_' + kIdx;
-          const val = mon[fName] || mon[legacyFName] || '';
-          html += '<tr>';
-          html += '<td class="mon-skill">' + skill + '</td>';
-          html += '<td class="mon-grade">' + val + '</td>';
-          html += '</tr>';
+          const rawVal = mon[fName] !== undefined ? mon[fName] : (mon[legacyFName] !== undefined ? mon[legacyFName] : '');
+          const val = (rawVal !== null && rawVal !== undefined) ? String(rawVal).trim() : '';
+          
+          // Skip skills where blank is selected or not graded
+          if (!val) return;
+
+          totalGradedSkills++;
+          subSkillsHtml += '<tr>';
+          subSkillsHtml += '<td class="mon-skill">' + skill + '</td>';
+          subSkillsHtml += '<td class="mon-grade">' + val + '</td>';
+          subSkillsHtml += '</tr>';
         });
+
+        if (subSkillsHtml) {
+          if (sub.name) {
+            catSkillsHtml += '<tr><td colspan="2" class="mon-subcat">' + sub.name + '</td></tr>';
+          }
+          catSkillsHtml += subSkillsHtml;
+        }
       });
-      html += '</tbody></table>';
+
+      if (catSkillsHtml) {
+        html += '<div class="mon-cat">' + cat.category + '</div>';
+        html += '<table class="mon-table"><tbody>';
+        html += catSkillsHtml;
+        html += '</tbody></table>';
+      }
     });
+
+    if (totalGradedSkills === 0) {
+      html += '<div style="text-align:center; padding:15px; margin:15px 0; background:#f9f9f9; border:1px solid #ddd; font-style:italic; font-size:11px;">No skill evaluations recorded for this report period.</div>';
+    }
 
     html += '<div class="mon-cat">TEACHERS COMMENTS & REINFORCEMENT</div>';
     html += '<div class="comments-grid">';
