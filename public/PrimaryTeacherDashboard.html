@@ -879,12 +879,20 @@
           setFormData('montessoriForm', res);
           var form = document.getElementById('montessoriForm');
           if (form) {
-            Object.keys(res).forEach(function(k) {
-              if (k.indexOf('sk_') === 0) {
-                var v = res[k] || '';
-                var radio = form.querySelector('input[type="radio"][name="' + k + '"][value="' + v + '"]');
-                if (radio) radio.checked = true;
-              }
+            montessoriSchema.forEach(function(cat, cIdx) {
+              cat.subcategories.forEach(function(sub, sIdx) {
+                sub.skills.forEach(function(skill, kIdx) {
+                  var fName = 'sk_'+cIdx+'_'+sIdx+'_'+kIdx;
+                  var legacyFName = (cIdx === 0)
+                    ? (sIdx <= 3 ? fName : (sIdx === 4 ? 'sk_1_0_'+kIdx : 'sk_2_0_'+kIdx))
+                    : 'sk_' + (cIdx + 2) + '_' + sIdx + '_' + kIdx;
+                  var v = res[fName] || res[legacyFName] || '';
+                  if (v) {
+                    var radio = form.querySelector('input[type="radio"][name="' + fName + '"][value="' + v + '"]');
+                    if (radio) radio.checked = true;
+                  }
+                });
+              });
             });
           }
         }

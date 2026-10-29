@@ -6,7 +6,7 @@ const montessoriSchema = [
         name: "Listening",
         skills: [
           "Listens attentively and responds to stories read aloud",
-          "Able to carry on a conversation with appropriately responses",
+          "Able to carry on a conversation with appropriate responses",
           "Understands and follows simple directions",
           "Shows understanding of positional words"
         ]
@@ -18,7 +18,7 @@ const montessoriSchema = [
           "Able to request information",
           "Able to describe an event or object and answer questions about it",
           "Uses expanded vocabulary for a variety of purposes",
-          "Repeat rhymes"
+          "Repeats rhymes"
         ]
       },
       {
@@ -30,7 +30,7 @@ const montessoriSchema = [
           "Forms pre writing shapes such as I, ----, O, using chalkboard",
           "Is able to build 2 letter phonic words using movable alphabet",
           "Is able to build 3 letter phonic words using movable alphabet",
-          "Is able to build longer phonetics words",
+          "Is able to build longer phonetic words",
           "Uses the movable alphabet to express ideas",
           "Able to write numbers and letters in notebook using a pencil",
           "Copies words and sentences on paper",
@@ -40,41 +40,31 @@ const montessoriSchema = [
       {
         name: "Reading",
         skills: [
-          "Show appreciation for books",
+          "Shows appreciation for books",
           "Able to reconstitute a picture from its pieces",
           "Able to sequence a series of pictures to tell a story",
           "Matches classified pictures and labels using 3-part cards"
         ]
-      }
-    ]
-  },
-  {
-    category: "Sounds Recognition",
-    subcategories: [
+      },
       {
         name: "Sounds Recognition",
         skills: [
-          "Responds correctly during a–c call-and-response",
-          "Responds correctly during a–g call-and-response",
+          "Responds correctly during a-c call-and-response",
+          "Responds correctly during a-g call-and-response",
           "Says sounds when prompted",
           "Identifies sound a - c",
-          "Identifies sound a – g",
+          "Identifies sound a - g",
           "Mentions two words that begin with sound /a/",
-          "Identifies beginning, medial and ending sounds in words.",
+          "Identifies beginning, medial and ending sounds in words",
           "Is able to blend and pronounce 2 letter phonetic words",
-          "Is able to blend and pronounce 3 letter phonetic word",
+          "Is able to blend and pronounce 3 letter phonetic words",
           "Is able to recognize and say sight words",
           "Is able to blend and pronounce longer phonetic words",
-          "Is able to read phonetics phrases and short sentences",
+          "Is able to read phonetic phrases and short sentences",
           "Is able to read non phonetic words, phrases and sentences",
           "Is able to read independently"
         ]
-      }
-    ]
-  },
-  {
-    category: "Grammar and Word Study",
-    subcategories: [
+      },
       {
         name: "Grammar and Word Study",
         skills: [
@@ -83,8 +73,8 @@ const montessoriSchema = [
           "Understands positional words",
           "Understands parts of speech - nouns",
           "Understands parts of speech - verbs",
-          "Understands parts of speech articles",
-          "Understands parts of speech adjectives"
+          "Understands parts of speech - articles",
+          "Understands parts of speech - adjectives"
         ]
       }
     ]
@@ -105,17 +95,17 @@ const montessoriSchema = [
         skills: [
           "Identifies numerals (1-10)",
           "Understands quantities (1-10)",
-          "Counts numbers 1–10",
+          "Counts numbers 1-10",
           "Counts and identifies numerals (1-20)",
           "Has developed one to one correspondence",
           "Matches numerals to quantities between 1-9",
-          "Uses Teens beads A board to develop Understanding of 11 to 19",
+          "Uses Teens beads and board to develop understanding of 11 to 19",
           "Can rote count to: 1-100",
-          "Can write numbers:1- 70",
+          "Can write numbers: 1-70",
           "Can do simple addition between (1-10), (1-20)",
           "Can do simple subtraction between (1-10), (1-20)",
-          "Uses Teen beads A board to develop Understanding of 20-99",
-          "Can sequentially to 100 using the 100 chain",
+          "Uses Teen beads and board to develop understanding of 20-99",
+          "Can count sequentially to 100 using the 100 chain",
           "Arranges numbers 1 to 100 in order using the 100 board",
           "Can count sequentially above 100 using the 1000 chain",
           "Understands ordinal numbers",
@@ -125,7 +115,7 @@ const montessoriSchema = [
       {
         name: "Operation and Memorization of facts",
         skills: [
-          "Understands the decimal system quantities units, tens hundreds, thousands",
+          "Understands the decimal system quantities units, tens, hundreds, thousands",
           "Recognizes the symbols of units, tens, hundreds and thousands",
           "Matches the quantities and symbols",
           "Uses decimal materials to perform addition (A), subtraction(s) without and with exchanging",
@@ -156,12 +146,12 @@ const montessoriSchema = [
     category: "Sensorial Activities",
     subcategories: [
       {
-        name: "Discrimination of dimension, colour, texture, smell, taste and hearing.",
+        name: "Discrimination of dimension, colour, texture, smell, taste and hearing",
         skills: [
           "Uses the knobbed cylinder block to order by various dimensions",
           "Is able to stack 10 blocks in order of size (TOWER)",
           "Is able to arrange in order of length (RODS)",
-          "Is able to arrange order of thickness (BROAD STAIRS)",
+          "Is able to arrange in order of thickness (BROAD STAIRS)",
           "Is able to name and identify primary colours RED, BLUE AND YELLOW",
           "Is able to grade colours from lightest to darkest shade",
           "Is able to identify colours of objects",
@@ -170,10 +160,10 @@ const montessoriSchema = [
           "Can trace plane shapes",
           "Can draw plane shapes unaided",
           "Is able to arrange tiles in order of smoothness from cold to hot",
-          "Can detect slight variation in sound.",
-          "Understand, sweet, sour, bitter, and salty tastes",
+          "Can detect slight variation in sound",
+          "Understands sweet, sour, bitter, and salty tastes",
           "Can use the mystery bag to identify objects by touch only",
-          "Show understanding of comparative words with respect to size, length, texture and taste.",
+          "Shows understanding of comparative words with respect to size, length, texture and taste",
           "Can identify living things",
           "Can identify non-living things",
           "Can identify parts of the body",
@@ -198,15 +188,15 @@ const montessoriSchema = [
           "Spoon from bowl to unequal bowls",
           "Spoon from bowl to bowl with indicator line",
           "Dry pouring from jug to jug",
-          "Can pour water from jug to 2 containers (equal\\unequal)",
-          "Can pour water from jug to 3 containers (equal\\unequal)",
+          "Can pour water from jug to 2 containers (equal/unequal)",
+          "Can pour water from jug to 3 containers (equal/unequal)",
           "Can pour water from jug to a bottle with indicator line",
           "Can pour water from jug to a bottle with indicator line using a funnel",
           "Can transfer water with a sponge",
           "Can transfer objects (stamp) with tweezers",
           "Can transfer and sort objects (button) with tweezers",
           "Can transfer objects (marbles) with tongs",
-          "Can tranfer water with turkey baster",
+          "Can transfer water with turkey baster",
           "Can transfer objects with escargot holder",
           "Can transfer object with chopsticks",
           "Able to use a pair of scissors",
@@ -239,14 +229,14 @@ const montessoriSchema = [
           "Able to brush teeth",
           "Able to use the toilet properly with minimum supervision",
           "Able to wash hands properly",
-          "Able to feed his/herself with minimum supervision."
+          "Able to feed his/herself with minimum supervision"
         ]
       },
       {
         name: "Grace and courtesy skills",
         skills: [
-          "Uses appropriately greetings for different time of the day",
-          "Uses the magic words: please, excuse me, sorry, thank you, pardon me.",
+          "Uses appropriate greetings for different times of the day",
+          "Uses the magic words: please, excuse me, sorry, thank you, pardon me",
           "Able to wait his/her turn",
           "Follows simple instruction",
           "Participates in group activities",
@@ -263,21 +253,21 @@ const montessoriSchema = [
         skills: [
           "Exhibits eagerness and curiosity as a learner",
           "Chooses appropriate activities without prompting",
-          "Work at suitable pace",
+          "Works at suitable pace",
           "Collaborates with other children for learning",
           "Shows interest in many different classroom activities",
-          "Listen to small groups",
-          "Seek needed help",
+          "Listens to small groups",
+          "Seeks needed help",
           "Perseveres at a difficult task",
           "Explores alternatives to accomplishing a task",
-          "Use prior experiences in present situations",
-          "Respond to adult directions to tasks/problems solving"
+          "Uses prior experiences in present situations",
+          "Responds to adult directions to tasks/problem solving"
         ]
       },
       {
         name: "Social and Emotional Development",
         skills: [
-          "Show age-appropriate attention span",
+          "Shows age-appropriate attention span",
           "Initiates conversations with peers",
           "Works confidently with peers",
           "Openly relates with adults",
@@ -297,7 +287,7 @@ const montessoriSchema = [
           "Organizes task by self",
           "Completes a task before starting another",
           "Attentive to details",
-          "Care for materials and environment",
+          "Cares for materials and environment",
           "Performs self-care tasks completely"
         ]
       },

@@ -249,7 +249,10 @@ module.exports = {
         }
         sub.skills.forEach((skill, kIdx) => {
           const fName = 'sk_'+cIdx+'_'+sIdx+'_'+kIdx;
-          const val = mon[fName] || '';
+          const legacyFName = (cIdx === 0)
+            ? (sIdx <= 3 ? fName : (sIdx === 4 ? 'sk_1_0_'+kIdx : 'sk_2_0_'+kIdx))
+            : 'sk_' + (cIdx + 2) + '_' + sIdx + '_' + kIdx;
+          const val = mon[fName] || mon[legacyFName] || '';
           html += '<tr>';
           html += '<td class="mon-skill">' + skill + '</td>';
           html += '<td class="mon-grade">' + val + '</td>';
