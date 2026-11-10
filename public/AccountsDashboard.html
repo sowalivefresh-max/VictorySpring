@@ -134,6 +134,20 @@
 
         <!-- TAB: Fee Structure -->
         <div class="aa-tab-content" data-group="acc-tabs" data-id="tab-fees">
+          <div class="aa-card mb-3">
+            <div class="aa-card-body" style="padding:12px 20px;">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span style="font-size:13px;font-weight:600;color:var(--aa-navy);"><i class="fa fa-calendar-alt"></i> Working Term:</span>
+                <select id="feeTermOverride" class="aa-select" style="width:160px;" onchange="onFeeTermOverrideChange()">
+                  <option value="First Term">First Term</option>
+                  <option value="Second Term">Second Term</option>
+                  <option value="Third Term">Third Term</option>
+                </select>
+                <select id="feeSessionOverride" class="aa-select" style="width:130px;" onchange="loadFeeStructures()"></select>
+                <span id="feeOverrideBadge" style="display:none;font-size:11px;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:12px;font-weight:600;"><i class="fa fa-info-circle"></i> Preparing future term</span>
+              </div>
+            </div>
+          </div>
           <div class="aa-card">
             <div class="aa-card-header">
               <h3 class="aa-card-title">Fee Structures</h3>
@@ -150,6 +164,20 @@
 
         <!-- TAB: Bills & Payments -->
         <div class="aa-tab-content" data-group="acc-tabs" data-id="tab-bills">
+          <div class="aa-card mb-3">
+            <div class="aa-card-body" style="padding:12px 20px;">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span style="font-size:13px;font-weight:600;color:var(--aa-navy);"><i class="fa fa-calendar-alt"></i> Working Term:</span>
+                <select id="billTermOverride" class="aa-select" style="width:160px;" onchange="onBillTermOverrideChange()">
+                  <option value="First Term">First Term</option>
+                  <option value="Second Term">Second Term</option>
+                  <option value="Third Term">Third Term</option>
+                </select>
+                <select id="billSessionOverride" class="aa-select" style="width:130px;" onchange="loadBills()"></select>
+                <span id="billOverrideBadge" style="display:none;font-size:11px;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:12px;font-weight:600;"><i class="fa fa-info-circle"></i> Preparing future term</span>
+              </div>
+            </div>
+          </div>
           <div class="aa-card mb-4">
             <div class="aa-card-body">
               <div class="d-flex justify-content-between align-items-center">
@@ -566,6 +594,13 @@
         if (!AA.user || !AA.settings || !AA.settings.current_term) return setTimeout(initDashboard, 100);
         currentTerm = AA.settings.current_term; currentSession = AA.settings.current_session;
         document.getElementById('currentTermText').textContent = currentTerm + ' - ' + currentSession;
+        // Populate term override selectors and default to current term/session
+        populateSessionOptions('feeSessionOverride', currentSession);
+        populateSessionOptions('billSessionOverride', currentSession);
+        if (document.getElementById('feeTermOverride')) document.getElementById('feeTermOverride').value = currentTerm;
+        if (document.getElementById('billTermOverride')) document.getElementById('billTermOverride').value = currentTerm;
+        updateOverrideBadge('feeTermOverride', 'feeOverrideBadge');
+        updateOverrideBadge('billTermOverride', 'billOverrideBadge');
         document.getElementById('expDate').valueAsDate = new Date();
         loadStudentsDropdown();
         loadClassesDropdown();
@@ -828,7 +863,9 @@
 
     function loadFeeStructures() {
       callServer('adminGetFeeStructures', [AA.token], function(data) {
-        var filtered = data.filter(function(d){ return d.term===currentTerm && d.session===currentSession; });
+        var feeTerm = (document.getElementById('feeTermOverride') && document.getElementById('feeTermOverride').value) ? document.getElementById('feeTermOverride').value : currentTerm;
+        var feeSession = (document.getElementById('feeSessionOverride') && document.getElementById('feeSessionOverride').value) ? document.getElementById('feeSessionOverride').value : currentSession;
+        var filtered = data.filter(function(d){ return d.term===feeTerm && d.session===feeSession; });
         var section = getAccountOfficerSection();
         if (section !== 'both') {
           filtered = filtered.filter(function(d){ 
@@ -868,7 +905,9 @@
 
     function regenerateClassBills(className) {
       aaConfirm('Regenerate bills for all active students in ' + className + '?\n\nThis will safely clear their old bills and generate new ones based on the updated fee structure. Payments previously made are 100% safe and will automatically attach to the new bills.', function() {
-        callServer('adminRegenerateClassBills', [AA.token, currentTerm, currentSession, className], function(res) {
+        var feeTerm2 = (document.getElementById('feeTermOverride') && document.getElementById('feeTermOverride').value) ? document.getElementById('feeTermOverride').value : currentTerm;
+          var feeSession2 = (document.getElementById('feeSessionOverride') && document.getElementById('feeSessionOverride').value) ? document.getElementById('feeSessionOverride').value : currentSession;
+          callServer('adminRegenerateClassBills', [AA.token, feeTerm2, feeSession2, className], function(res) {
           showToast(res.message, res.success ? 'success' : 'error');
           if (res.success) { loadBills(); loadDashboard(); }
         }, null, true);
@@ -1003,12 +1042,14 @@
       if (hasError) return showToast('All fee items must have a name.', 'error');
       if (items.length === 0) return showToast('Add at least one fee item.', 'error');
       var total = items.reduce(function(s,i){ return s + (parseFloat(i.amount)||0); }, 0);
+      var feeTerm = (document.getElementById('feeTermOverride') && document.getElementById('feeTermOverride').value) ? document.getElementById('feeTermOverride').value : currentTerm;
+      var feeSession = (document.getElementById('feeSessionOverride') && document.getElementById('feeSessionOverride').value) ? document.getElementById('feeSessionOverride').value : currentSession;
       var data = {
         id: document.getElementById('feeId').value || '',
         className: className,
         section: section,
-        term: currentTerm,
-        session: currentSession,
+        term: feeTerm,
+        session: feeSession,
         lineItems: JSON.stringify(items),
         totalFee: total
       };
@@ -1021,7 +1062,10 @@
     // -- Bills & Payments --
     var globalBills = [];
     function loadBills() {
+      var billTerm = (document.getElementById('billTermOverride') && document.getElementById('billTermOverride').value) ? document.getElementById('billTermOverride').value : currentTerm;
+      var billSession = (document.getElementById('billSessionOverride') && document.getElementById('billSessionOverride').value) ? document.getElementById('billSessionOverride').value : currentSession;
       callServer('adminGetBills', [AA.token, {}], function(bills) {
+        bills = bills.filter(function(b){ return (!b.term || b.term === billTerm) && (!b.session || b.session === billSession); });
                   var section = getAccountOfficerSection();
           if (section !== 'both') {
             bills = bills.filter(function(b) {
@@ -1084,10 +1128,46 @@
       }, null, true);
     }
     function generateBills() {
-      aaConfirm('Generate term bills for all active students based on current fee structures? This will skip existing bills.', function() {
-        callServer('adminGenerateBills', [AA.token, currentTerm, currentSession], function(res){ showToast(res.message, res.success?'success':'error'); if(res.success){loadBills();loadDashboard();} }, null, true);
+      var billTerm = (document.getElementById('billTermOverride') && document.getElementById('billTermOverride').value) ? document.getElementById('billTermOverride').value : currentTerm;
+      var billSession = (document.getElementById('billSessionOverride') && document.getElementById('billSessionOverride').value) ? document.getElementById('billSessionOverride').value : currentSession;
+      var termLabel = billTerm + ' ' + billSession;
+      aaConfirm('Generate bills for ' + termLabel + ' for all active students based on fee structures for that term? This will skip existing bills.', function() {
+        callServer('adminGenerateBills', [AA.token, billTerm, billSession], function(res){ showToast(res.message, res.success?'success':'error'); if(res.success){loadBills();loadDashboard();} }, null, true);
       });
     }
+    // ── Term Override Helpers ─────────────────────────────────────────────────
+    function populateSessionOptions(selectId, selectedSession) {
+      var sel = document.getElementById(selectId);
+      if (!sel) return;
+      var base = currentSession || selectedSession || '2025/2026';
+      var parts = base.split('/');
+      var y1 = parseInt(parts[0]) || new Date().getFullYear();
+      var sessions = [];
+      for (var y = y1 - 1; y <= y1 + 2; y++) {
+        sessions.push(y + '/' + (y + 1));
+      }
+      sel.innerHTML = sessions.map(function(s) {
+        return '<option value="' + s + '"' + (s === base ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
+    }
+    function updateOverrideBadge(termSelectId, badgeId) {
+      var termSel = document.getElementById(termSelectId);
+      var sessSel = document.getElementById(termSelectId === 'feeTermOverride' ? 'feeSessionOverride' : 'billSessionOverride');
+      var badge = document.getElementById(badgeId);
+      if (!termSel || !badge) return;
+      var isFuture = (termSel.value !== currentTerm) || (sessSel && sessSel.value !== currentSession);
+      badge.style.display = isFuture ? 'inline-block' : 'none';
+    }
+    function onFeeTermOverrideChange() {
+      updateOverrideBadge('feeTermOverride', 'feeOverrideBadge');
+      loadFeeStructures();
+    }
+    function onBillTermOverrideChange() {
+      updateOverrideBadge('billTermOverride', 'billOverrideBadge');
+      loadBills();
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     function deleteBill(billId) {
       aaConfirm('Delete this bill record? This will allow it to be regenerated. This cannot be undone.', function() {
         callServer('adminDeleteBill', [AA.token, billId], function(res) {
